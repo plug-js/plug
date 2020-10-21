@@ -1,0 +1,27 @@
+{
+  "name": "@plugjs/plug",
+  "version": "1.0.0-pre0",
+  "description": "Plug is a simple (fast) build system for JavaScript and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fast-glob": "^3.2.4"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.14",
+    "@types/chai-as-promised": "^7.1.3",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^12.12.69",
+    "@types/source-map-support": "^0.5.3",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^8.2.0",
+    "nyc": "^15.1.0",
+    "source-map-support": "^0.5.19",
+    "typescript": "^4.0.3"
+  }
+}
