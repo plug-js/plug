@@ -160,7 +160,7 @@ describe('Task', () => {
         result.push(6)
       })
 
-    await task()
+    await task(<any> null) // TODO
     expect(result).to.eql([ 1, 3, 5, 6, 4, 2 ])
     expect(Date.now() - now).to.be.gte(30).lt(60)
     expect(task.subtasks).to.have.length(3)
@@ -186,7 +186,7 @@ describe('Task', () => {
         result.push(6)
       })
 
-    await task()
+    await task(<any> null) // todo
     expect(result).to.eql([ 1, 2, 3, 4, 5, 6 ])
     expect(Date.now() - now).to.be.gte(60)
     expect(task.subtasks).to.have.length(3)

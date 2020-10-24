@@ -1,11 +1,34 @@
 import assert from 'assert'
 import { NonEmptyArray, assertNonEmptyArray } from './types'
 
+/* ========================================================================== */
+
+/**
+ * A `Task`'s own _execution context_, passed to a `Task` when being invoked.
+ *
+ * The `name` is declared here as tasks are simple functions which should be
+ * invoked with a `void this`.
+ */
+export interface TaskContext {
+  /** The _name_ of the task being executed */
+  readonly name: string,
+
+  /** Emit a _debug_ message within the context of the execution of a `Task` */
+  debug(message: string, ...args: any[]): void
+  /** Emit an _alert_ message within the context of the execution of a `Task` */
+  alert(message: string, ...args: any[]): void
+  /** Emit an _error_ message within the context of the execution of a `Task` */
+  error(message: string, ...args: any[]): void
+
+  /** Emit a message within the context of the execution of a `Task` */
+  log(message: string, ...args: any[]): void
+}
+
 /**
  * The `Task` type defines a callable (possibly asynchronous) function to
  * be invoked when tasks are executed.
  */
-export type Task = ((this: void) => void | Promise<void>) & {
+export type Task = ((this: void, context: TaskContext) => void | Promise<void>) & {
   /* The _optional_ description for this `Task` */
   readonly description?: string,
   /* Any _sub-task_ included by this `Task` */
@@ -78,7 +101,7 @@ export function task(nameOrTask: string | Task, descriptionOrTask?: string | Tas
 
   /* Wrap the task into a local function so we can have a new name, description */
   const call = tasks[0]
-  const task = () => call()
+  const task = (context: TaskContext) => call(context)
 
   /* We always want to have a name for the task */
   Object.defineProperty(task, 'name', { value: name != undefined ? name : call.name || '' })
@@ -123,8 +146,8 @@ export function parallel(name: string, description: string, ...tasks: NonEmptyAr
 export function parallel(nameOrTask: string | Task, descriptionOrTask?: string | Task, ...extraTasks: Task[]): Task {
   const { name = '', description = '', tasks } = combine(nameOrTask, descriptionOrTask, extraTasks)
 
-  const parent = task(name, description, async () => {
-    await Promise.all(tasks.map(async (task) => await task()))
+  const parent = task(name, description, async (context: TaskContext) => {
+    await Promise.all(tasks.map(async (task) => await task(context)))
   })
 
   Object.defineProperty(parent, 'subtasks', { value: Object.freeze(tasks) })
@@ -163,8 +186,8 @@ export function series(name: string, description: string, ...tasks: NonEmptyArra
 export function series(nameOrTask: string | Task, descriptionOrTask?: string | Task, ...extraTasks: Task[]): Task {
   const { name = '', description = '', tasks } = combine(nameOrTask, descriptionOrTask, extraTasks)
 
-  const parent = task(name, description, async () => {
-    await tasks.reduce((prev, task) => prev.then(task), Promise.resolve())
+  const parent = task(name, description, async (context: TaskContext) => {
+    await tasks.reduce((prev, task) => prev.then(() => task(context)), Promise.resolve())
   })
 
   Object.defineProperty(parent, 'subtasks', { value: Object.freeze(tasks) })
