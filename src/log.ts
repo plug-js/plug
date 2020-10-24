@@ -6,13 +6,6 @@ import { Task } from './task'
 import { Plugin } from './plugin'
 import { STYLE, RGB } from './colors'
 
-// /* Pretty colors!!! */
-// const ANSI_RESET = '\u001b[0m'
-// const ANSI_GRAY = '\u001b[38;5;245m'
-// const ANSI_DGRAY = '\u001b[38;5;240m'
-// const ANSI_MAGENTA = '\u001b[35m'
-// const ANSI_BLUE = '\u001b[36m'
-
 /* ========================================================================== */
 
 /** Options to construct `Log` instances */
@@ -24,6 +17,7 @@ export interface LogOptions {
 }
 
 /* The default configurations from command line */
+/* istanbul ignore next -- let's keep this as a "manual" test */
 const defaults: Required<LogOptions> = (() => {
   let color = isatty((<any> process.stdout).fd), debug = false, quiet = true
 
