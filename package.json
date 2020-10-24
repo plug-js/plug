@@ -1,5 +1,5 @@
 {
-  "name": "@plugjs/plug",
+  "name": "@plug-js/plug",
   "version": "1.0.0-pre0",
   "description": "Plug is a simple (fast) build system for JavaScript and TypeScript",
   "main": "index.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "fast-glob": "^3.2.4"
   },
