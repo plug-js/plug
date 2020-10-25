@@ -74,6 +74,10 @@ export class FileEntry extends BaseEntry<EntryType.FILE> {
   constructor(name: string, from: string, to?: string) {
     super(EntryType.FILE, name, from, to)
   }
+
+  parent(): DirectoryEntry {
+    throw new Error('TODO // method not implemented')
+  }
 }
 
 export class DirectoryEntry extends BaseEntry<EntryType.DIRECTORY> {
