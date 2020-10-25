@@ -19,7 +19,7 @@ export interface LogOptions {
 /* The default configurations from command line */
 /* istanbul ignore next -- let's keep this as a "manual" test */
 const defaults: Required<LogOptions> = (() => {
-  let color = isatty((<any> process.stdout).fd), debug = false, quiet = true
+  let color = isatty((<any> process.stdout).fd), debug = false, quiet = false
 
   for (const option of process.argv) {
     switch (option) {
@@ -95,7 +95,7 @@ function format(
   }
 
   // Close up (always reset, convert to string, write)
-  strings.push(STYLE.RESET)
+  w(STYLE.RESET)
   return strings.join('')
 }
 
@@ -130,6 +130,11 @@ export class Log implements Log {
     this.#color = merged.color
     this.#debug = merged.debug
     this.#quiet = merged.quiet
+
+    if (this.#quiet && this.#debug) {
+      this.#write(format(this.#color, 'ALERT', null, null, 'Both "quiet" and "debug" logging requested, assuming "debug"'))
+      this.#quiet = false
+    }
   }
 
   /** Emit a message */
