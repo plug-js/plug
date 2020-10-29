@@ -4,7 +4,7 @@ import assert from 'assert'
 import { Dirent } from 'fs'
 import { cwd } from 'process'
 
-import { Task, TaskContext } from './task'
+import { TaskCall, TaskContext } from './task'
 import { Plugin, PluginHandler } from './plugin'
 import { resolve, FileEntry, DirectoryEntry } from './entry'
 import { NonEmptyArray, assertNonEmptyString, assertNonEmptyArray } from './types'
@@ -74,7 +74,7 @@ export type ProcessorOptions = {
  * set of  of `Plugin`s, and finally (optionally) writing them **to** a
  * destination directory.
  */
-export interface Processor extends Task {
+export interface Processor extends TaskCall {
   /** Append a `Plugin` instance to the ones used by this `Processor` */
   with:
     ((plugin: Plugin) => this) |
@@ -82,7 +82,7 @@ export interface Processor extends Task {
     ((name: string, handler: PluginHandler) => this)
 
   /** This `Processor` will write processed file to the specified directory */
-  to: (destination: string) => Task,
+  to: (destination: string) => TaskCall,
 }
 
 /* ========================================================================== */
@@ -199,7 +199,7 @@ export function process(...args: any[]): Processor {
       }
 
       matches.set(match.fromSourcePath, Promise.resolve())
-      console.log(match)
+      // console.log(match)
     }
 
     await Promise.all(matches.values())

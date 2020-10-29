@@ -19,21 +19,21 @@ class PlugContext {
   }
 
   debug(message: string, ...args: any[]): void {
-    this.context.debug(message, this.plugin, message, ...args)
+    this.context.log.debug(message, this.plugin, message, ...args)
   }
   print(message: string, ...args: any[]): void {
-    this.context.debug(message, this.plugin, message, ...args)
+    this.context.log.debug(message, this.plugin, message, ...args)
   }
   alert(message: string, ...args: any[]): void {
-    this.context.debug(message, this.plugin, message, ...args)
+    this.context.log.debug(message, this.plugin, message, ...args)
   }
   error(message: string, ...args: any[]): void {
-    this.context.debug(message, this.plugin, message, ...args)
+    this.context.log.debug(message, this.plugin, message, ...args)
   }
 
   pluginContext() {
     return {
-      task: this.context.name,
+      task: this.context.task.name,
       debug: this.debug.bind(this),
       print: this.print.bind(this),
       alert: this.print.bind(this),

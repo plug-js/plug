@@ -1,195 +1,232 @@
+import path from 'path'
 import assert from 'assert'
-import { NonEmptyArray, assertNonEmptyArray } from './types'
+import support from 'source-map-support'
 
-/* ========================================================================== */
+import { Log, makeLog } from './log/log'
 
-/**
- * A `Task`'s own _execution context_, passed to a `Task` when being invoked.
- *
- * The `name` is declared here as tasks are simple functions which should be
- * invoked with a `void this`.
+import { assertTask, assertTaskCall, assertString, assertArray } from './types'
+
+/* ========================================================================== *
+ * TYPES                                                                      *
+ * ========================================================================== */
+
+ /**
+ * A `Task`'s own _execution context_, passed to a `TaskCall` when invoked.
  */
 export interface TaskContext {
-  /** The _name_ of the task being executed */
-  readonly name: string,
-
-  /** Emit a _debug_ message within the context of the execution of a `Task` */
-  debug(message: string, ...args: any[]): void
-  /** Emit an _alert_ message within the context of the execution of a `Task` */
-  alert(message: string, ...args: any[]): void
-  /** Emit an _error_ message within the context of the execution of a `Task` */
-  error(message: string, ...args: any[]): void
-
-  /** Emit a message within the context of the execution of a `Task` */
-  log(message: string, ...args: any[]): void
+  /** The instance of the task being executed */
+  readonly task: Task
+  /** A logger configured for the task being executed */
+  readonly log: Log
 }
 
 /**
- * The `Task` type defines a callable (possibly asynchronous) function to
- * be invoked when tasks are executed.
+ * A `TaskCall` is the basic foundation of a `Task`: a function callable with
+ * a `TaskContext` as its only argument.
  */
-export type Task = ((this: void, context: TaskContext) => void | Promise<void>) & {
+export type TaskCall = ((this: void, context: TaskContext) => void | Promise<void>) & {
+  /* The _optional_ description for this `TaskSource` */
+  description?: string,
+}
+
+/** Constructor options for `Task` */
+export type TaskConstructorOptions = {
+  /**
+   * The `TaskCall` to be wrapped by this `Task`
+   *
+   * This can be `undefined` if the `Task` overrides the `call(...)` method
+   */
+  call?: TaskCall,
+  /** The (optiona) _name_ for the `Task` */
+  name?: string,
+  /** The (optiona) _description_ for the `Task` */
+  description?: string
+}
+
+/**
+ * The `Task` type defines a `TaskCallable` associated with a optional
+ * description and optional list of _sub-tasks_.
+ */
+export interface Task {
+  /* Constructor for all `Task` types */
+  new (options: TaskConstructorOptions): Task
+
+  /* The name of this `Task` */
+  readonly name: string,
   /* The _optional_ description for this `Task` */
   readonly description?: string,
-  /* Any _sub-task_ included by this `Task` */
-  readonly subtasks?: NonEmptyArray<Task>,
+  /* The source location where this `Task` was defined */
+  readonly location?: string
 }
 
-/* ========================================================================== */
+/** Constructor options for `ParentTask` */
+export type ParentTaskConstructorOptions = Omit<TaskConstructorOptions, 'call'> & {
+  /** An array of `Tasks` to be managed by the `ParentTask` */
+  subtasks: Task[]
+}
 
-/* Internal function to parse the arguments of `task`, `parallel` or `series` */
-function combine(nameOrTask: string | Task, descriptionOrTask: undefined | string | Task, tasks: Task[]) {
-  let name: string | undefined, description: string | undefined
+/**
+ * The `ParentTask` type defines a `Task` parent for other _sub-tasks_.
+ */
+export interface ParentTask extends Task {
+  /* Constructor for all `ParentTask` types */
+  new (options: ParentTaskConstructorOptions): ParentTask
 
-  /* Check our tasks */
-  tasks.forEach((task) => assert.strictEqual(typeof task, 'function', 'Task is not a function'))
+  /** The array of _sub-tasks_ managed by this `ParentTask` */
+  readonly subtasks: Task[]
+}
 
-  /* Check the (optional) description */
-  if (typeof descriptionOrTask === 'function') {
-    tasks.unshift(descriptionOrTask)
-  } else if (typeof descriptionOrTask === 'string') {
-    description = descriptionOrTask
-  } else {
-    assert.strictEqual(typeof descriptionOrTask, 'undefined', 'Second parameter must be a Task or description string')
+export type TaskList = (Task | TaskCall | string)[]
+
+/* ========================================================================== *
+ * INTERNAL FUNCTIONS                                                         *
+ * ========================================================================== */
+
+// This is a bit of a _hairy_ function... We use V8's internal stack traces
+// processing and sourcemap to get the original source file, line and column.
+function caller(): string | undefined {
+  // Save the old "prepareStackTrace", likely from "source-map-support"
+  const prepare = Error.prepareStackTrace
+  try {
+    // Inject our new "prepareStackTrace"
+    Error.prepareStackTrace = (err, traces) => {
+      for (const trace of traces) {
+        const source = trace.getFileName()
+        // The first location outside of this directory tree is the one matching
+        if (source && (! source.startsWith(__dirname + path.sep))) {
+          // Use "sourceMapSupport" to map the optionally source-mapped position
+          const { source: file, line, column } = support.mapSourcePosition({
+            line: trace.getLineNumber() || /* istanbul ignore next */ -1,
+            column: trace.getColumnNumber() || /* istanbul ignore next */ -1,
+            source,
+          })
+          // Done, return something compatible with TaskLocation
+          const relative = path.relative(process.cwd(), file)
+          const resolved = relative.startsWith('..') ? /* istanbul ignore next */ file : relative
+          return `${resolved}:${line}:${column}`
+        }
+      }
+    }
+
+    // Create a new stack and return what we got above
+    return new Error().stack
+  } finally {
+    // Always restore the old "prepareStackTrace" call
+    Error.prepareStackTrace = prepare
+  }
+}
+
+// Parse arguments for a parallel/series declaration
+function parse(args: (TaskList | string)[]) {
+  assert(args.length > 0, 'No arguments specified')
+
+  // The task list is *always* the last argument, sooooo
+  const list = args.pop()
+  assert(Array.isArray(list), `Tasks list must be an Array: ${typeof list}`)
+
+  // Name and description can be desctructured from the remaining arguments
+  const [ name =  '', description = '' ] = args
+  assert(typeof name === 'string', `Name must be a string: ${typeof name}`)
+  assert(typeof description === 'string', `Description must be a string: ${typeof description}`)
+
+  return { name, description, list }
+}
+
+// Get the name or description property out of a TaskCall possibly overriding it
+function getProperty(prop: 'name' | 'description', override?: string, call?: TaskCall): string {
+  if (override !== undefined) return override
+  if (call) return call[prop] || ''
+  return ''
+}
+
+/* ========================================================================== *
+ * EXPORTED "Task" CLASS                                                      *
+ * ========================================================================== */
+
+ /* WeakMap of task => taskCall */
+const calls = new WeakMap<Task, TaskCall | undefined>()
+
+export class Task {
+  /**
+   * Create a new `Task` by wrapping a `TaskCall` _function_.
+   */
+  constructor({ call, name, description }: TaskConstructorOptions) {
+    // assertTaskCall(call, 'Property "call" is not a "TaskCall"')
+    calls.set(this, call)
+
+    name = getProperty('name', name, call)
+    description = getProperty('description', description, call)
+
+    // Name and description can be desctructured from the remaining arguments
+    assertString(name, 'Property "name" is not a string')
+    assertString(description, 'Property "description" is not a string')
+
+    // The basics of a task....
+    Object.defineProperties(this, {
+      // Not enumerable, otherwise it'll have to be EVERYWHERE in tests!
+      location: { enumerable: false, value: caller() },
+      // The task name is always an enumeragble property
+      name: { enumerable: true, value: name },
+    })
+
+    // The description, optional, is enumerable, too!
+    if (description) Object.defineProperty(this, 'description', { enumerable: true, value: description })
   }
 
-  /* Check the (optional) name */
-  if (typeof nameOrTask === 'function') {
-    tasks.unshift(nameOrTask)
-  } else if (typeof nameOrTask === 'string') {
-    name = nameOrTask
-  } else {
-    assert.strictEqual(typeof nameOrTask, 'undefined', 'First parameter must be a Task or name string')
+  call(context: TaskContext) {
+    const call = calls.get(this)
+    assertTaskCall(call, 'No "TaskCall" associated with this "Task"')
+    return call.call(undefined, context)
+  }
+}
+
+export abstract class ParentTask extends Task {
+  constructor(options: ParentTaskConstructorOptions) {
+    // This is our parent task call, just log if we have no sub-tasks
+    // const parentCall = (context: TaskContext) => {
+    //   if (this.subtasks.length > 0) return call(context)
+    //   context.log.alert('Parent task has no subtasks')
+    // }
+
+    // Construct the real task making sure we don't pass the call through
+    super(Object.assign({}, options, { call: undefined }))
+
+    assertArray(options.subtasks, 'Subtasks must be specified in an Array')
+
+    // Triple check that we only have tasks
+    const subtasks = options.subtasks.map((task) => {
+      assertTask(task, `A "ParentTask"'s sub-task must be a "Task"`)
+      return task
+    })
+
+    // Define our list of sub-tasks
+    Object.defineProperty(this, 'subtasks', { enumerable: true, value: subtasks })
   }
 
-  /* Check that we have at least one task to combine and return */
-  assertNonEmptyArray(tasks, 'No tasks specified')
-  return { name, description, tasks }
+  abstract call(context: TaskContext): void | Promise<void>
 }
 
-/* ========================================================================== */
+export abstract class ParallelTask extends ParentTask {
+  constructor(options: ParentTaskConstructorOptions) {
+    // This is our task call, parallel execution of tasks
+    const call = (context: TaskContext) => {
+      const promises = this.subtasks.map((task) => task.call(context))
+      return Promise.all(promises).then(() => void 0)
+    }
 
-/**
- * Create a new `Task` by wrapping a _function_.
- *
- * @param task - The _function_ to be wrapped by the `Task`
- */
-export function task(task: Task): Task
-
-/**
- * Create a new named `Task` by wrapping a _function_.
- *
- * @param name - The _name_ to give to the `Task`
- * @param task - The _function_ to be wrapped by the `Task`
- */
-export function task(name: string, task: Task): Task
-
-/**
- * Create a new named `Task` with a description by wrapping a _function_.
- *
- * @param name - The _name_ to give to the `Task`
- * @param description - The _description_ to give to the `Task`
- * @param task - The _function_ to be wrapped by the `Task`
- */
-export function task(name: string, description: string, task: Task): Task
-
-/* -------------------------------------------------------------------------- */
-
-/* Overloaded `task(...)` definition */
-export function task(nameOrTask: string | Task, descriptionOrTask?: string | Task, extraTask?: Task): Task {
-  const { name, description, tasks } = combine(nameOrTask, descriptionOrTask, extraTask ? [ extraTask ] : [])
-
-  /* Wrap the task into a local function so we can have a new name, description */
-  const call = tasks[0]
-  const task = (context: TaskContext) => call(context)
-
-  /* We always want to have a name for the task */
-  Object.defineProperty(task, 'name', { value: name != undefined ? name : call.name || '' })
-
-  /* Description is optional, and injected only if available */
-  const taskDescription = description != undefined ? description : call.description || ''
-  if (taskDescription) Object.defineProperty(task, 'description', { value: taskDescription })
-
-  /* Done */
-  return task
+    // Construct the parent task
+    super(Object.assign({ call }, options))
+  }
 }
 
-/* ========================================================================== */
+export abstract class SerialTask extends ParentTask {
+  constructor(options: ParentTaskConstructorOptions) {
+    // This is our task call, serial execution of tasks
+    const call = (context: TaskContext) => {
+      return this.subtasks.reduce((prev, task) => prev.then(() => task.call(context)), Promise.resolve())
+    }
 
-/**
- * Create a new `Task` executing a number of _sub-tasks_ in parallel.
- *
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function parallel(...tasks: NonEmptyArray<Task>): Task
-
-/**
- * Create a new named `Task` executing a number of _sub-tasks_ in parallel.
- *
- * @param name - The _name_ to give to the `Task`
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function parallel(name: string, ...tasks: NonEmptyArray<Task>): Task
-
-/**
- * Create a new named `Task` with a description executing a number of
- * _sub-tasks_ in parallel.
- *
- * @param name - The _name_ to give to the `Task`
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function parallel(name: string, description: string, ...tasks: NonEmptyArray<Task>): Task
-
-/* -------------------------------------------------------------------------- */
-
-/* Overloaded `parallel(...)` definition */
-export function parallel(nameOrTask: string | Task, descriptionOrTask?: string | Task, ...extraTasks: Task[]): Task {
-  const { name = '', description = '', tasks } = combine(nameOrTask, descriptionOrTask, extraTasks)
-
-  const parent = task(name, description, async (context: TaskContext) => {
-    await Promise.all(tasks.map(async (task) => await task(context)))
-  })
-
-  Object.defineProperty(parent, 'subtasks', { value: Object.freeze(tasks) })
-  return parent
-}
-
-/* ========================================================================== */
-
-/**
- * Create a new `Task` executing a number of _sub-tasks_ in series.
- *
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function series(...tasks: NonEmptyArray<Task>): Task
-
-/**
- * Create a new named `Task` executing a number of _sub-tasks_ in series.
- *
- * @param name - The _name_ to give to the `Task`
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function series(name: string, ...tasks: NonEmptyArray<Task>): Task
-
-/**
- * Create a new named `Task` with a description executing a number of
- * _sub-tasks_ in series.
- *
- * @param name - The _name_ to give to the `Task`
- * @param tasks - The _functions_ to be wrapped by the `Task`
- */
-export function series(name: string, description: string, ...tasks: NonEmptyArray<Task>): Task
-
-/* -------------------------------------------------------------------------- */
-
-/* Overloaded `series(...)` definition */
-export function series(nameOrTask: string | Task, descriptionOrTask?: string | Task, ...extraTasks: Task[]): Task {
-  const { name = '', description = '', tasks } = combine(nameOrTask, descriptionOrTask, extraTasks)
-
-  const parent = task(name, description, async (context: TaskContext) => {
-    await tasks.reduce((prev, task) => prev.then(() => task(context)), Promise.resolve())
-  })
-
-  Object.defineProperty(parent, 'subtasks', { value: Object.freeze(tasks) })
-  return parent
+    // Construct the parent task
+    super(Object.assign({ call }, options))
+  }
 }
