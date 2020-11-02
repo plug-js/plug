@@ -1,25 +1,68 @@
 import { expect } from 'chai'
 import { isatty } from 'tty'
 
-import { makeLog, makeTestLog, LogLevel } from '../src/log/log'
+import { Log, LogLevel, LogOptions, LogContext, makeLog, default as log } from '../src/log/log'
 
-describe('Logger', () => {
-  it('should have the right defaults and override them', () => {
-    expect(makeLog().options).to.eql({
+type TestLog = Log & { logs: string[] }
+type TestLogContext = { taskName?: string, pluginName?: string }
+
+function makeTestLog(options: Partial<LogOptions> = {}, { taskName, pluginName }: TestLogContext = {}): TestLog {
+  const logs: string[] = []
+
+  const context: LogContext = { write: (what: string) => logs.push(what) }
+  if (taskName) context.task = <any> { name: taskName }
+  if (pluginName) context.plugin = <any> { name: pluginName }
+
+  const log: TestLog = Object.assign(makeLog(context), {
+    level: LogLevel.DEBUG,
+    colors: false,
+    times: false,
+    logs: logs,
+  }, options)
+
+  return log
+}
+
+describe.only('Logger', () => {
+  afterEach(() => {
+    Object.assign(log, {
       level: LogLevel.NORMAL,
-      color: isatty((<any> process.stdout).fd),
+      colors: isatty((<any> process.stdout).fd),
       times: true,
-      taskName: null,
-      pluginName: null,
     })
+  })
 
-    expect(makeTestLog().options).to.eql({
-      level: LogLevel.DEBUG,
-      color: false,
-      times: false,
-      taskName: null,
-      pluginName: null,
+  it('should have the right defaults and override them', () => {
+    expect(log).to.include({
+      level: LogLevel.NORMAL,
+      colors: isatty((<any> process.stdout).fd),
+      times: true,
     })
+  })
+
+  it('should normalise options', () => {
+    log.level = LogLevel.NORMAL
+    expect(log.level).to.eql(LogLevel.NORMAL)
+    log.level = -1
+    expect(log.level).to.eql(LogLevel.DEBUG)
+    log.level = Number.MAX_SAFE_INTEGER
+    expect(log.level).to.eql(LogLevel.QUIET)
+    log.level = <any> 'FOOBAR'
+    expect(log.level).to.eql(LogLevel.NORMAL)
+
+    log.colors = true
+    expect(log.colors).to.be.true
+    log.colors = <any> ''
+    expect(log.colors).to.be.false
+    log.colors = <any> 'FOOBAR'
+    expect(log.colors).to.be.true
+
+    log.times = true
+    expect(log.times).to.be.true
+    log.times = <any> ''
+    expect(log.times).to.be.false
+    log.times = <any> 'FOOBAR'
+    expect(log.times).to.be.true
   })
 
   it('should log at "debug" level', () => {
@@ -98,7 +141,7 @@ describe('Logger', () => {
     expect(log.logs).to.eql([ 'The test for an Error being logged \'string\' 1 true\n' + err.stack ])
   })
 
-  it('should log with timestamps', () => {
+  it('should log with times', () => {
     const log = makeTestLog({ times: true })
 
     log('A simple message')
@@ -114,8 +157,8 @@ describe('Logger', () => {
     expect(logs[3]).to.match(/^\d{2}:\d{2}:\d{2}.\d{3} \[ERROR\] An error message$/)
   })
 
-  it('should log with color', () => {
-    const log = makeTestLog({ color: true })
+  it('should log with colors', () => {
+    const log = makeTestLog({ colors: true })
 
     log('Reset before and after')
 
@@ -125,7 +168,7 @@ describe('Logger', () => {
   })
 
   it('should log for tasks and plugins', () => {
-    let log = makeTestLog({ taskName: 'theTask' })
+    let log = makeTestLog({}, { taskName: 'theTask' })
 
     log('A simple message')
     log.debug('A debug message')
@@ -139,7 +182,7 @@ describe('Logger', () => {
       '[ERROR] {theTask} An error message'
     ])
 
-    log = makeTestLog({ taskName: 'theTask', pluginName: 'thePlugin' })
+    log = makeTestLog({}, { taskName: 'theTask', pluginName: 'thePlugin' })
 
     log('A simple message')
     log.debug('A debug message')
@@ -153,7 +196,7 @@ describe('Logger', () => {
       '[ERROR] {theTask|thePlugin} An error message'
     ])
 
-    log = makeTestLog({ pluginName: 'anotherPlugin' })
+    log = makeTestLog({}, { pluginName: 'anotherPlugin' })
 
     log('A simple message')
     log.debug('A debug message')
@@ -169,25 +212,27 @@ describe('Logger', () => {
   })
 
   it('should log to the console with pretty colors', () => {
-    let log = makeLog({ level: -1, color: true })
+    log.level = LogLevel.DEBUG
+    log.colors = true
+    log.times = true
 
     log('A simple message', 1, true, { hello: 'world' })
     log.debug('A debug message', 1, true, { hello: 'world' })
     log.alert('An alert message', 1, true, { hello: 'world' })
     log.error('An error message', 1, true, { hello: 'world' })
 
-    log = makeLog({ taskName: 'theTask' })
+    const log2 = makeLog({ task: <any> { name: 'theTask' } })
 
-    log('A task simple message', 1, true, { hello: 'world' })
-    log.debug('A task debug message', 1, true, { hello: 'world' })
-    log.alert('A task alert message', 1, true, { hello: 'world' })
-    log.error('A task error message', 1, true, { hello: 'world' })
+    log2('A task simple message', 1, true, { hello: 'world' })
+    log2.debug('A task debug message', 1, true, { hello: 'world' })
+    log2.alert('A task alert message', 1, true, { hello: 'world' })
+    log2.error('A task error message', 1, true, { hello: 'world' })
 
-    log = makeLog({ taskName: 'anotherTask', pluginName: 'thePlugIn' })
+    const log3 = makeLog({ task: <any> { name: 'theTask' }, plugin: <any> { name: 'thePlugin' } })
 
-    log('A plugin simple message', 1, true, { hello: 'world' })
-    log.debug('A plugin debug message', 1, true, { hello: 'world' })
-    log.alert('A plugin alert message', 1, true, { hello: 'world' })
-    log.error('A plugin error message', 1, true, { hello: 'world' })
+    log3('A plugin simple message', 1, true, { hello: 'world' })
+    log3.debug('A plugin debug message', 1, true, { hello: 'world' })
+    log3.alert('A plugin alert message', 1, true, { hello: 'world' })
+    log3.error('A plugin error message', 1, true, { hello: 'world' })
   })
 })

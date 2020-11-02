@@ -1,8 +1,12 @@
+import assert from 'assert'
+
 import { isatty } from 'tty'
 import { EOL } from 'os'
 import { inspect } from 'util'
 
 import { STYLE, RGB } from './colors'
+import { Plugin } from '../plugin'
+import { Task } from '../task'
 
 /* ========================================================================== */
 
@@ -18,21 +22,17 @@ export enum LogLevel {
 /** Options to customize the logger */
 export interface LogOptions {
   /** The _level_ of the messages to log (default: `LogLevel.NORMAL`) */
-  level?: LogLevel
+  level: LogLevel
   /** Whether to log the current time or not (default: `true`) */
-  times?: boolean
+  times: boolean
   /** Whether to colorize the output or not (default: `true` if standard output is a _TTY_) */
-  color?: boolean
-  /** The _name_ of the `Task` to log before any other message */
-  taskName?: string | null
-  /** The _name_ of the `Plugin` to log before any other message */
-  pluginName?: string | null
+  colors: boolean
 }
 
-/** Our logging function, with sub-functions for various gravity */
-export type Log = ((message: string, ...args: any[]) => void) & {
-  /** The options configured for this `Log` instance */
-  readonly options: Required<Readonly<LogOptions>>
+/** Our main `Log` type, defining a logger */
+export type Log = ((message: string, ...args: any[]) => void) & LogOptions & {
+  /** The options configured for the `Log` instance */
+  options: Required<Readonly<LogOptions>>
 
   /** Emit a _debug_ message */
   debug(message: string, ...args: any[]): void
@@ -42,30 +42,29 @@ export type Log = ((message: string, ...args: any[]) => void) & {
   error(message: string, ...args: any[]): void
 }
 
-/** A log for testing purposes */
-export type TestLog = Log & {
-  /** An array of logs entries logged by this `Log`, reset upon read */
-  readonly logs: string[]
+/* Logging context, describing where entries come from and are written to  */
+export type LogContext = {
+  /** The function used to write log entries, defaults to `console.log(...)` */
+  write?: (data: string) => void
+  /** The optional `Task` to contextualize log entries */
+  task?: Task
+  /** The optional `Plugin` to contextualize log entries */
+  plugin?: Plugin
 }
 
 /* ========================================================================== */
 
-/* The `EmitOptions` type encloses what's required to _emit_ a log entry */
-type EmitOptions = Required<LogOptions> & {
-  write: (data: string) => void
-}
-
 /* The default configurations from command line */
 /* istanbul ignore next -- let's keep this as a "manual" test */
-const defaults: EmitOptions = (() => {
-  let color = isatty((<any> process.stdout).fd)
+const options: LogOptions = (() => {
+  let colors = isatty((<any> process.stdout).fd)
   let level = LogLevel.NORMAL
   let times = true
 
   for (const option of process.argv) {
     switch (option) {
-      case '--color': color = true; break
-      case '--no-color': color = false; break
+      case '--color': colors = true; break
+      case '--no-color': colors = false; break
 
       case '--times': times = true; break
       case '--no-times': times = false; break
@@ -83,22 +82,22 @@ const defaults: EmitOptions = (() => {
   if (level < LogLevel.DEBUG) level = LogLevel.DEBUG
   if (level > LogLevel.QUIET) level = LogLevel.QUIET
 
-  const write = console.log.bind(console)
-  return { color, level, times, write, taskName: null, pluginName: null }
+  return { colors, level, times }
 })()
 
 /* Emit a logging message, properly format */
-function emit(level: LogLevel, options: EmitOptions, message: string, args: any[]) {
+function emit(level: LogLevel, context: LogContext, message: string, args: any[]) {
   // First check if we _really_ have to log this message
   if (level < options.level) return
 
   // Options needed for properly logging messages...
-  const { color, taskName, pluginName, write } = options
+  const taskName = context.task?.name
+  const pluginName = context.plugin?.name
 
   // Simplify wrinting colors here
   const strings: string[] = []
   const w = (col: STYLE | RGB | null, ...args: string[]) => {
-    if (color && col) strings.push(col)
+    if (options.colors && col) strings.push(col)
     strings.push(...args)
   }
 
@@ -144,49 +143,54 @@ function emit(level: LogLevel, options: EmitOptions, message: string, args: any[
   // All other arguments
   for (const arg of args) {
     w(null, arg instanceof Error ? EOL : ' ')
-    w(null, inspect(arg, { colors: color }))
+    w(null, inspect(arg, { colors: options.colors }))
   }
 
   // Close up (always reset, convert to string, write)
   w(STYLE.RESET)
+  const write = context.write || console.log
   write(strings.join(''))
 }
 
 /* ========================================================================== */
 
-export function makeLog(maybeOptions: LogOptions = {}): Log {
-  const options = Object.assign({}, defaults, maybeOptions)
+/* Create a logger with the specified emission context */
+export function makeLog(context: LogContext): Log {
+  const log = (message: string, ...args: any[]) => emit(LogLevel.NORMAL, context, message, args)
+  log.debug = (message: string, ...args: any[]) => emit(LogLevel.DEBUG, context, message, args)
+  log.alert = (message: string, ...args: any[]) => emit(LogLevel.ALERT, context, message, args)
+  log.error = (message: string, ...args: any[]) => emit(LogLevel.ERROR, context, message, args)
 
-  /* Logging at various levels */
-  const log = (message: string, ...args: any[]) => emit(LogLevel.NORMAL, options, message, args)
-  log.debug = (message: string, ...args: any[]) => emit(LogLevel.DEBUG, options, message, args)
-  log.alert = (message: string, ...args: any[]) => emit(LogLevel.ALERT, options, message, args)
-  log.error = (message: string, ...args: any[]) => emit(LogLevel.ERROR, options, message, args)
-
-  /* Options */
-  log.options = Object.freeze({
-    level: options.level,
-    color: options.color,
-    times: options.times,
-    taskName: options.taskName,
-    pluginName: options.pluginName,
+  // Implement our "LogOptions" properties
+  return Object.defineProperties(log, {
+    level: {
+      enumerable: true,
+      get: () => options.level,
+      set(level: LogLevel) {
+        level = parseInt(level.toString())
+        if (isNaN(level)) level = LogLevel.NORMAL
+        if (level < LogLevel.DEBUG) level = LogLevel.DEBUG
+        if (level > LogLevel.QUIET) level = LogLevel.QUIET
+        options.level = level
+      }
+    },
+    colors: {
+      enumerable: true,
+      get: () => options.colors,
+      set(colors: boolean) {
+        options.colors = !!colors
+      }
+    },
+    times: {
+      enumerable: true,
+      get: () => options.times,
+      set(times: boolean) {
+        options.times = !!times
+      }
+    },
   })
-
-  /* Return our log */
-  return log
 }
 
-export function makeTestLog(maybeOptions: LogOptions = {}): TestLog {
-  const logs: string[] = []
-
-  const options = Object.assign({
-    write: logs.push.bind(logs),
-    level: LogLevel.DEBUG,
-    color: false,
-    times: false,
-    taskName: null,
-    pluginName: null,
-  }, maybeOptions)
-
-  return Object.defineProperty(makeLog(options), 'logs', { get: () => logs.splice(0) })
-}
+/* The exported Log, normally usable by anyone  */
+const log: Log = makeLog({})
+export default log
