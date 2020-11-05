@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { Guard } from '../types'
+import { Guard, typeName, isObject } from '../types'
 
 // Define "OptionKey" as any key besides "name" or "description"
 type OptionKey<T> = Exclude<keyof T, 'name' | 'description'>
@@ -19,8 +19,8 @@ type Options<T> = { [P in OptionKey<T>]?: T[P] } & {
  * to construct tasks either in the `Task` constructors or by `Plug`
  *
  * @param key The `key` of the extra argument (e.g. `task` or `subtasks`)
- * @param check A check to employ
- * @param args
+ * @param check A check to employ for verifying the last argument (e.g. `Task`)
+ * @param args The array of arguments to be parsed
  */
 export function parseArguments<T>(
   key: OptionKey<T>,
@@ -41,7 +41,7 @@ export function parseArguments<T>(
     if (check(arg)) {
       options[key] = arg
       return options
-    } else if (typeof arg !== 'string') {
+    } else if (isObject(arg)) {
       return arg
     }
   }
@@ -60,11 +60,11 @@ export function parseArguments<T>(
 
   // Name and description checks
   const [ name, description ] = args
-  assert((typeof name === 'string') || (typeof name === 'undefined'), `Invalid type for "name": ${typeof name}`)
-  assert((typeof description === 'string') || (typeof description === 'undefined'), `Invalid type for "description": ${typeof description}`)
+  assert((typeof name === 'string') || (typeof name === 'undefined'), `Invalid type for "name": ${typeName(name)}`)
+  assert((typeof description === 'string') || (typeof description === 'undefined'), `Invalid type for "description": ${typeName(description)}`)
 
   // Assign name and descriptor then return
-  options.name = name
-  options.description = description
+  if (name !== undefined) options.name = name
+  if (description !== undefined) options.description = description
   return options
 }
