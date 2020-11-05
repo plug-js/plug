@@ -1,8 +1,16 @@
 import assert from 'assert'
 
-import { Task, TaskCall } from '../task'
-import { Plug } from '../plug'
-import { Class, NonEmptyArray } from './types'
+import {
+  Assertor,
+  Class,
+  Guard,
+  NonEmptyArray,
+} from './types'
+
+import {
+  Task,
+  TaskCall,
+} from '../task'
 
 /* ========================================================================== *
  * INTERNAL TYPES AND FUNCTIONS                                               *
@@ -34,15 +42,7 @@ function classAssertor<T>(clz: Class<T>): Assertor<T> {
   }
 }
 
-/* ========================================================================== *
- * EXPORTED TYPES                                                             *
-/* ========================================================================== */
-
-export type Guard<T> = (what: any) => what is T
-
-export type Assertor<T> = (what: any, message?: string) => asserts what is T
-
-export type Type = {
+type Type = {
   undefined: undefined,
   null: null,
   boolean: boolean,

@@ -1,10 +1,11 @@
 import assert from 'assert'
 
-import { isatty } from 'tty'
 import { EOL } from 'os'
 import { inspect } from 'util'
+import { isatty } from 'tty'
 
 import { STYLE, RGB } from './colors'
+
 import { Plugin } from '../plugin'
 import { Task } from '../task'
 
