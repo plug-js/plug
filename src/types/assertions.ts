@@ -16,15 +16,6 @@ import {
  * INTERNAL TYPES AND FUNCTIONS                                               *
 /* ========================================================================== */
 
-function typeName(what: any): string {
-  if (what === null) return 'null' // damn you, JavaScript
-  const type = typeof what
-  if (type !== 'object') return type
-  if (Array.isArray(what)) return `array[length=${what.length}]`
-  if (what.constructor.name === 'Object') return 'object'
-  return `"${what.constructor.name}"`
-}
-
 function createMessage(what: any, type: string, message?: string) {
   if (message) return `${message} (was: ${typeName(what)})`
   return `Argument of type ${typeName(what)} is not ${type}`
@@ -53,6 +44,19 @@ type Type = {
   function: Function,
   object: object,
   array: [],
+}
+
+/* ========================================================================== *
+ * A SANE TYPEOF                                                              *
+ * ========================================================================== */
+
+export function typeName(what: any): string {
+  if (what === null) return 'null' // damn you, JavaScript
+  const type = typeof what
+  if (type !== 'object') return type
+  if (Array.isArray(what)) return `array[length=${what.length}]`
+  if (what.constructor.name === 'Object') return 'object'
+  return `"${what.constructor.name}"`
 }
 
 /* ========================================================================== *
