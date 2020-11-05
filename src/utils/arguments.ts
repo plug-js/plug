@@ -59,7 +59,7 @@ export function parseArguments<T>(
   assert(args.length < 3, `Too many arguments (max: 2, was: ${args.length})`)
 
   // Name and description checks
-  const name = args[0], description = args[1]
+  const [ name, description ] = args
   assert((typeof name === 'string') || (typeof name === 'undefined'), `Invalid type for "name": ${typeof name}`)
   assert((typeof description === 'string') || (typeof description === 'undefined'), `Invalid type for "description": ${typeof description}`)
 
