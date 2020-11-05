@@ -21,6 +21,8 @@ export enum LogLevel {
 
 /** Options to customize the logger */
 export interface LogOptions {
+  /** The function used to write log entries, defaults to `console.log(...)` */
+  write: null | ((data: string) => void)
   /** The _level_ of the messages to log (default: `LogLevel.NORMAL`) */
   level: LogLevel
   /** Whether to log the current time or not (default: `true`) */
@@ -44,8 +46,6 @@ export type Log = ((message: string, ...args: any[]) => void) & LogOptions & {
 
 /* Logging context, describing where entries come from and are written to  */
 export type LogContext = {
-  /** The function used to write log entries, defaults to `console.log(...)` */
-  write?: (data: string) => void
   /** The optional `Task` to contextualize log entries */
   task?: Task
   /** The optional `Plugin` to contextualize log entries */
@@ -82,7 +82,7 @@ const options: LogOptions = (() => {
   if (level < LogLevel.DEBUG) level = LogLevel.DEBUG
   if (level > LogLevel.QUIET) level = LogLevel.QUIET
 
-  return { colors, level, times }
+  return { colors, level, times, write: null }
 })()
 
 /* Emit a logging message, properly format */
@@ -90,16 +90,17 @@ function emit(level: LogLevel, context: LogContext, message: string, args: any[]
   // First check if we _really_ have to log this message
   if (level < options.level) return
 
-  // Options needed for properly logging messages...
-  const taskName = context.task?.name
-  const pluginName = context.plugin?.name
-
   // Simplify wrinting colors here
   const strings: string[] = []
+  const u = (what: string) => options.colors ? `${STYLE.UNDERLINE}${what}${STYLE.UNDERLINE_OFF}` : what
   const w = (col: STYLE | RGB | null, ...args: string[]) => {
     if (options.colors && col) strings.push(col)
     strings.push(...args)
   }
+
+  // Options needed for properly logging messages...
+  const taskName = context.task ? context.task.name || u('anonymous task') : null
+  const pluginName = context.plugin ? context.plugin.name || u('anonymous plugin') : null
 
   // Reset our color at the beginning of the line
   w(STYLE.RESET)
@@ -148,7 +149,7 @@ function emit(level: LogLevel, context: LogContext, message: string, args: any[]
 
   // Close up (always reset, convert to string, write)
   w(STYLE.RESET)
-  const write = context.write || console.log
+  const write = options.write || console.log
   write(strings.join(''))
 }
 
@@ -163,6 +164,14 @@ export function makeLog(context: LogContext): Log {
 
   // Implement our "LogOptions" properties
   return Object.defineProperties(log, {
+    write: {
+      enumerable: false,
+      get: () => options.write,
+      set(write: null | ((data: string) => void)) {
+        if (write) assert(typeof write === 'function', 'Log writer not a function')
+        options.write = write
+      }
+    },
     level: {
       enumerable: true,
       get: () => options.level,
