@@ -1,9 +1,8 @@
 import * as t from '../src/types'
 
 import { Task } from '../src/task'
-import { Plug } from '../src/plug'
 
-import { AssertionError, default as assert } from 'assert'
+import { AssertionError } from 'assert'
 import { expect } from 'chai'
 
 describe('Types', () => {
