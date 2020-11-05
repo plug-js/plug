@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { Guard } from './types'
+import { Guard } from '../types'
 
 // Define "OptionKey" as any key besides "name" or "description"
 type OptionKey<T> = Exclude<keyof T, 'name' | 'description'>

@@ -3,8 +3,7 @@ import assert from 'assert'
 import support from 'source-map-support'
 
 import { Log, makeLog } from './log'
-
-import { parseArguments } from './arguments'
+import { parseArguments } from './utils'
 
 import {
   assertArrayOf,

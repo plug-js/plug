@@ -10,13 +10,15 @@ import {
 import assert from 'assert'
 
 import { assertString, assertTask, isTask, isTaskCall, isArray } from './types'
-import { parseArguments } from './arguments'
+import { parseArguments } from './utils'
 
 export type TaskList = (Task | TaskCall | string)[]
 
 type TaskListOptions = Omit<ParentTaskOptions, 'subtasks'> & {
   subtasks?: TaskList
 }
+
+/* ========================================================================== */
 
 function parseTaskList(args: (TaskList | string)[], tasks: Map<String, Task>): ParentTaskOptions {
   const options = parseArguments<TaskListOptions>('subtasks', isArray, args)
@@ -61,10 +63,7 @@ export interface Plug {
   series(tasks: TaskList): Task
   series(name: string, tasks: TaskList): Task
   series(name: string, description: string, tasks: TaskList): Task
-
 }
-
-/* ========================================================================== */
 
 /* ========================================================================== */
 
