@@ -1,290 +1,438 @@
-// import { makeTestLog } from '../src/log'
-import { TaskCall, Task } from '../src/task'
-import { Plug } from '../src/plug'
+import { Task, TaskCall, ParallelTask, SeriesTask } from '../src/task'
 import { expect } from 'chai'
 import { AssertionError } from 'assert'
+
+import log from '../src/log'
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => void setTimeout(resolve, ms))
 }
 
 describe('Task', () => {
-  describe('definition', () => {
-    it('should create a Task', () => {
-      let myFunction: TaskCall = (() => () => {})()
+  describe('creation', () => {
+    it('should include a task location', () => {
+      expect(new Task({ call: () => {} }).location).to.eql('test/10-task.test.ts:14:13')
+    })
+
+    it('should create a Task from an anonymous function', () => {
+      const myFunction = (() => () => {})()
       expect(myFunction.name).to.equal('')
 
-      // Anyonymous functions
-      expect(new Task({ call: myFunction })).to.eql({
-        call: myFunction,
+      // without options
+
+      expect(new Task(myFunction)).to.eql({
         name: '',
       })
 
-      expect(new Task({ name: 'theName', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
+      expect(new Task('overrideName', myFunction)).to.eql({
+        name: 'overrideName',
       })
 
-      expect(new Task({ name: 'theName', description: 'theDescription', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
+      expect(new Task('overrideName', 'theDescription', myFunction)).to.eql({
+        name: 'overrideName',
         description: 'theDescription',
       })
 
-      // Named functions
-      myFunction = () => {}
-      expect(myFunction.name).to.equal('myFunction')
-
-      expect(new Task({ call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'myFunction',
-      })
-
-      expect(new Task({ name: 'theName', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
-      })
-
-      expect(new Task({ name: 'theName', description: 'theDescription', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
-        description: 'theDescription',
-      })
-
-      expect(new Task({ name: '', call: myFunction })).to.eql({ // name explicitly set to an empty string
-        call: myFunction,
+      expect(new Task('', myFunction)).to.eql({
         name: '',
       })
 
-      // Named functions with an extra "description"
-      myFunction.description = 'myDescription'
+      expect(new Task('', '', myFunction)).to.eql({
+        name: '',
+      })
+
+      // with options
 
       expect(new Task({ call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'myFunction',
-        description: 'myDescription',
+        name: '',
       })
 
-      expect(new Task({ name: 'theName', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
-        description: 'myDescription',
+      expect(new Task({ name: 'overrideName', call: myFunction })).to.eql({
+        name: 'overrideName',
       })
 
-      expect(new Task({ name: 'theName', description: 'theDescription', call: myFunction })).to.eql({
-        call: myFunction,
-        name: 'theName',
+      expect(new Task({ name: 'overrideName', description: 'theDescription', call: myFunction })).to.eql({
+        name: 'overrideName',
         description: 'theDescription',
       })
 
-      expect(new Task({ name: '', description: '', call: myFunction })).to.eql({ // explicitly set both name and description to empty strings
-        call: myFunction,
+      expect(new Task({ name: '', call: myFunction })).to.eql({
+        name: '',
+      })
+
+      expect(new Task({ name: '', description: '', call: myFunction })).to.eql({
         name: '',
       })
     })
 
-    // it('should not create a Task with the wrong parameters', () => {
-    //   const plug = <any> new Plug()
+    it('should create a Task from a named function', () => {
+      const myFunction = () => {}
+      expect(myFunction.name).to.equal('myFunction')
 
-    //   expect(() => plug.task()).to.throw(AssertionError, 'No arguments specified')
-    //   expect(() => plug.task(false)).to.throw(AssertionError, 'Task call must be a function: boolean')
-    //   expect(() => plug.task(false, () => {})).to.throw(AssertionError, 'Name must be a string: boolean')
-    //   expect(() => plug.task('foo', false, () => {})).to.throw(AssertionError, 'Description must be a string: boolean')
-    // })
+      // without options
 
-    it('should include a task location', () => {
-      expect(new Task({ call: () => {} }).location).to.eql('test/10-task.test.ts:96:13')
+      expect(new Task(myFunction)).to.eql({
+        name: 'myFunction',
+      })
+
+      expect(new Task('overrideName', myFunction)).to.eql({
+        name: 'overrideName',
+      })
+
+      expect(new Task('overrideName', 'theDescription', myFunction)).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task('', myFunction)).to.eql({
+        name: '',
+      })
+
+      expect(new Task('', '', myFunction)).to.eql({
+        name: '',
+      })
+
+      // with options
+
+      expect(new Task({ call: myFunction })).to.eql({
+        name: 'myFunction',
+      })
+
+      expect(new Task({ name: 'overrideName', call: myFunction })).to.eql({
+        name: 'overrideName',
+      })
+
+      expect(new Task({ name: 'overrideName', description: 'theDescription', call: myFunction })).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task({ name: '', call: myFunction })).to.eql({
+        name: '',
+      })
+
+      expect(new Task({ name: '', description: '', call: myFunction })).to.eql({
+        name: '',
+      })
+    })
+
+    it('should create a Task from an anonymous TaskCall', () => {
+      const myFunction: TaskCall = (() => () => {})()
+      expect(myFunction.name).to.equal('')
+      myFunction.description = 'functionDescription'
+
+      // without options
+
+      expect(new Task(myFunction)).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('overrideName', myFunction)).to.eql({
+        name: 'overrideName',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('overrideName', 'theDescription', myFunction)).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task('', myFunction)).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('', '', myFunction)).to.eql({
+        name: '',
+      })
+
+      // with options
+
+      expect(new Task({ call: myFunction })).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: 'overrideName', call: myFunction })).to.eql({
+        name: 'overrideName',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: 'overrideName', description: 'theDescription', call: myFunction })).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task({ name: '', call: myFunction })).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: '', description: '', call: myFunction })).to.eql({
+        name: '',
+      })
+    })
+
+    it('should create a Task from a named TaskCall', () => {
+      const myFunction: TaskCall = () => {}
+      expect(myFunction.name).to.equal('myFunction')
+      myFunction.description = 'functionDescription'
+
+      expect(new Task({ call: myFunction })).to.eql({
+        name: 'myFunction',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: 'overrideName', call: myFunction })).to.eql({
+        name: 'overrideName',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: 'overrideName', description: 'theDescription', call: myFunction })).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task({ name: '', call: myFunction })).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task({ name: '', description: '', call: myFunction })).to.eql({
+        name: '',
+      })
+    })
+
+    it('should create a task overriding the "call" method', () => {
+      const result: any[] = []
+
+      class MyTask extends Task {
+        async call(...args: any[]) {
+          result.push(this, ...args)
+        }
+      }
+
+      const task = new MyTask()
+      expect(task).to.be.instanceOf(Task)
+      expect(task).to.be.instanceOf(MyTask)
+
+      task.call('foo', 'bar', 'baz')
+      expect(result).to.eql([ task, 'foo', 'bar', 'baz' ])
+    })
+
+    it('should correctly include a "log"', () => {
+      const task = new Task({ name: 'loggable', call: () => {} })
+      expect(task.log).to.be.a('function')
+      expect(task.log.debug).to.be.a('function')
+      expect(task.log.alert).to.be.a('function')
+      expect(task.log.error).to.be.a('function')
+    })
+
+    it('should not create a Task with the wrong parameters', () => {
+      expect(() => new (<any> Task)({})).to.throw(AssertionError, 'Task must be constructed with a "call" option or override the "call" method')
+      expect(() => new (<any> Task)('foo')).to.throw(AssertionError, 'Task must be constructed with a "call" option or override the "call" method')
+      expect(() => new (<any> Task)({ call: 'foo' })).to.throw(AssertionError, 'Property "call" is not a "Task" instance or "TaskCall" function (was: string)')
+      expect(() => new (<any> Task)({ call: () => {}, name: true })).to.throw(AssertionError, 'Property "name" is not a string (was: boolean)')
+      expect(() => new (<any> Task)({ call: () => {}, description: true })).to.throw(AssertionError, 'Property "description" is not a string (was: boolean)')
     })
   })
 
-  // describe('importing', () => {
-  //   it('should not allow duplicate named tasks', () => {
-  //     const plug = new Plug()
-  //     const call = (() => () => {})()
+  describe('invocation', () => {
+    it('should correctly invoke a successful task', async () => {
+      const result: any[] = [] // will contain [ this, context ]
 
-  //     // allow anonymous calls
-  //     expect(plug.task(call)).to.eql({ call, name: '' })
-  //     expect(plug.task(call)).to.eql({ call, name: '' })
+      const task = new Task({ call: function(...args: any[]) {
+        result.push(this, ...args)
+        return <void> <unknown> 'foobar'
+      } })
 
-  //     expect(plug.task('theName1', call)).to.eql({ call, name: 'theName1' })
-  //     expect(plug.task('theName2', call)).to.eql({ call, name: 'theName2' })
-  //     expect(() => plug.task('theName1', call)).to.throw(AssertionError,
-  //       'Duplicate task with name "theName1"\n' +
-  //       '  previously declared at: test/10-task.test.ts:109:18\n' +
-  //       '  current declaration at: test/10-task.test.ts:111:24')
-  //   })
+      const promise = (<any> task.call)('foo', 'bar')
+      expect(promise).to.be.instanceOf(Promise)
+      expect(await promise).to.be.undefined
 
-  //   it('should not import anonymous tasks', () => {
-  //     const plug = new Plug()
-  //     const task = plug.task(() => {})
-  //     expect(task.name).to.equal('')
+      expect(result).to.have.length(2)
+      expect(result[0]).to.equal(task)
+      expect(result[1].task).to.equal(task)
+      expect(result[1].log).to.be.a('function').with.property('name', 'log')
+    })
 
-  //     expect(() => plug.import(task)).to.throw(AssertionError,
-  //     'Cowardly refusing to import an anonymous task\n' +
-  //     '  declared at: test/10-task.test.ts:119:24')
+    it('should correctly invoke a failing task', async () => {
+      const result: any[] = [] // will contain [ this, context ]
 
-  //     expect(() => plug.import(<any> { call: task.call, name: '' })).to.throw(AssertionError,
-  //       'Cowardly refusing to import an anonymous task\n' +
-  //       '  declared at: (unknown)')
-  //   })
+      const task = new Task({ call: function(...args: any[]) {
+        result.push(this, ...args)
+        throw 'foobar'
+      } })
 
-  //   it('should import tasks from another Plug instance', () => {
-  //     const plug1 = new Plug()
-  //     const task1 = plug1.task('foo', () => {})
-  //     const task2 = plug1.task('bar', () => {})
-  //     expect(plug1.tasks).to.eql([ task1, task2 ])
+      const promise = (<any> task.call)('foo', 'bar')
+      expect(promise).to.be.instanceOf(Promise)
+      await expect(promise).to.be.rejectedWith('foobar')
 
-  //     const plug2 = new Plug()
-  //     const task3 = plug2.task('baz', () => {})
-  //     plug2.import(plug1)
-  //     expect(plug2.tasks).to.eql([ task3, task1, task2 ])
-  //   })
+      expect(result).to.have.length(2)
+      expect(result[0]).to.equal(task)
+      expect(result[1].task).to.equal(task)
+      expect(result[1].log).to.be.a('function').with.property('name', 'log')
+    })
+  })
 
-  //   it('should import functions as tasks', () => {
-  //     const plug = new Plug()
-  //     const task = () => {}
-  //     expect(task.name).to.equal('task')
+  describe('parallel tasks', () => {
+    it('should define a parallel task', () => {
+      expect(new ParallelTask()).to.eql({
+        name: '',
+        subtasks: [],
+      })
 
-  //     plug.import(task)
-  //     expect(plug.tasks).to.eql([ { name: 'task', call: task } ])
+      expect(new ParallelTask([])).to.eql({
+        name: '',
+        subtasks: [],
+      })
 
-  //     expect(() => plug.import(task)).to.throw(AssertionError,
-  //       'Duplicate task with name "task"\n' +
-  //       '  previously declared at: test/10-task.test.ts:148:18\n' +
-  //       '  current declaration at: test/10-task.test.ts:151:31')
-  //   })
+      expect(new ParallelTask('theName', [])).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
 
-  //   it('should not import tasks with the wrong parameters', () => {
-  //     const plug = new Plug()
-  //     expect(() => plug.import(<any> true)).to.throw(AssertionError, 'Invalid type for task: boolean')
-  //     expect(() => plug.import(<any> { name: true })).to.throw(AssertionError, 'Invalid type for task name: boolean')
-  //     expect(() => plug.import(<any> { name: 'foo', call: true })).to.throw(AssertionError, 'Invalid type for task call: boolean')
-  //   })
-  // })
+      expect(new ParallelTask('theName', 'theDescription', [])).to.eql({
+        name: 'theName',
+        description: 'theDescription',
+        subtasks: [],
+      })
 
-  // describe('parallel tasks', () => {
-  //   it('should define a parallel task', () => {
-  //     const plug = new Plug()
-  //     const f = () => {}
+      expect(new ParallelTask({ subtasks: [] })).to.eql({
+        name: '',
+        subtasks: [],
+      })
 
-  //     let t = plug.parallel([])
-  //     // expect(t).to.be.a('function')
-  //     expect(t).to.have.own.property('name', '<parallel>')
-  //     expect(t).to.not.have.property('description')
-  //     expect(t).to.have.own.property('subtasks').eql([ f ])
+      expect(new ParallelTask({ name: 'theName', subtasks: [] })).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
 
-  //     t = plug.parallel('theName', [])
-  //     // expect(t).to.be.a('function')
-  //     expect(t).to.have.own.property('name', 'theName')
-  //     expect(t).to.not.have.property('description')
-  //     expect(t).to.have.own.property('subtasks').eql([])
+      expect(new ParallelTask({ name: 'theName', description: 'theDescription', subtasks: [] })).to.eql({
+        name: 'theName',
+        description: 'theDescription',
+        subtasks: [],
+      })
 
-  //     t = plug.parallel('theName', 'theDescription', [])
-  //     expect(t).to.be.a('function')
-  //     expect(t).to.have.own.property('name', 'theName')
-  //     expect(t).to.have.own.property('description', 'theDescription')
-  //     expect(t).to.have.own.property('subtasks').eql([])
+      expect(new (<any> ParallelTask)('theName')).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
+    })
 
-  //     // expect(() => (<any> parallel)(123)).to.throw(AssertionError, 'First parameter must be a Task or name string')
-  //     // expect(() => (<any> parallel)('name', 123)).to.throw(AssertionError, 'Second parameter must be a Task or description string')
-  //     // expect(() => (<any> parallel)('name', 123)).to.throw(AssertionError, 'Second parameter must be a Task or description string')
-  //     // expect(() => (<any> parallel)('name', 'desc')).to.throw(AssertionError, 'No tasks specified')
-  //   })
-  // })
+    it('should run a few tasks in parallel', async () => {
+      const result: number[] = []
+      const now = Date.now()
+
+      const t1 = new Task({ name: 'foo', call: async (context) => {
+        result.push(1)
+        await delay(30)
+        result.push(2)
+      } })
+
+      const t2 = new Task({ name: 'bar', call: async (context) => {
+        result.push(3)
+        await delay(20)
+        result.push(4)
+      } })
+
+      const t3 = new Task({ name: 'baz', call: async (context) => {
+        result.push(5)
+        await delay(10)
+        result.push(6)
+      } })
+
+      const t = new ParallelTask({ subtasks: [ t1, t2, t3 ]})
+      expect(t).to.eql({
+        name: '',
+        subtasks: [ t1, t2, t3 ],
+      })
+
+      await t.call()
+
+      expect(result).to.eql([ 1, 3, 5, 6, 4, 2 ])
+      expect(Date.now() - now).to.be.gte(30).lt(60)
+    })
+  })
+
+  describe('series tasks', () => {
+    it('should define a series task', () => {
+      expect(new SeriesTask()).to.eql({
+        name: '',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask([])).to.eql({
+        name: '',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask('theName', [])).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask('theName', 'theDescription', [])).to.eql({
+        name: 'theName',
+        description: 'theDescription',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask({ subtasks: [] })).to.eql({
+        name: '',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask({ name: 'theName', subtasks: [] })).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
+
+      expect(new SeriesTask({ name: 'theName', description: 'theDescription', subtasks: [] })).to.eql({
+        name: 'theName',
+        description: 'theDescription',
+        subtasks: [],
+      })
+
+      expect(new (<any> SeriesTask)('theName')).to.eql({
+        name: 'theName',
+        subtasks: [],
+      })
+    })
+
+    it('should run a few tasks in series', async () => {
+      const result: number[] = []
+      const now = Date.now()
+
+      const t1 = new Task({ name: 'foo', call: async (context) => {
+        result.push(1)
+        await delay(30)
+        result.push(2)
+      } })
+
+      const t2 = new Task({ name: 'bar', call: async (context) => {
+        result.push(3)
+        await delay(20)
+        result.push(4)
+      } })
+
+      const t3 = new Task({ name: 'baz', call: async (context) => {
+        result.push(5)
+        await delay(10)
+        result.push(6)
+      } })
+
+      const t = new SeriesTask({ subtasks: [ t1, t2, t3 ]})
+      expect(t).to.eql({
+        name: '',
+        subtasks: [ t1, t2, t3 ],
+      })
+
+      await t.call()
+
+      expect(result).to.eql([ 1, 2, 3, 4, 5, 6 ])
+      expect(Date.now() - now).to.be.gte(60)
+    })
+  })
 })
-
-
-//   it('should define a series task', () => {
-//     const f = () => {}
-
-//     let t = series(f)
-//     expect(t).to.be.a('function')
-//     expect(t).to.have.own.property('name', '<series>')
-//     expect(t).to.not.have.property('description')
-//     expect(t).to.have.own.property('subtasks').eql([ f ])
-
-//     t = series('theName', f)
-//     expect(t).to.be.a('function')
-//     expect(t).to.have.own.property('name', 'theName')
-//     expect(t).to.not.have.property('description')
-//     expect(t).to.have.own.property('subtasks').eql([ f ])
-
-//     t = series('theName', 'theDescription', f)
-//     expect(t).to.be.a('function')
-//     expect(t).to.have.own.property('name', 'theName')
-//     expect(t).to.have.own.property('description', 'theDescription')
-//     expect(t).to.have.own.property('subtasks').eql([ f ])
-
-//     expect(() => (<any> series)(123)).to.throw(AssertionError, 'First parameter must be a Task or name string')
-//     expect(() => (<any> series)('name', 123)).to.throw(AssertionError, 'Second parameter must be a Task or description string')
-//     expect(() => (<any> series)('name', 123)).to.throw(AssertionError, 'Second parameter must be a Task or description string')
-//     expect(() => (<any> series)('name', 'desc')).to.throw(AssertionError, 'No tasks specified')
-//   })
-
-//   it('should run a few tasks in parallel', async () => {
-//     const result: number[] = []
-//     const now = Date.now()
-
-//     const task = parallel(
-//       async (context) => {
-//         // expect(context.task).to.equal(task)
-//         context.log('foo')
-
-//         result.push(1)
-//         await delay(30)
-//         result.push(2)
-//       },
-//       async (context) => {
-//         // expect(context.task).to.equal(task)
-//         context.log('bar')
-
-//         result.push(3)
-//         await delay(20)
-//         result.push(4)
-//       },
-//       async (context) => {
-//         // expect(context.task).to.equal(task)
-//         context.log('baz')
-
-//         result.push(5)
-//         await delay(10)
-//         result.push(6)
-//       })
-
-//     const log = makeTestLog()
-
-//     const context: TaskContext = { task, log } //: log.for('foo') }
-
-//     await task(context)
-//     expect(result).to.eql([ 1, 3, 5, 6, 4, 2 ])
-//     expect(Date.now() - now).to.be.gte(30).lt(60)
-//     expect(task.subtasks).to.have.length(3)
-
-//     console.log(log.logs)
-//   })
-
-//   it('should run a few tasks in series', async () => {
-//     const result: number[] = []
-//     const now = Date.now()
-//     const task = series(
-//       async (context) => {
-//         result.push(1)
-//         await delay(30)
-//         result.push(2)
-//       },
-//       async (context) => {
-//         result.push(3)
-//         await delay(20)
-//         result.push(4)
-//       },
-//       async (context) => {
-//         result.push(5)
-//         await delay(10)
-//         result.push(6)
-//       })
-
-//     await task(<any> null) // todo
-//     expect(result).to.eql([ 1, 2, 3, 4, 5, 6 ])
-//     expect(Date.now() - now).to.be.gte(60)
-//     expect(task.subtasks).to.have.length(3)
-//   })
