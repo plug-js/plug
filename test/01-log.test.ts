@@ -9,11 +9,12 @@ type TestLogContext = { taskName?: string, pluginName?: string }
 function makeTestLog(options: Partial<LogOptions> = {}, { taskName, pluginName }: TestLogContext = {}): TestLog {
   const logs: string[] = []
 
-  const context: LogContext = { write: (what: string) => logs.push(what) }
-  if (taskName) context.task = <any> { name: taskName }
-  if (pluginName) context.plugin = <any> { name: pluginName }
+  const context: LogContext = {}
+  if (taskName != null) context.task = <any> { name: taskName }
+  if (pluginName != null) context.plugin = <any> { name: pluginName }
 
   const log: TestLog = Object.assign(makeLog(context), {
+    write: (what: string) => logs.push(what),
     level: LogLevel.DEBUG,
     colors: false,
     times: false,
@@ -23,9 +24,10 @@ function makeTestLog(options: Partial<LogOptions> = {}, { taskName, pluginName }
   return log
 }
 
-describe.only('Logger', () => {
+describe('Logger', () => {
   afterEach(() => {
     Object.assign(log, {
+      write: null,
       level: LogLevel.NORMAL,
       colors: isatty((<any> process.stdout).fd),
       times: true,
@@ -34,6 +36,7 @@ describe.only('Logger', () => {
 
   it('should have the right defaults and override them', () => {
     expect(log).to.include({
+      write: null,
       level: LogLevel.NORMAL,
       colors: isatty((<any> process.stdout).fd),
       times: true,
@@ -182,6 +185,20 @@ describe.only('Logger', () => {
       '[ERROR] {theTask} An error message'
     ])
 
+    log = makeTestLog({}, { taskName: '' })
+
+    log('A simple message')
+    log.debug('A debug message')
+    log.alert('An alert message')
+    log.error('An error message')
+
+    expect(log.logs).eql([
+      '{anonymous task} A simple message',
+      '[DEBUG] {anonymous task} A debug message',
+      '[ALERT] {anonymous task} An alert message',
+      '[ERROR] {anonymous task} An error message'
+    ])
+
     log = makeTestLog({}, { taskName: 'theTask', pluginName: 'thePlugin' })
 
     log('A simple message')
@@ -194,6 +211,20 @@ describe.only('Logger', () => {
       '[DEBUG] {theTask|thePlugin} A debug message',
       '[ALERT] {theTask|thePlugin} An alert message',
       '[ERROR] {theTask|thePlugin} An error message'
+    ])
+
+    log = makeTestLog({}, { taskName: 'theTask', pluginName: '' })
+
+    log('A simple message')
+    log.debug('A debug message')
+    log.alert('An alert message')
+    log.error('An error message')
+
+    expect(log.logs).eql([
+      '{theTask|anonymous plugin} A simple message',
+      '[DEBUG] {theTask|anonymous plugin} A debug message',
+      '[ALERT] {theTask|anonymous plugin} An alert message',
+      '[ERROR] {theTask|anonymous plugin} An error message'
     ])
 
     log = makeTestLog({}, { pluginName: 'anotherPlugin' })
@@ -228,11 +259,64 @@ describe.only('Logger', () => {
     log2.alert('A task alert message', 1, true, { hello: 'world' })
     log2.error('A task error message', 1, true, { hello: 'world' })
 
+    const log2b = makeLog({ task: <any> { name: '' } })
+
+    log2b('A task simple message', 1, true, { hello: 'world' })
+    log2b.debug('A task debug message', 1, true, { hello: 'world' })
+    log2b.alert('A task alert message', 1, true, { hello: 'world' })
+    log2b.error('A task error message', 1, true, { hello: 'world' })
+
     const log3 = makeLog({ task: <any> { name: 'theTask' }, plugin: <any> { name: 'thePlugin' } })
 
     log3('A plugin simple message', 1, true, { hello: 'world' })
     log3.debug('A plugin debug message', 1, true, { hello: 'world' })
     log3.alert('A plugin alert message', 1, true, { hello: 'world' })
     log3.error('A plugin error message', 1, true, { hello: 'world' })
+
+    const log3b = makeLog({ task: <any> { name: 'theTask' }, plugin: <any> { name: '' } })
+
+    log3b('A plugin simple message', 1, true, { hello: 'world' })
+    log3b.debug('A plugin debug message', 1, true, { hello: 'world' })
+    log3b.alert('A plugin alert message', 1, true, { hello: 'world' })
+    log3b.error('A plugin error message', 1, true, { hello: 'world' })
+  })
+
+  it.skip('should log to the console in black and white', () => {
+    log.level = LogLevel.DEBUG
+    log.colors = false
+    log.times = true
+
+    log('A simple message', 1, true, { hello: 'world' })
+    log.debug('A debug message', 1, true, { hello: 'world' })
+    log.alert('An alert message', 1, true, { hello: 'world' })
+    log.error('An error message', 1, true, { hello: 'world' })
+
+    const log2 = makeLog({ task: <any> { name: 'theTask' } })
+
+    log2('A task simple message', 1, true, { hello: 'world' })
+    log2.debug('A task debug message', 1, true, { hello: 'world' })
+    log2.alert('A task alert message', 1, true, { hello: 'world' })
+    log2.error('A task error message', 1, true, { hello: 'world' })
+
+    const log2b = makeLog({ task: <any> { name: '' } })
+
+    log2b('A task simple message', 1, true, { hello: 'world' })
+    log2b.debug('A task debug message', 1, true, { hello: 'world' })
+    log2b.alert('A task alert message', 1, true, { hello: 'world' })
+    log2b.error('A task error message', 1, true, { hello: 'world' })
+
+    const log3 = makeLog({ task: <any> { name: 'theTask' }, plugin: <any> { name: 'thePlugin' } })
+
+    log3('A plugin simple message', 1, true, { hello: 'world' })
+    log3.debug('A plugin debug message', 1, true, { hello: 'world' })
+    log3.alert('A plugin alert message', 1, true, { hello: 'world' })
+    log3.error('A plugin error message', 1, true, { hello: 'world' })
+
+    const log3b = makeLog({ task: <any> { name: 'theTask' }, plugin: <any> { name: '' } })
+
+    log3b('A plugin simple message', 1, true, { hello: 'world' })
+    log3b.debug('A plugin debug message', 1, true, { hello: 'world' })
+    log3b.alert('A plugin alert message', 1, true, { hello: 'world' })
+    log3b.error('A plugin error message', 1, true, { hello: 'world' })
   })
 })
