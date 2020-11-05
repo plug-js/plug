@@ -7,6 +7,8 @@ import {
   SeriesTask,
 } from './task'
 
+import { findCaller } from './utils'
+
 import assert from 'assert'
 
 import { assertString, assertTask, isTask, isTaskCall, isArray } from './types'
@@ -29,7 +31,7 @@ function parseTaskList(args: (TaskList | string)[], tasks: Map<String, Task>): P
     if (isTaskCall(task)) return new Task(task)
     assertString(task)
     const t = tasks.get(task)
-    assert(t, `Unknown task "${task}"`) // TODO: location
+    assert(t, `Unknown task "${task}"\n  declared at: ${findCaller()}`)
     return t
   }) || []
 
@@ -87,7 +89,7 @@ export class Plug {
   import(...tasks: Task[]): this {
     for (let task of tasks) {
       assertTask(task)
-      assert(task.name, `Cowardly refusing to import an anonymous task\n  declared at: ${task}`)
+      assert(task.name, `Cowardly refusing to import an anonymous task\n  declared at: ${task.location}`)
 
       const prev = this.#tasks.get(task.name)
       if (prev && (prev !== task)) {
