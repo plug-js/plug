@@ -114,13 +114,8 @@ export class Task {
 
     // Call must be a valid TaskCall *or* overriden by classes extending this
     if (options.call) {
-      const call = options.call
-      if (isTask(call)) {
-        this.#call = call.#call
-      } else {
-        assertTaskCall(options.call, 'Property "call" is not a "Task" instance or "TaskCall" function')
-        this.#call = call
-      }
+      assertTaskCall(options.call, 'Property "call" is not a "TaskCall" function')
+      this.#call = options.call
     } else {
       assert(this.call !== Task.prototype.call, 'Task must be constructed with a "call" option or override the "call" method')
     }

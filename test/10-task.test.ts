@@ -232,7 +232,7 @@ describe('Task', () => {
     it('should not create a Task with the wrong parameters', () => {
       expect(() => new (<any> Task)({})).to.throw(AssertionError, 'Task must be constructed with a "call" option or override the "call" method')
       expect(() => new (<any> Task)('foo')).to.throw(AssertionError, 'Task must be constructed with a "call" option or override the "call" method')
-      expect(() => new (<any> Task)({ call: 'foo' })).to.throw(AssertionError, 'Property "call" is not a "Task" instance or "TaskCall" function (was: string)')
+      expect(() => new (<any> Task)({ call: 'foo' })).to.throw(AssertionError, 'Property "call" is not a "TaskCall" function (was: string)')
       expect(() => new (<any> Task)({ call: () => {}, name: true })).to.throw(AssertionError, 'Property "name" is not a string (was: boolean)')
       expect(() => new (<any> Task)({ call: () => {}, description: true })).to.throw(AssertionError, 'Property "description" is not a string (was: boolean)')
     })
