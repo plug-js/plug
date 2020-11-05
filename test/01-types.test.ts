@@ -262,15 +262,6 @@ describe('Types', () => {
       expect(t.assertTask(new Task({ call: () => {} }))).to.be.undefined
     })
 
-    it('should assert a Plug instance', () => {
-      expect(t.isPlug({})).to.be.false
-      expect(t.isPlug(new Plug())).to.be.true
-
-      expect(() => t.assertPlug({})).to.throw(AssertionError, 'Argument of type object is not an instance of "Plug"')
-      expect(() => t.assertPlug({}, 'Wrong')).to.throw(AssertionError, 'Wrong (was: object)')
-      expect(t.assertPlug(new Plug())).to.be.undefined
-    })
-
     it('should assert a TaskCall function', () => {
       expect(t.isTaskCall({})).to.be.false
       expect(t.isTaskCall(() => {})).to.be.true
