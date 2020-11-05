@@ -8,10 +8,6 @@ import { Class, NonEmptyArray } from './types'
  * INTERNAL TYPES AND FUNCTIONS                                               *
 /* ========================================================================== */
 
-type Check<T> = (what: any) => what is T
-
-type Assertor<T> = (what: any, message?: string) => asserts what is T
-
 function typeName(what: any): string {
   if (what === null) return 'null' // damn you, JavaScript
   const type = typeof what
@@ -26,7 +22,7 @@ function createMessage(what: any, type: string, message?: string) {
   return `Argument of type ${typeName(what)} is not ${type}`
 }
 
-function classCheck<T>(clz: Class<T>): Check<T> {
+function classCheck<T>(clz: Class<T>): Guard<T> {
   return function(what: any): what is T {
     return isType<T>(what, clz)
   }
@@ -41,6 +37,10 @@ function classAssertor<T>(clz: Class<T>): Assertor<T> {
 /* ========================================================================== *
  * EXPORTED TYPES                                                             *
 /* ========================================================================== */
+
+export type Guard<T> = (what: any) => what is T
+
+export type Assertor<T> = (what: any, message?: string) => asserts what is T
 
 export type Type = {
   undefined: undefined,
@@ -271,11 +271,9 @@ export function assertNonEmptyArrayOf(what: any, type: any, message?: string) {
  * SPECIFIC PLUG CHECKS AND ASSERTIONS                                        *
  * ========================================================================== */
 
-export const isTask: Check<Task> = classCheck(Task)
-export const isPlug: Check<Plug> = classCheck(Plug)
+export const isTask: Guard<Task> = classCheck(Task)
 
 export const assertTask: Assertor<Task> = classAssertor(Task)
-export const assertPlug: Assertor<Plug> = classAssertor(Plug)
 
 /* ========================================================================== */
 
