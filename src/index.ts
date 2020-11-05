@@ -1,1 +1,1 @@
-export * as colors from './log/colors'
+export * as log from './log'
