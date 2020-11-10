@@ -2,8 +2,6 @@ import { Task, TaskCall, ParallelTask, SeriesTask } from '../src/task'
 import { expect } from 'chai'
 import { AssertionError } from 'assert'
 
-import log from '../src/log'
-
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => void setTimeout(resolve, ms))
 }
@@ -11,7 +9,7 @@ function delay(ms: number): Promise<void> {
 describe('Task', () => {
   describe('creation', () => {
     it('should include a task location', () => {
-      expect(new Task({ call: () => {} }).location).to.eql('test/10-task.test.ts:14:13')
+      expect(new Task({ call: () => {} }).location).to.eql('test/10-task.test.ts:12:13')
     })
 
     it('should create a Task from an anonymous function', () => {
@@ -178,6 +176,34 @@ describe('Task', () => {
       const myFunction: TaskCall = () => {}
       expect(myFunction.name).to.equal('myFunction')
       myFunction.description = 'functionDescription'
+
+      // without options
+
+      expect(new Task(myFunction)).to.eql({
+        name: 'myFunction',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('overrideName', myFunction)).to.eql({
+        name: 'overrideName',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('overrideName', 'theDescription', myFunction)).to.eql({
+        name: 'overrideName',
+        description: 'theDescription',
+      })
+
+      expect(new Task('', myFunction)).to.eql({
+        name: '',
+        description: 'functionDescription',
+      })
+
+      expect(new Task('', '', myFunction)).to.eql({
+        name: '',
+      })
+
+      // with options
 
       expect(new Task({ call: myFunction })).to.eql({
         name: 'myFunction',
