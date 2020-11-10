@@ -31,7 +31,7 @@ function parseTaskList(args: (TaskList | string)[], tasks: Map<String, Task>): P
     if (isTaskCall(task)) return new Task(task)
     assertString(task)
     const t = tasks.get(task)
-    assert(t, `Unknown task "${task}"\n  declared at: ${findCaller()}`)
+    assert(t, `Unknown task "${task}"`)
     return t
   }) || []
 
@@ -45,45 +45,35 @@ function parseTaskList(args: (TaskList | string)[], tasks: Map<String, Task>): P
 export interface Plug {
   readonly tasks: readonly Task[]
 
-  task(options: TaskOptions): Task
-  task(task: TaskCall): Task
-  task(name: string, task: TaskCall): Task
-  task(name: string, description: string, task: TaskCall): Task
+
 
   /* ------------------------------------------------------------------------ */
 
-  import(...tasks: Task[]): this
-
-  /* ------------------------------------------------------------------------ */
-
-  parallel(tasks: TaskList): Task
-  parallel(name: string, tasks: TaskList): Task
-  parallel(name: string, description: string, tasks: TaskList): Task
-
-  /* ------------------------------------------------------------------------ */
-
-  series(tasks: TaskList): Task
-  series(name: string, tasks: TaskList): Task
-  series(name: string, description: string, tasks: TaskList): Task
 }
 
 /* ========================================================================== */
 
-export class Plug {
+export class Plug implements Plug {
   #tasks: Map<string, Task> = new Map()
 
   constructor() {
     Object.defineProperty(this, 'tasks', { get: () => Array.from(this.#tasks.values()) })
   }
 
+  task(task: TaskCall): Task
+  task(name: string, task: TaskCall): Task
+  task(name: string, description: string, task: TaskCall): Task
+
   /* Overloaded `task(...)` definition */
-  task(...args: (TaskCall | TaskOptions | string)[]): Task {
+  task(...args: (TaskCall | string)[]): Task {
     const options = parseArguments<TaskOptions>('call', isTaskCall, args)
     const task = new Task(options)
 
     if (task.name) this.import(task);
     return task
   }
+
+  /* ------------------------------------------------------------------------ */
 
   /* Overloaded `import(...) definition */
   import(...tasks: Task[]): this {
@@ -104,15 +94,27 @@ export class Plug {
     return this
   }
 
+  /* ------------------------------------------------------------------------ */
+
+  parallel(tasks: TaskList): ParallelTask
+  parallel(name: string, tasks: TaskList): ParallelTask
+  parallel(name: string, description: string, tasks: TaskList): ParallelTask
+
   /* Overloaded `parallel(...)` definition */
-  parallel(...args: (TaskList | string)[]): Task {
+  parallel(...args: (TaskList | string)[]): ParallelTask {
     const task = new ParallelTask(parseTaskList(args, this.#tasks))
     if (task.name) this.import(task)
     return task
   }
 
-  /* Overloaded `parallel(...)` definition */
-  series(...args: (TaskList | string)[]): Task {
+  /* ------------------------------------------------------------------------ */
+
+  series(tasks: TaskList): SeriesTask
+  series(name: string, tasks: TaskList): SeriesTask
+  series(name: string, description: string, tasks: TaskList): SeriesTask
+
+  /* Overloaded `series(...)` definition */
+  series(...args: (TaskList | string)[]): SeriesTask {
     const task = new SeriesTask(parseTaskList(args, this.#tasks))
     if (task.name) this.import(task)
     return task
