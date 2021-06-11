@@ -6,23 +6,42 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Pier Fumagalli <pier@usrz.com>",
   "license": "MIT",
   "dependencies": {
-    "fast-glob": "^3.2.4"
+    "fast-glob": "^3.2.5",
+    "source-map": "<0.7"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.14",
-    "@types/chai-as-promised": "^7.1.3",
-    "@types/mocha": "^8.0.3",
-    "@types/node": "<13",
+    "@types/chai": "^4.2.18",
+    "@types/chai-as-promised": "^7.1.4",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "<16",
+    "@types/source-map": "^0.5.7",
     "@types/source-map-support": "^0.5.3",
-    "chai": "^4.2.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "mocha": "^8.2.0",
-    "nodemon": "^2.0.6",
+    "eslint": "^7.28.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-deprecation": "^1.2.1",
+    "mocha": "^9.0.0",
+    "nodemon": "^2.0.7",
     "nyc": "^15.1.0",
     "source-map-support": "^0.5.19",
-    "typescript": "^4.0.3"
-  }
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.2"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plug-js/plug.git"
+  },
+  "bugs": {
+    "url": "https://github.com/plug-js/plug/issues"
+  },
+  "homepage": "https://github.com/plug-js/plug#readme"
 }
