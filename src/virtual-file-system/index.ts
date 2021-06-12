@@ -1,25 +1,6 @@
 import { RawSourceMap } from 'source-map'
 import { VirtualFileSystemImpl } from './internal'
-
-/** An absolute path always starts from "/" */
-export type AbsolutePath = string & {
-  __brand_absolute_path: any
-}
-
-/** The path relative to the base directory */
-export type RelativePath = string & {
-  __brand_relative_path: any
-}
-
-/** The absolute path canonicalized depending con case sensitivity */
-export type CanonicalPath = AbsolutePath & {
-  __brand_canonical_path: any
-}
-
-/** An absolute path for a directory */
-export type DirectoryPath = AbsolutePath & {
-  __brand_directory_path: any
-}
+import { AbsolutePath, RelativePath, CanonicalPath, DirectoryPath } from '../utils/paths'
 
 /**
  * The `VirtualFile` interface represents a file in a `VirtualFileSystem`.
@@ -65,8 +46,6 @@ export interface VirtualFile {
 export interface VirtualFileSystem {
   /** The base directory of this `VirtualFileSystem` */
   readonly directoryPath: DirectoryPath,
-  /** Whether the file system is case sensitive or not */
-  readonly caseSensitive: boolean,
 
   /** Return a `VirtualFile` associated with this `VirtualFileSystem` */
   get(path: string): VirtualFile
