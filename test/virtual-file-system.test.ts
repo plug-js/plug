@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { VirtualFile, VirtualFileSystem } from '../src/virtual-file-system'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
+import { caseSensitivePaths } from '../src/utils/paths'
 
 describe('Virtual File System', () => {
   it('should create a new VirtualFileSystem', () => {
@@ -129,7 +130,7 @@ describe('Virtual File System', () => {
     const fileLower = fileSystem.get(__filename.toLowerCase())
     const fileUpper = fileSystem.get(__filename.toUpperCase())
 
-    if (fileSystem.caseSensitive) {
+    if (caseSensitivePaths) {
       expect(file).to.equal(fileAdded)
 
       if (file.absolutePath == fileLower.absolutePath) { // this file is all lowercase
