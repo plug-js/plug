@@ -12,7 +12,7 @@ import {
   caseSensitivePaths,
 } from '../src/utils/paths'
 
-describe.only('Paths', () => {
+describe('Paths', () => {
   const dir = '/foo/bar' as DirectoryPath
   const file = '/foo/bar/baz.txt' as AbsolutePath
   const relative = 'baz.txt' as RelativePath
