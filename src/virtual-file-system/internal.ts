@@ -1,8 +1,8 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFile, VirtualFileSystem, AbsolutePath, RelativePath, VirtualFileSystemBuilder } from './index'
+import { VirtualFile, VirtualFileSystem, AbsolutePath, RelativePath, VirtualFileSystemBuilder, CanonicalPath, DirectoryPath } from './index'
 import { resolve, relative, dirname } from 'path'
 import { readFileSync, existsSync, statSync, promises as fs } from 'fs'
-import { extractSourceMappingURL, readSourceMap, readSourceMapSync } from '../utils/source-maps'
+import { extractSourceMappingURL, parseSourceMappingURL } from '../utils/source-maps'
 
 /*
  * This is a bit of a hack: we determine case sensitivity on _this_ file
@@ -12,9 +12,18 @@ import { extractSourceMappingURL, readSourceMap, readSourceMapSync } from '../ut
 const __lfilename = __filename.toLowerCase()
 const __ufilename = __filename.toUpperCase()
 const caseSensitive = !(existsSync(__lfilename) && existsSync(__ufilename))
-function canonical(name: string): string {
+
+function getAbsolutePath(directory: DirectoryPath, path: string): AbsolutePath {
+  return resolve(directory, path) as AbsolutePath
+}
+
+function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath {
+  return relative(directory, path) as RelativePath
+}
+
+function getCanonicalPath(name: AbsolutePath): CanonicalPath {
   // istanbul ignore next // dependant on underlying file system
-  return caseSensitive ? name : name.toLowerCase()
+  return (caseSensitive ? name : name.toLowerCase()) as CanonicalPath
 }
 
 /* ========================================================================== *
@@ -22,16 +31,18 @@ function canonical(name: string): string {
  * ========================================================================== */
 
 /* Internal type associating content and an (optional) source map */
-type VirtualFileData = { contents: string, lastModified: number, sourceMap?: RawSourceMap }
+type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 class VirtualFileImpl implements VirtualFile {
-  readonly fileSystem!: VirtualFileSystem
-  readonly absolutePath!: AbsolutePath
-  readonly relativePath!: RelativePath
-  readonly canonicalPath!: AbsolutePath
+  readonly fileSystem: VirtualFileSystem
+  readonly absolutePath: AbsolutePath
+  readonly relativePath: RelativePath
+  readonly canonicalPath: CanonicalPath
 
-  #promise: Promise<VirtualFileData> | undefined
-  #data: VirtualFileData | undefined
+  #promise?: Promise<VirtualFileData>
+  #data?: VirtualFileData
+
+  #sourceMap?: RawSourceMap
 
   constructor(
       fileSystem: VirtualFileSystem,
@@ -39,26 +50,26 @@ class VirtualFileImpl implements VirtualFile {
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
   ) {
-    const absolutePath = resolve(fileSystem.baseDir, path)
-    const relativePath = relative(fileSystem.baseDir, absolutePath)
-    const canonicalPath = canonical(absolutePath)
+    const directoryPath = fileSystem.directoryPath
+    const absolutePath = getAbsolutePath(directoryPath, path)
+    const relativePath = getRelativePath(directoryPath, absolutePath)
+    const canonicalPath = getCanonicalPath(absolutePath)
 
-    Object.defineProperties(this, {
-      fileSystem: { value: fileSystem },
-      absolutePath: { value: absolutePath },
-      relativePath: { value: relativePath },
-      canonicalPath: { value: canonicalPath },
-    })
+    this.fileSystem = fileSystem
+    this.absolutePath = absolutePath
+    this.relativePath = relativePath
+    this.canonicalPath = canonicalPath
 
     if (contents != undefined) {
       const lastModified = Date.now()
-      // TODO: async sourcemap support
       if (sourceMap === true) {
         const { contents: code, url } = extractSourceMappingURL(contents, true)
-        const sourceMap = readSourceMapSync(this, url)
-        this.#data = { contents: code, lastModified, sourceMap }
+        const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
+        this.#data = { contents: code, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
+        this.#sourceMap = sourceMap
       } else if (sourceMap) {
-        this.#data = { lastModified, contents, sourceMap }
+        this.#data = { lastModified, contents }
+        this.#sourceMap = sourceMap
       } else {
         this.#data = { lastModified, contents }
       }
@@ -79,8 +90,9 @@ class VirtualFileImpl implements VirtualFile {
     const code = readFileSync(this.absolutePath, 'utf8')
     const lastModified = statSync(this.absolutePath).mtimeMs
     const { contents, url } = extractSourceMappingURL(code, true)
-    const sourceMap = readSourceMapSync(this, url)
-    return { contents, lastModified, sourceMap }
+    const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
+    this.#sourceMap = sourceMap
+    return { contents, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
   }
 
   existsSync(): boolean {
@@ -102,7 +114,15 @@ class VirtualFileImpl implements VirtualFile {
   }
 
   sourceMapSync(): RawSourceMap | undefined {
-    return this.#readSync().sourceMap
+    if (this.#sourceMap) return this.#sourceMap
+
+    const sourceMapFile = this.#readSync().sourceMapFile
+    if (! sourceMapFile) return
+
+    const file = this.fileSystem.get(sourceMapFile)
+    if (! file.existsSync()) return
+
+    return this.#sourceMap = JSON.parse(file.contentsSync())
   }
 
   /* ======================================================================== *
@@ -110,14 +130,16 @@ class VirtualFileImpl implements VirtualFile {
    * ======================================================================== */
 
   #read(): Promise<VirtualFileData> {
+    if (this.#data) return Promise.resolve(this.#data)
     if (this.#promise) return this.#promise
 
     return this.#promise = (async (): Promise<VirtualFileData> => {
       const code = await fs.readFile(this.absolutePath, 'utf8')
       const lastModified = (await fs.stat(this.absolutePath)).mtimeMs
       const { contents, url } = extractSourceMappingURL(code, true)
-      const sourceMap = await readSourceMap(this, url)
-      return this.#data = { contents, lastModified, sourceMap }
+      const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
+      this.#sourceMap = sourceMap
+      return this.#data = { contents, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
     })()
   }
 
@@ -138,7 +160,14 @@ class VirtualFileImpl implements VirtualFile {
   }
 
   async sourceMap(): Promise<RawSourceMap | undefined> {
-    return this.#data ? this.#data.sourceMap : (await this.#read()).sourceMap
+    if (this.#sourceMap) return this.#sourceMap
+    const sourceMapFile = (await this.#read()).sourceMapFile
+    if (! sourceMapFile) return
+
+    const file = this.fileSystem.get(sourceMapFile)
+    if (! await file.exists()) return
+
+    return this.#sourceMap = JSON.parse(await file.contents())
   }
 }
 
@@ -147,24 +176,25 @@ class VirtualFileImpl implements VirtualFile {
  * ========================================================================== */
 
 export class VirtualFileSystemImpl implements VirtualFileSystem {
-  #cache: Record<string, VirtualFile> = {}
-  #files: VirtualFile[] = []
+  #cache = new Map<CanonicalPath, VirtualFile>()
+  #files = [] as VirtualFile[]
 
-  readonly baseDir!: AbsolutePath
-  readonly caseSensitive!: boolean
+  readonly directoryPath: DirectoryPath
+  readonly caseSensitive: boolean
 
   constructor(path?: string) {
-    const baseDir = path ? resolve(process.cwd(), path) : process.cwd()
-    Object.defineProperties(this, {
-      caseSensitive: { value: caseSensitive },
-      baseDir: { value: baseDir },
-    })
+    this.directoryPath = (path ? resolve(process.cwd(), path) : process.cwd()) as DirectoryPath
+    this.caseSensitive = caseSensitive
   }
 
   get(path: string): VirtualFile {
-    const resolved = canonical(resolve(this.baseDir, path))
-    if (resolved in this.#cache) return this.#cache[resolved]
-    return this.#cache[resolved] = new VirtualFileImpl(this, path)
+    const file = new VirtualFileImpl(this, path)
+
+    const cached = this.#cache.get(file.canonicalPath)
+    if (cached) return cached
+
+    this.#cache.set(file.canonicalPath, file)
+    return file
   }
 
   list(): Readonly<VirtualFile[]> {
@@ -172,7 +202,7 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
   }
 
   builder(path?: string): VirtualFileSystemBuilder {
-    const baseDir = path ? resolve(this.baseDir, path) : this.baseDir
+    const baseDir = path ? resolve(this.directoryPath, path) : this.directoryPath
     return VirtualFileSystemImpl.builder(baseDir)
   }
 
@@ -184,7 +214,7 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
       add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
         if (! fileSystem) throw new Error('Virtual file system already built')
         const file = new VirtualFileImpl(fileSystem, path, contents, sourceMap)
-        fileSystem.#cache[file.canonicalPath] = file
+        fileSystem.#cache.set(file.canonicalPath, file)
         fileSystem.#files.push(file)
         return this
       },

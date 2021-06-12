@@ -11,6 +11,16 @@ export type RelativePath = string & {
   __brand_relative_path: any
 }
 
+/** The absolute path canonicalized depending con case sensitivity */
+export type CanonicalPath = AbsolutePath & {
+  __brand_canonical_path: any
+}
+
+/** An absolute path for a directory */
+export type DirectoryPath = AbsolutePath & {
+  __brand_directory_path: any
+}
+
 /**
  * The `VirtualFile` interface represents a file in a `VirtualFileSystem`.
  */
@@ -22,7 +32,7 @@ export interface VirtualFile {
   /** The path of this `VirtualFile` relative to its `VirtualFileSystem`'s `baseDir` */
   readonly relativePath: RelativePath
   /** The _canonical_ path of this `VirtualFile` (dependant on filesystem case sensitivity) */
-  readonly canonicalPath: AbsolutePath
+  readonly canonicalPath: CanonicalPath
 
   /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
   exists(): Promise<boolean>
@@ -54,7 +64,7 @@ export interface VirtualFile {
  */
 export interface VirtualFileSystem {
   /** The base directory of this `VirtualFileSystem` */
-  readonly baseDir: AbsolutePath,
+  readonly directoryPath: DirectoryPath,
   /** Whether the file system is case sensitive or not */
   readonly caseSensitive: boolean,
 

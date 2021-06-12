@@ -7,41 +7,41 @@ describe('Virtual File System', () => {
   it('should create a new VirtualFileSystem', () => {
     expect(new VirtualFileSystem())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', process.cwd())
+        .to.have.property('directoryPath', process.cwd())
     expect(new VirtualFileSystem('foo'))
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', process.cwd() + '/foo')
+        .to.have.property('directoryPath', process.cwd() + '/foo')
     expect(new VirtualFileSystem('/foo'))
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo')
+        .to.have.property('directoryPath', '/foo')
 
     expect(VirtualFileSystem.builder().build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', process.cwd())
+        .to.have.property('directoryPath', process.cwd())
     expect(VirtualFileSystem.builder('foo').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', process.cwd() + '/foo')
+        .to.have.property('directoryPath', process.cwd() + '/foo')
     expect(VirtualFileSystem.builder('/foo').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo')
+        .to.have.property('directoryPath', '/foo')
 
     const virtualFileSystem = new VirtualFileSystem('/foo/bar')
 
     expect(virtualFileSystem.builder().build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo/bar')
+        .to.have.property('directoryPath', '/foo/bar')
     expect(virtualFileSystem.builder('baz').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo/bar/baz')
+        .to.have.property('directoryPath', '/foo/bar/baz')
     expect(virtualFileSystem.builder('..').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo')
+        .to.have.property('directoryPath', '/foo')
     expect(virtualFileSystem.builder('../baz').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/foo/baz')
+        .to.have.property('directoryPath', '/foo/baz')
     expect(virtualFileSystem.builder('/baz').build())
         .to.be.instanceOf(VirtualFileSystem)
-        .to.have.property('baseDir', '/baz')
+        .to.have.property('directoryPath', '/baz')
   })
 
   it('should build a VirtualFileSystem with files', () => {
@@ -50,7 +50,7 @@ describe('Virtual File System', () => {
         .add('one.txt')
         .build()
 
-    expect(virtualFileSystem.baseDir).to.equal('/foo')
+    expect(virtualFileSystem.directoryPath).to.equal('/foo')
 
     const files = virtualFileSystem.list()
     expect(files.length).to.equal(1)
@@ -173,51 +173,134 @@ describe('Virtual File System', () => {
     })
 
     it('should create a VirtualFile', async () => {
-      function create(contents?: any, sourceMap?: any): VirtualFile {
+      function create(contents: string): VirtualFile {
         return VirtualFileSystem
             .builder('/foo')
-            .add('bar.js', contents, sourceMap)
+            .add('bar.js', contents)
             .build()
             .get('bar.js')
       }
 
-      const file0 = create('')
-      expect(await file0.exists()).to.be.true
-      expect(await file0.contents()).to.equal('')
-      expect(await file0.sourceMap()).to.be.undefined
-      expect(await file0.lastModified()).to.be.closeTo(Date.now(), 2)
-
-      const file1 = create('// foobar')
+      const file1 = create('')
       expect(await file1.exists()).to.be.true
-      expect(await file1.contents()).to.equal('// foobar')
+      expect(await file1.contents()).to.equal('')
       expect(await file1.sourceMap()).to.be.undefined
       expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
 
+      const file2 = create('// foobar')
+      expect(await file2.exists()).to.be.true
+      expect(await file2.contents()).to.equal('// foobar')
+      expect(await file2.sourceMap()).to.be.undefined
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+    })
+
+    it('should create a VirtualFile with an inline source map', async () => {
       const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
-      const file2 = create(data) // extract source map (default)
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(await file1.exists()).to.be.true
+      expect(await file1.contents()).to.equal('\n// foo')
+      expect(await file1.sourceMap()).to.eql({})
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('\n// foo')
       expect(await file2.sourceMap()).to.eql({})
       expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
 
-      const file3 = create(data, true) // extract source map
+      const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
-      expect(await file3.contents()).to.equal('\n// foo')
-      expect(await file3.sourceMap()).to.eql({})
+      expect(await file3.contents()).to.equal(data)
+      expect(await file3.sourceMap()).to.be.undefined
       expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
 
-      const file4 = create(data, false) // do not process source maps
+      const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(data)
-      expect(await file4.sourceMap()).to.be.undefined
+      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
+    })
 
-      const file5 = create(data, { foo: 'bar' }) // supplied source map
-      expect(await file5.exists()).to.be.true
-      expect(await file5.contents()).to.equal(data)
-      expect(await file5.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file5.lastModified()).to.be.closeTo(Date.now(), 2)
+    it('should create a VirtualFile with an external source map', async () => {
+      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .add('bar.js.map', '{"foo":"bar"}')
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(await file1.exists()).to.be.true
+      expect(await file1.contents()).to.equal('\n// foo')
+      expect(await file1.sourceMap()).to.eql({ foo: 'bar' })
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
+      expect(await file2.exists()).to.be.true
+      expect(await file2.contents()).to.equal('\n// foo')
+      expect(await file2.sourceMap()).to.eql({ foo: 'bar' })
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file3 = create(false) // do not process source maps
+      expect(await file3.exists()).to.be.true
+      expect(await file3.contents()).to.equal(data)
+      expect(await file3.sourceMap()).to.be.undefined
+      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file4 = create({ foo: 'bar' }) // supplied source map
+      expect(await file4.exists()).to.be.true
+      expect(await file4.contents()).to.equal(data)
+      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
+      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
+    })
+
+    it('should create a VirtualFile with a missing external source map', async () => {
+      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(await file1.exists()).to.be.true
+      expect(await file1.contents()).to.equal('\n// foo')
+      expect(await file1.sourceMap()).to.be.undefined
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
+      expect(await file2.exists()).to.be.true
+      expect(await file2.contents()).to.equal('\n// foo')
+      expect(await file2.sourceMap()).to.be.undefined
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file3 = create(false) // do not process source maps
+      expect(await file3.exists()).to.be.true
+      expect(await file3.contents()).to.equal(data)
+      expect(await file3.sourceMap()).to.be.undefined
+      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
+
+      const file4 = create({ foo: 'bar' }) // supplied source map
+      expect(await file4.exists()).to.be.true
+      expect(await file4.contents()).to.equal(data)
+      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
+      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should read a VirtualFile from disk', async () => {
@@ -262,51 +345,134 @@ describe('Virtual File System', () => {
     })
 
     it('should create a VirtualFile', () => {
-      function create(contents?: any, sourceMap?: any): VirtualFile {
+      function create(contents: string): VirtualFile {
         return VirtualFileSystem
             .builder('/foo')
-            .add('bar.js', contents, sourceMap)
+            .add('bar.js', contents)
             .build()
             .get('bar.js')
       }
 
-      const file0 = create('')
-      expect(file0.existsSync()).to.be.true
-      expect(file0.contentsSync()).to.equal('')
-      expect(file0.sourceMapSync()).to.be.undefined
-      expect(file0.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
-
-      const file1 = create('// foobar')
+      const file1 = create('')
       expect(file1.existsSync()).to.be.true
-      expect(file1.contentsSync()).to.equal('// foobar')
+      expect(file1.contentsSync()).to.equal('')
       expect(file1.sourceMapSync()).to.be.undefined
       expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
+      const file2 = create('// foobar')
+      expect(file2.existsSync()).to.be.true
+      expect(file2.contentsSync()).to.equal('// foobar')
+      expect(file2.sourceMapSync()).to.be.undefined
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+    })
+
+    it('should create a VirtualFile with an inline source map', async () => {
       const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
-      const file2 = create(data) // extract source map (default)
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(file1.existsSync()).to.be.true
+      expect(file1.contentsSync()).to.equal('\n// foo')
+      expect(file1.sourceMapSync()).to.eql({})
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('\n// foo')
       expect(file2.sourceMapSync()).to.eql({})
       expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
-      const file3 = create(data, true) // extract source map
+      const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
-      expect(file3.contentsSync()).to.equal('\n// foo')
-      expect(file3.sourceMapSync()).to.eql({})
+      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.sourceMapSync()).to.be.undefined
       expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
-      const file4 = create(data, false) // do not process source maps
+      const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(data)
-      expect(file4.sourceMapSync()).to.be.undefined
+      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+    })
 
-      const file5 = create(data, { foo: 'bar' }) // supplied source map
-      expect(file5.existsSync()).to.be.true
-      expect(file5.contentsSync()).to.equal(data)
-      expect(file5.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file5.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+    it('should create a VirtualFile with an external source map', async () => {
+      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .add('bar.js.map', '{"foo":"bar"}')
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(file1.existsSync()).to.be.true
+      expect(file1.contentsSync()).to.equal('\n// foo')
+      expect(file1.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
+      expect(file2.existsSync()).to.be.true
+      expect(file2.contentsSync()).to.equal('\n// foo')
+      expect(file2.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file3 = create(false) // do not process source maps
+      expect(file3.existsSync()).to.be.true
+      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.sourceMapSync()).to.be.undefined
+      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file4 = create({ foo: 'bar' }) // supplied source map
+      expect(file4.existsSync()).to.be.true
+      expect(file4.contentsSync()).to.equal(data)
+      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+    })
+
+    it('should create a VirtualFile with a missing external source map', async () => {
+      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+
+      function create(sourceMap?: any): VirtualFile {
+        return VirtualFileSystem
+            .builder('/foo')
+            .add('bar.js', data, sourceMap)
+            .build()
+            .get('bar.js')
+      }
+
+      const file1 = create() // extract source map (default)
+      expect(file1.existsSync()).to.be.true
+      expect(file1.contentsSync()).to.equal('\n// foo')
+      expect(file1.sourceMapSync()).to.be.undefined
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file2 = create(true) // extract source map
+      expect(file2.existsSync()).to.be.true
+      expect(file2.contentsSync()).to.equal('\n// foo')
+      expect(file2.sourceMapSync()).to.be.undefined
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file3 = create(false) // do not process source maps
+      expect(file3.existsSync()).to.be.true
+      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.sourceMapSync()).to.be.undefined
+      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+
+      const file4 = create({ foo: 'bar' }) // supplied source map
+      expect(file4.existsSync()).to.be.true
+      expect(file4.contentsSync()).to.equal(data)
+      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should read a VirtualFile from disk', () => {

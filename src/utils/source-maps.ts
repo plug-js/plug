@@ -67,8 +67,11 @@ export function extractSourceMappingURL(
   return { contents: contents.replace(match[0], replacement), url }
 }
 
-/* Parse an inline sourcemap or return the sourcemap file */
-function readSourceMapInternal(
+/**
+ * Parse an source mapping URL returning either a raw sourcemap or the path
+ * to an external _file_ where the sourcemap can be read from.
+ */
+export function parseSourceMappingURL(
     file: VirtualFile,
     url?: string,
 ): { sourceMap?: RawSourceMap, sourceMapFile?: VirtualFile } {
@@ -104,7 +107,7 @@ export async function readSourceMap(
     file: VirtualFile,
     url?: string,
 ): Promise<RawSourceMap | undefined> {
-  const { sourceMap, sourceMapFile } = readSourceMapInternal(file, url)
+  const { sourceMap, sourceMapFile } = parseSourceMappingURL(file, url)
 
   if (sourceMap) return sourceMap
   if (sourceMapFile && await sourceMapFile.exists()) {
@@ -122,7 +125,7 @@ export function readSourceMapSync(
     file: VirtualFile,
     url?: string,
 ): RawSourceMap | undefined {
-  const { sourceMap, sourceMapFile } = readSourceMapInternal(file, url)
+  const { sourceMap, sourceMapFile } = parseSourceMappingURL(file, url)
 
   if (sourceMap) return sourceMap
   if (sourceMapFile && sourceMapFile.existsSync()) {
