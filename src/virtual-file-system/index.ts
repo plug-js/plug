@@ -23,13 +23,16 @@ export interface VirtualFile {
   readonly relativePath: RelativePath
   /** The _canonical_ path of this `VirtualFile` (dependant on filesystem case sensitivity) */
   readonly canonicalPath: AbsolutePath
-  /** The last modified timestamp of this `VirtualFile` */
-  readonly lastModified: number
 
   /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
   exists(): Promise<boolean>
   /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
   existsSync(): boolean
+
+  /** The last modified timestamp of this `VirtualFile` */
+  lastModified(): Promise<number>
+  /** The last modified timestamp of this `VirtualFile` */
+  lastModifiedSync(): number
 
   /** Return the contents of this `VirtualFile` */
   contents(): Promise<string>

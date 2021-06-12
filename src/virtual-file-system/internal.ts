@@ -65,10 +65,6 @@ class VirtualFileImpl implements VirtualFile {
     }
   }
 
-  get lastModified(): number {
-    return this.#readSync().lastModified
-  }
-
   get(path: string): VirtualFile {
     return this.fileSystem.get(resolve(dirname(this.absolutePath), path))
   }
@@ -95,6 +91,10 @@ class VirtualFileImpl implements VirtualFile {
       if (error.code === 'ENOENT') return false
       throw error
     }
+  }
+
+  lastModifiedSync(): number {
+    return this.#readSync().lastModified
   }
 
   contentsSync(): string {
@@ -127,6 +127,10 @@ class VirtualFileImpl implements VirtualFile {
       if (error.code === 'ENOENT') return false
       throw error
     })
+  }
+
+  async lastModified(): Promise<number> {
+    return this.#data ? this.#data.lastModified : (await this.#read()).lastModified
   }
 
   async contents(): Promise<string> {
