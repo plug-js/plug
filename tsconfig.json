@@ -3,14 +3,21 @@
     "lib": [
       "es2019"
     ],
+    "types": [
+      "node",
+      "mocha",
+      "chai",
+      "chai-as-promised",
+    ],
     "removeComments": false,
     "esModuleInterop": true,
     "noImplicitAny": true,
     "module": "commonjs",
-    "sourceMap": true,
+    "sourceMap": false,
+    "inlineSourceMap": true,
     "strict": true,
     "target": "es2019",
     "declaration": true,
-    "allowJs": false
+    "allowJs": false,
   }
 }
