@@ -46,13 +46,11 @@ class VirtualFileImpl implements VirtualFile {
 
   constructor(
       fileSystem: VirtualFileSystem,
-      path: string,
+      absolutePath: AbsolutePath,
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
   ) {
-    const directoryPath = fileSystem.directoryPath
-    const absolutePath = getAbsolutePath(directoryPath, path)
-    const relativePath = getRelativePath(directoryPath, absolutePath)
+    const relativePath = getRelativePath(fileSystem.directoryPath, absolutePath)
     const canonicalPath = getCanonicalPath(absolutePath)
 
     this.fileSystem = fileSystem
@@ -188,11 +186,13 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
   }
 
   get(path: string): VirtualFile {
-    const file = new VirtualFileImpl(this, path)
+    const absolutePath = getAbsolutePath(this.directoryPath, path)
+    const canonicalPath = getCanonicalPath(absolutePath)
 
-    const cached = this.#cache.get(file.canonicalPath)
+    const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
+    const file = new VirtualFileImpl(this, absolutePath)
     this.#cache.set(file.canonicalPath, file)
     return file
   }
@@ -213,7 +213,9 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
       add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
         if (! fileSystem) throw new Error('Virtual file system already built')
-        const file = new VirtualFileImpl(fileSystem, path, contents, sourceMap)
+
+        const absolutePath = getAbsolutePath(fileSystem.directoryPath, path)
+        const file = new VirtualFileImpl(fileSystem, absolutePath, contents, sourceMap)
         fileSystem.#cache.set(file.canonicalPath, file)
         fileSystem.#files.push(file)
         return this
