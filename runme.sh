@@ -1,3 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-./node_modules/.bin/nodemon -e ts -w src -w test -x ./bootstrap.sh
+export PATH=$(dirname $0)/node_modules/.bin:${PATH}
+
+tsc --build bootstrap.json
+node ./build/src/typescript/loader.js
