@@ -1,7 +1,7 @@
 import { URL, pathToFileURL, fileURLToPath } from 'url'
 import { RawSourceMap } from 'source-map'
-import { VirtualFile } from '../virtual-file-system'
 import { EOL } from 'os'
+import { AbsolutePath } from './paths'
 
 // Lifted from WebPack's "source-map-loader "
 const innerRegex = /\s*[#@]\s*sourceMappingURL\s*=\s*([^\s'"]*)\s*/
@@ -29,16 +29,18 @@ const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/
  * EXPORTED FUNCTIONS                                                         *
  * ========================================================================== */
 
+// Internal types for sanity...
+type ExtractedSourceMapURL = { contents: string, url?: string }
+type ParsedSourceMap = { sourceMap?: RawSourceMap, sourceMapFile?: AbsolutePath }
+type ExtractedSourceMap = ParsedSourceMap & { contents: string }
+
 /**
  * Extract the source mapping URL from a chunk of code, optionally wiping it.
  *
  * @param contents The code where the source mapping URL is located.
  * @param wipe Whether to wipe the URL from the source or not.
  */
-export function extractSourceMappingURL(
-    contents: string,
-    wipe: boolean,
-): { contents: string, url?: string } {
+export function extractSourceMappingURL(contents: string, wipe: boolean): ExtractedSourceMapURL {
   // Split the code into lines
   const lines = contents.split(/^/m)
 
@@ -68,15 +70,18 @@ export function extractSourceMappingURL(
 }
 
 /**
- * Parse an source mapping URL returning either a raw sourcemap or the path
- * to an external _file_ where the sourcemap can be read from.
+ * Parse a source mapping URL returning either a raw sourcemap (if inline,
+ * as a base-64 data URL) or the path to an external _file_ where the sourcemap
+ * can be read from.
+ *
+ * Any non-file URLs for source maps will be ignored
+ *
+ * @param path The absolute path of the file containing the source mapping url
+ * @param url The source map URL to parse as a sourcemap or external file
  */
-export function parseSourceMappingURL(
-    file: VirtualFile,
-    url?: string,
-): { sourceMap?: RawSourceMap, sourceMapFile?: VirtualFile } {
+export function parseSourceMappingURL(path: AbsolutePath, url?: string): ParsedSourceMap | undefined {
   // No URL? No source map!
-  if (! url) return {}
+  if (! url) return
 
   // Decode the base64 from inline source maps
   if (innlineSourceMapRegExp.test(url)) {
@@ -86,49 +91,28 @@ export function parseSourceMappingURL(
   }
 
   // This is an URL (relative or whatnot) resolve it!
-  const base = pathToFileURL(file.absolutePath)
+  const base = pathToFileURL(path)
   const resolved = new URL(url, base)
 
   // If the resolved URL is not a file, don't read the source map
-  if (resolved.protocol !== 'file:') return {}
+  if (resolved.protocol !== 'file:') return
 
   // If the source map file does not exist, don't read the source map
-  const sourceMapFile = file.fileSystem.get(fileURLToPath(resolved))
+  const sourceMapFile = fileURLToPath(resolved) as AbsolutePath
   return { sourceMapFile }
 }
 
 /**
- * Read the source map identified by its URL for a virtual file.
+ * Extracts, optionally wiping, a source mapping url from some code at the
+ * specified path, returning either the source map or the location of the
+ * external file containing it
  *
- * @param file The virtual file for which the source map is being read.
- * @param url The URL of the source map to read.
+ * @param path The absolute path of the code to parse
+ * @param code The code to parse for source mapping URLs
+ * @param wipe Whether to wipe the source mapping URL from the file or not
  */
-export async function readSourceMap(
-    file: VirtualFile,
-    url?: string,
-): Promise<RawSourceMap | undefined> {
-  const { sourceMap, sourceMapFile } = parseSourceMappingURL(file, url)
-
-  if (sourceMap) return sourceMap
-  if (sourceMapFile && await sourceMapFile.exists()) {
-    return JSON.parse(await sourceMapFile.contents())
-  }
-}
-
-/**
- * Read the source map identified by its URL for a virtual file.
- *
- * @param file The virtual file for which the source map is being read.
- * @param url The URL of the source map to read.
- */
-export function readSourceMapSync(
-    file: VirtualFile,
-    url?: string,
-): RawSourceMap | undefined {
-  const { sourceMap, sourceMapFile } = parseSourceMappingURL(file, url)
-
-  if (sourceMap) return sourceMap
-  if (sourceMapFile && sourceMapFile.existsSync()) {
-    return JSON.parse(sourceMapFile.contentsSync())
-  }
+export function extractSourceMap(path: AbsolutePath, code: string, wipe: boolean): ExtractedSourceMap | undefined {
+  const { contents, url } = extractSourceMappingURL(code, wipe)
+  const parsedSourceMap = parseSourceMappingURL(path, url)
+  if (parsedSourceMap) return { contents, ...parsedSourceMap }
 }

@@ -1,6 +1,6 @@
-import { extractSourceMappingURL, readSourceMapSync, readSourceMap } from '../src/utils/source-maps'
+import { extractSourceMap, extractSourceMappingURL, parseSourceMappingURL } from '../src/utils/source-maps'
 import { expect } from 'chai'
-import { VirtualFile, VirtualFileSystem } from '../src/virtual-file-system'
+import { AbsolutePath } from '../src/utils/paths'
 
 describe('Source Maps', () => {
   it('should extract a source mapping url', () => {
@@ -44,181 +44,48 @@ describe('Source Maps', () => {
         .to.eql({ contents: '//# sourceMappingURL = \n// barfoo' })
   })
 
-  describe('Asynchronous Implementation', () => {
-    it('should not read a falsy source map url', async () => {
-      expect(await readSourceMap(null as any)).to.be.undefined
-      expect(await readSourceMap(null as any, '')).to.be.undefined
-      expect(await readSourceMap(null as any, undefined)).to.be.undefined
-      expect(await readSourceMap(null as any, false as any)).to.be.undefined
-    })
+  it('should parse a source mapping URL', () => {
+    const path = '/foo/bar/baz.js' as AbsolutePath
 
-    it('should read an inline source map url', async () => {
-      expect(await readSourceMap(null as any, 'data:application/json;base64,e30=')).to.eql({})
-      expect(await readSourceMap(null as any, 'data:application/json;base64,e30')).to.eql({})
-      await expect(readSourceMap(null as any, 'data:application/json;base64,'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-    })
+    expect(parseSourceMappingURL(path)).to.be.undefined
 
-    it('should not read read a non-file url', () => {
-      const file = { absolutePath: '/foo/bar/baz' } as VirtualFile
-      expect(readSourceMapSync(file, 'foo://bar')).to.be.undefined
-    })
+    expect(parseSourceMappingURL(path, 'http://www/')).to.be.undefined
 
-    it('should not read a non-existent file url', async () => {
-      const mapFile = {
-        exists: async () => false,
-      } as VirtualFile
+    expect(parseSourceMappingURL(path, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, '../bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, './baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, 'baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
 
-      const virtualFileSystem = {
-        get(path: string) {
-          expect(path).to.eql('/foo/bar/baz.txt.map')
-          return mapFile
-        },
-      } as VirtualFileSystem
-
-      const sourceFile = {
-        absolutePath: '/foo/bar/baz.txt',
-        fileSystem: virtualFileSystem,
-      } as VirtualFile
-
-      expect(await readSourceMap(sourceFile, 'baz.txt.map')).to.be.undefined
-      expect(await readSourceMap(sourceFile, './baz.txt.map')).to.be.undefined
-      expect(await readSourceMap(sourceFile, '../bar/baz.txt.map')).to.be.undefined
-      expect(await readSourceMap(sourceFile, '/foo/bar/baz.txt.map')).to.be.undefined
-      expect(await readSourceMap(sourceFile, 'file:/foo/bar/baz.txt.map')).to.be.undefined
-      expect(await readSourceMap(sourceFile, 'file:///foo/bar/baz.txt.map')).to.be.undefined
-    })
-
-    it('should read a source map from a file url', async () => {
-      let data = '{"fake":true}'
-
-      const mapFile = {
-        exists: async () => true,
-        contents: async () => data,
-      } as VirtualFile
-
-      const virtualFileSystem = {
-        get(path: string) {
-          expect(path).to.eql('/foo/bar/baz.txt.map')
-          return mapFile
-        },
-      } as VirtualFileSystem
-
-      const sourceFile = {
-        absolutePath: '/foo/bar/baz.txt',
-        fileSystem: virtualFileSystem,
-      } as VirtualFile
-
-      expect(await readSourceMap(sourceFile, 'baz.txt.map')).to.eql({ fake: true })
-      expect(await readSourceMap(sourceFile, './baz.txt.map')).to.eql({ fake: true })
-      expect(await readSourceMap(sourceFile, '../bar/baz.txt.map')).to.eql({ fake: true })
-      expect(await readSourceMap(sourceFile, '/foo/bar/baz.txt.map')).to.eql({ fake: true })
-      expect(await readSourceMap(sourceFile, 'file:/foo/bar/baz.txt.map')).to.eql({ fake: true })
-      expect(await readSourceMap(sourceFile, 'file:///foo/bar/baz.txt.map')).to.eql({ fake: true })
-
-      data = ''
-
-      await expect(readSourceMap(sourceFile, 'baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-      await expect(readSourceMap(sourceFile, './baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-      await expect(readSourceMap(sourceFile, '../bar/baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-      await expect(readSourceMap(sourceFile, '/foo/bar/baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-      await expect(readSourceMap(sourceFile, 'file:/foo/bar/baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-      await expect(readSourceMap(sourceFile, 'file:///foo/bar/baz.txt.map'))
-          .to.be.rejectedWith(SyntaxError, 'Unexpected end of JSON input')
-    })
+    expect(parseSourceMappingURL(path, 'data:application/json;base64,e30=')).to.eql({ sourceMap: {} })
+    expect(parseSourceMappingURL(path, 'data:application/json;base64,e30')).to.eql({ sourceMap: {} })
+    expect(() => parseSourceMappingURL(path, 'data:application/json;base64,')).to.throw(SyntaxError)
   })
 
-  describe('Synchronous Implementation', () => {
-    it('should not read a falsy source map url', () => {
-      expect(readSourceMapSync(null as any)).to.be.undefined
-      expect(readSourceMapSync(null as any, '')).to.be.undefined
-      expect(readSourceMapSync(null as any, undefined)).to.be.undefined
-      expect(readSourceMapSync(null as any, false as any)).to.be.undefined
+  it('should extract some source map data', () => {
+    const path = '/foo/bar/baz.js' as AbsolutePath
+
+    expect(extractSourceMap(path, '//# sourceMappingURL=data:application/json;base64,e30\n// foobar', false)).to.eql({
+      contents: '//# sourceMappingURL=data:application/json;base64,e30\n// foobar',
+      sourceMap: {},
     })
 
-    it('should read an inline source map url', () => {
-      expect(readSourceMapSync(null as any, 'data:application/json;base64,e30=')).to.eql({})
-      expect(readSourceMapSync(null as any, 'data:application/json;base64,e30')).to.eql({})
-      expect(() => readSourceMapSync(null as any, 'data:application/json;base64,'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
+    expect(extractSourceMap(path, '//# sourceMappingURL=data:application/json;base64,e30\n// foobar', true)).to.eql({
+      contents: '\n// foobar',
+      sourceMap: {},
     })
 
-    it('should not read read a non-file url', () => {
-      const file = { absolutePath: '/foo/bar/baz' } as VirtualFile
-      expect(readSourceMapSync(file, 'foo://bar')).to.be.undefined
+    expect(extractSourceMap(path, '//# sourceMappingURL=baz.js.map\n// foobar', false)).to.eql({
+      contents: '//# sourceMappingURL=baz.js.map\n// foobar',
+      sourceMapFile: '/foo/bar/baz.js.map',
     })
 
-    it('should not read a non-existent file url', () => {
-      const mapFile = {
-        existsSync: () => false,
-      } as VirtualFile
-
-      const virtualFileSystem = {
-        get(path: string) {
-          expect(path).to.eql('/foo/bar/baz.txt.map')
-          return mapFile
-        },
-      } as VirtualFileSystem
-
-      const sourceFile = {
-        absolutePath: '/foo/bar/baz.txt',
-        fileSystem: virtualFileSystem,
-      } as VirtualFile
-
-      expect(readSourceMapSync(sourceFile, 'baz.txt.map')).to.be.undefined
-      expect(readSourceMapSync(sourceFile, './baz.txt.map')).to.be.undefined
-      expect(readSourceMapSync(sourceFile, '../bar/baz.txt.map')).to.be.undefined
-      expect(readSourceMapSync(sourceFile, '/foo/bar/baz.txt.map')).to.be.undefined
-      expect(readSourceMapSync(sourceFile, 'file:/foo/bar/baz.txt.map')).to.be.undefined
-      expect(readSourceMapSync(sourceFile, 'file:///foo/bar/baz.txt.map')).to.be.undefined
+    expect(extractSourceMap(path, '//# sourceMappingURL=baz.js.map\n// foobar', true)).to.eql({
+      contents: '\n// foobar',
+      sourceMapFile: '/foo/bar/baz.js.map',
     })
 
-    it('should read a source map from a file url', () => {
-      let data = '{"fake":true}'
-
-      const mapFile = {
-        existsSync: () => true,
-        contentsSync: () => data,
-      } as VirtualFile
-
-      const virtualFileSystem = {
-        get(path: string) {
-          expect(path).to.eql('/foo/bar/baz.txt.map')
-          return mapFile
-        },
-      } as VirtualFileSystem
-
-      const sourceFile = {
-        absolutePath: '/foo/bar/baz.txt',
-        fileSystem: virtualFileSystem,
-      } as VirtualFile
-
-      expect(readSourceMapSync(sourceFile, 'baz.txt.map')).to.eql({ fake: true })
-      expect(readSourceMapSync(sourceFile, './baz.txt.map')).to.eql({ fake: true })
-      expect(readSourceMapSync(sourceFile, '../bar/baz.txt.map')).to.eql({ fake: true })
-      expect(readSourceMapSync(sourceFile, '/foo/bar/baz.txt.map')).to.eql({ fake: true })
-      expect(readSourceMapSync(sourceFile, 'file:/foo/bar/baz.txt.map')).to.eql({ fake: true })
-      expect(readSourceMapSync(sourceFile, 'file:///foo/bar/baz.txt.map')).to.eql({ fake: true })
-
-      data = ''
-
-      expect(() => readSourceMapSync(sourceFile, 'baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-      expect(() => readSourceMapSync(sourceFile, './baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-      expect(() => readSourceMapSync(sourceFile, '../bar/baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-      expect(() => readSourceMapSync(sourceFile, '/foo/bar/baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-      expect(() => readSourceMapSync(sourceFile, 'file:/foo/bar/baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-      expect(() => readSourceMapSync(sourceFile, 'file:///foo/bar/baz.txt.map'))
-          .to.throw(SyntaxError, 'Unexpected end of JSON input')
-    })
+    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', false)).to.be.undefined
+    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', true)).to.be.undefined
   })
 })
