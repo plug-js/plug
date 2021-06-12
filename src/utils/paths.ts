@@ -44,7 +44,7 @@ export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): R
 
 /** Return the canonical path from an absolute path, considering filesystem case sensitivity */
 export function getCanonicalPath(name: AbsolutePath): CanonicalPath {
-  // istanbul ignore next // dependant on underlying file system
+  // istanbul ignore next - dependant on underlying file system
   return (caseSensitivePaths ? name : name.toLowerCase()) as CanonicalPath
 }
 
