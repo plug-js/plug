@@ -125,6 +125,7 @@ class VirtualFileImpl implements VirtualFile {
     if (this.#sourceMap) return this.#sourceMap
 
     const sourceMapFile = this.#readSync().sourceMapFile
+    // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
     const file = this.fileSystem.get(sourceMapFile)
@@ -159,6 +160,7 @@ class VirtualFileImpl implements VirtualFile {
     if (this.#sourceMap) return this.#sourceMap
 
     const sourceMapFile = (await this.#read()).sourceMapFile
+    // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
     const file = this.fileSystem.get(sourceMapFile)
