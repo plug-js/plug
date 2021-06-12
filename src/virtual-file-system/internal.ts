@@ -1,30 +1,20 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFile, VirtualFileSystem, AbsolutePath, RelativePath, VirtualFileSystemBuilder, CanonicalPath, DirectoryPath } from './index'
-import { resolve, relative, dirname } from 'path'
-import { readFileSync, existsSync, statSync, promises as fs } from 'fs'
-import { extractSourceMappingURL, parseSourceMappingURL } from '../utils/source-maps'
+import { VirtualFile, VirtualFileSystem, VirtualFileSystemBuilder } from './index'
+import { readFileSync, statSync, promises as fs } from 'fs'
+import { extractSourceMap } from '../utils/source-maps'
 
-/*
- * This is a bit of a hack: we determine case sensitivity on _this_ file
- * but maybe a VirtualFileSystem from another directory might use a different
- * underlying file system... This is good enough for now!
- */
-const __lfilename = __filename.toLowerCase()
-const __ufilename = __filename.toUpperCase()
-const caseSensitive = !(existsSync(__lfilename) && existsSync(__ufilename))
-
-function getAbsolutePath(directory: DirectoryPath, path: string): AbsolutePath {
-  return resolve(directory, path) as AbsolutePath
-}
-
-function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath {
-  return relative(directory, path) as RelativePath
-}
-
-function getCanonicalPath(name: AbsolutePath): CanonicalPath {
-  // istanbul ignore next // dependant on underlying file system
-  return (caseSensitive ? name : name.toLowerCase()) as CanonicalPath
-}
+import {
+  AbsolutePath,
+  RelativePath,
+  CanonicalPath,
+  DirectoryPath,
+  getRelativePath,
+  getCanonicalPath,
+  getAbsolutePath,
+  getCurrentDirectoryPath,
+  getDirectoryPath,
+  getDirectory,
+} from '../utils/paths'
 
 /* ========================================================================== *
  * VIRTUAL FILE IMPLEMENTATION                                                *
@@ -41,8 +31,7 @@ class VirtualFileImpl implements VirtualFile {
 
   #promise?: Promise<VirtualFileData>
   #data?: VirtualFileData
-
-  #sourceMap?: RawSourceMap
+  #sourceMap?: RawSourceMap | false
 
   constructor(
       fileSystem: VirtualFileSystem,
@@ -61,42 +50,62 @@ class VirtualFileImpl implements VirtualFile {
     if (contents != undefined) {
       const lastModified = Date.now()
       if (sourceMap === true) {
-        const { contents: code, url } = extractSourceMappingURL(contents, true)
-        const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
-        this.#data = { contents: code, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
-        this.#sourceMap = sourceMap
-      } else if (sourceMap) {
-        this.#data = { lastModified, contents }
-        this.#sourceMap = sourceMap
+        this.#readSourceMapData(contents, lastModified)
       } else {
         this.#data = { lastModified, contents }
+        this.#sourceMap = sourceMap
       }
     }
   }
 
   get(path: string): VirtualFile {
-    return this.fileSystem.get(resolve(dirname(this.absolutePath), path))
+    const directory = getDirectory(this.absolutePath)
+    const absolutePath = getAbsolutePath(directory, path)
+    return this.fileSystem.get(absolutePath)
   }
 
   /* ======================================================================== *
-   * SYNCHRONOUS IMPLEMENTATION                                               *
+   * INTERNAL READING FUNCTIONS                                               *
    * ======================================================================== */
+
+  #readSourceMapData(contents: string, lastModified: number): VirtualFileData {
+    const sourceMapData = extractSourceMap(this.absolutePath, contents, true)
+    if (sourceMapData) {
+      this.#data = { lastModified, ...sourceMapData }
+      this.#sourceMap = sourceMapData.sourceMap
+    } else {
+      this.#data = { lastModified, contents }
+      this.#sourceMap = false
+    }
+    return this.#data
+  }
 
   #readSync(): VirtualFileData {
     if (this.#data) return this.#data
 
     const code = readFileSync(this.absolutePath, 'utf8')
     const lastModified = statSync(this.absolutePath).mtimeMs
-    const { contents, url } = extractSourceMappingURL(code, true)
-    const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
-    this.#sourceMap = sourceMap
-    return { contents, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
+    return this.#readSourceMapData(code, lastModified)
   }
+
+  #read(): Promise<VirtualFileData> {
+    if (this.#promise) return this.#promise
+    if (this.#data) return this.#promise = Promise.resolve(this.#data)
+
+    return this.#promise = (async (): Promise<VirtualFileData> => {
+      const code = await fs.readFile(this.absolutePath, 'utf8')
+      const lastModified = (await fs.stat(this.absolutePath)).mtimeMs
+      return this.#readSourceMapData(code, lastModified)
+    })()
+  }
+
+  /* ======================================================================== *
+   * SYNCHRONOUS IMPLEMENTATION                                               *
+   * ======================================================================== */
 
   existsSync(): boolean {
     try {
-      this.#readSync()
-      return true
+      return !! (this.#data || this.#readSync())
     } catch (error) {
       if (error.code === 'ENOENT') return false
       throw error
@@ -112,6 +121,7 @@ class VirtualFileImpl implements VirtualFile {
   }
 
   sourceMapSync(): RawSourceMap | undefined {
+    if (this.#sourceMap === false) return undefined
     if (this.#sourceMap) return this.#sourceMap
 
     const sourceMapFile = this.#readSync().sourceMapFile
@@ -127,26 +137,13 @@ class VirtualFileImpl implements VirtualFile {
    * ASYNC IMPLEMENTATION                                                     *
    * ======================================================================== */
 
-  #read(): Promise<VirtualFileData> {
-    if (this.#data) return Promise.resolve(this.#data)
-    if (this.#promise) return this.#promise
-
-    return this.#promise = (async (): Promise<VirtualFileData> => {
-      const code = await fs.readFile(this.absolutePath, 'utf8')
-      const lastModified = (await fs.stat(this.absolutePath)).mtimeMs
-      const { contents, url } = extractSourceMappingURL(code, true)
-      const { sourceMap, sourceMapFile } = parseSourceMappingURL(this, url)
-      this.#sourceMap = sourceMap
-      return this.#data = { contents, lastModified, sourceMapFile: sourceMapFile?.absolutePath }
-    })()
-  }
-
   async exists(): Promise<boolean> {
-    if (this.#data) return true
-    return this.#read().then(() => true, (error) => {
+    try {
+      return !! (this.#data || await this.#read())
+    } catch (error) {
       if (error.code === 'ENOENT') return false
       throw error
-    })
+    }
   }
 
   async lastModified(): Promise<number> {
@@ -158,7 +155,9 @@ class VirtualFileImpl implements VirtualFile {
   }
 
   async sourceMap(): Promise<RawSourceMap | undefined> {
+    if (this.#sourceMap === false) return undefined
     if (this.#sourceMap) return this.#sourceMap
+
     const sourceMapFile = (await this.#read()).sourceMapFile
     if (! sourceMapFile) return
 
@@ -178,11 +177,10 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
   #files = [] as VirtualFile[]
 
   readonly directoryPath: DirectoryPath
-  readonly caseSensitive: boolean
 
   constructor(path?: string) {
-    this.directoryPath = (path ? resolve(process.cwd(), path) : process.cwd()) as DirectoryPath
-    this.caseSensitive = caseSensitive
+    const currentDirectory = getCurrentDirectoryPath()
+    this.directoryPath = getDirectoryPath(currentDirectory, path)
   }
 
   get(path: string): VirtualFile {
@@ -202,8 +200,8 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
   }
 
   builder(path?: string): VirtualFileSystemBuilder {
-    const baseDir = path ? resolve(this.directoryPath, path) : this.directoryPath
-    return VirtualFileSystemImpl.builder(baseDir)
+    const directory = getDirectoryPath(this.directoryPath, path)
+    return VirtualFileSystemImpl.builder(directory)
   }
 
   static builder(path?: string): VirtualFileSystemBuilder {
