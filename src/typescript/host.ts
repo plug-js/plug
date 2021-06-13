@@ -180,8 +180,13 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
       onError?: (message: string) => void,
       sourceFiles?: readonly SourceFile[],
   ): void {
-    void sourceFiles // prevent ESLint from whining!
-    this.#fileSystemBuilder.add(fileName, data)
+    try {
+      void sourceFiles // prevent ESLint from whining!
+      this.#fileSystemBuilder.add(fileName, data)
+    } catch (error) {
+      if (! onError) throw error
+      onError(error.message)
+    }
   }
 
   /** [TS] Get the default library associated with the given options */
@@ -202,7 +207,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
   /** [TS] Read the file if it exists, otherwise return undefined */
   readFile(fileName: string): string | undefined {
     const file = this.#fileSystem.get(fileName)
-    if (file.exists()) return file.contentsSync()
+    if (file.existsSync()) return file.contentsSync()
   }
 
   /** [TS] Return the current working directory */
