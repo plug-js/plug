@@ -1,9 +1,10 @@
 import { expect } from 'chai'
 import { EOL } from 'os'
 import { basename, isAbsolute } from 'path'
-import { ScriptTarget } from 'typescript'
+import { ScriptKind, ScriptTarget } from 'typescript'
 import { TypeScriptHost } from '../src/typescript/host'
 import { caseSensitivePaths } from '../src/utils/paths'
+import { VirtualFileSystem } from '../src/virtual-file-system'
 
 describe('TypeScript Host', () => {
   it('should regenerate the virtual file system on build', () => {
@@ -70,7 +71,7 @@ describe('TypeScript Host', () => {
       get: (filename: string):any => ({
         canonicalPath: `canonical ${filename}`,
         existsSync: (): string => filename != 'no' ? `existsSync ${filename}` : '',
-        contentsSync: (): string => `contentsSync ${filename}`
+        contentsSync: (): string => `contentsSync ${filename}`,
       }),
     } as any)
 
@@ -91,5 +92,72 @@ describe('TypeScript Host', () => {
 
     expect(host.readFile('baz.txt')).to.equal('contentsSync baz.txt')
     expect(host.readFile('no')).to.be.undefined
+  })
+
+  it('should create some source files', () => {
+    const fileSystem = VirtualFileSystem.builder('/foo')
+        .add('bar.ts', '// ts')
+        .add('bar.tsx', '// tsx')
+        .add('bar.js', '// js')
+        .add('bar.jsx', '// jsx')
+        .add('bar.json', '// json')
+        .add('bar.txt', '// txt')
+        .build()
+
+    const host = new TypeScriptHost(fileSystem)
+
+    const bin = host.getSourceFile('bar.bin', ScriptTarget.ES2021)
+    expect(bin).to.be.undefined
+
+    const ts = host.getSourceFile('bar.ts', ScriptTarget.ES2015)
+    const tsx = host.getSourceFile('bar.tsx', ScriptTarget.ES2016)
+    const js = host.getSourceFile('bar.js', ScriptTarget.ES2017)
+    const jsx = host.getSourceFile('bar.jsx', ScriptTarget.ES2018)
+    const json = host.getSourceFile('bar.json', ScriptTarget.ES2019)
+    const txt = host.getSourceFile('bar.txt', ScriptTarget.ES2020)
+
+    expect(ts?.languageVersion).to.equal(ScriptTarget.ES2015)
+    expect(tsx?.languageVersion).to.equal(ScriptTarget.ES2016)
+    expect(js?.languageVersion).to.equal(ScriptTarget.ES2017)
+    expect(jsx?.languageVersion).to.equal(ScriptTarget.ES2018)
+    // expect(json?.languageVersion).to.equal(ScriptTarget.ES2019) // always 2015?
+    expect(txt?.languageVersion).to.equal(ScriptTarget.ES2020)
+
+    expect((<any> ts)?.scriptKind).to.equal(ScriptKind.TS)
+    expect((<any> tsx)?.scriptKind).to.equal(ScriptKind.TSX)
+    expect((<any> js)?.scriptKind).to.equal(ScriptKind.JS)
+    expect((<any> jsx)?.scriptKind).to.equal(ScriptKind.JSX)
+    expect((<any> json)?.scriptKind).to.equal(ScriptKind.JSON)
+    // expect((<any> txt)?.scriptKind).to.equal(ScriptKind.Unknown) // always TS
+
+    expect(ts?.fileName).to.equal('/foo/bar.ts')
+    expect(tsx?.fileName).to.equal('/foo/bar.tsx')
+    expect(js?.fileName).to.equal('/foo/bar.js')
+    expect(jsx?.fileName).to.equal('/foo/bar.jsx')
+    expect(json?.fileName).to.equal('/foo/bar.json')
+    expect(txt?.fileName).to.equal('/foo/bar.txt')
+
+    expect(ts?.text).to.equal('// ts')
+    expect(tsx?.text).to.equal('// tsx')
+    expect(js?.text).to.equal('// js')
+    expect(jsx?.text).to.equal('// jsx')
+    expect(json?.text).to.equal('// json')
+    expect(txt?.text).to.equal('// txt')
+
+    // cache!
+    expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015)).to.equal(ts)
+    expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016)).to.equal(tsx)
+    expect(host.getSourceFile('bar.js', ScriptTarget.ES2017)).to.equal(js)
+    expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018)).to.equal(jsx)
+    expect(host.getSourceFile('bar.json', ScriptTarget.ES2019)).to.equal(json)
+    expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020)).to.equal(txt)
+
+    // can not test negative cache easily, as TS uses its own caches internally, too!
+    // expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015, undefined, false)).not.to.equal(ts)
+    // expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016, undefined, false)).not.to.equal(tsx)
+    // expect(host.getSourceFile('bar.js', ScriptTarget.ES2017, undefined, false)).not.to.equal(js)
+    // expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018, undefined, false)).not.to.equal(jsx)
+    // expect(host.getSourceFile('bar.json', ScriptTarget.ES2019, undefined, false)).not.to.equal(json)
+    // expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020, undefined, false)).not.to.equal(txt)
   })
 })
