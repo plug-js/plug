@@ -1,15 +1,30 @@
+import { Failure } from '../failure'
+
 import {
   Diagnostic,
   DiagnosticCategory,
+  formatDiagnostics,
   FormatDiagnosticsHost,
   formatDiagnosticsWithColorAndContext,
 } from 'typescript'
 
-class Failure extends Error {
-  constructor() {
-    super('Build failed')
-    this.name = 'Failure'
-    delete this.stack
+export class TypeScriptFailure extends Failure {
+  private _host!: FormatDiagnosticsHost
+
+  diagnostics!: readonly Diagnostic[]
+
+  constructor(diagnostics: readonly Diagnostic[], host: FormatDiagnosticsHost, message?: string) {
+    super(message || 'TypeScript Error')
+
+    Object.defineProperties(this, {
+      diagnostics: { value: diagnostics },
+      _host: { value: host },
+    })
+  }
+
+  report(colors: boolean): string {
+    if (! colors) return formatDiagnostics(this.diagnostics, this._host)
+    return formatDiagnosticsWithColorAndContext(this.diagnostics, this._host)
   }
 }
 
@@ -25,10 +40,4 @@ export function hasWarnings(diagnostics: readonly Diagnostic[]): boolean {
     if (diagnostic.category == DiagnosticCategory.Warning) return true
   }
   return false
-}
-
-export function reportAndFail(diagnostics: readonly Diagnostic[], host: FormatDiagnosticsHost): void {
-  if (diagnostics.length == 0) return
-  process.stderr.write(formatDiagnosticsWithColorAndContext(diagnostics, host))
-  if (hasErrors(diagnostics)) throw new Failure()
 }
