@@ -51,7 +51,7 @@ export interface VirtualFileSystem {
   get(path: string): VirtualFile
 
   /** Return all `VirtualFile`s this `VirtualFileSystem` was build with */
-  list(): Readonly<VirtualFile[]>
+  list(): readonly VirtualFile[]
 
   /** Create a new `VirtualFileSystemBuilder` */
   builder(path?: string): VirtualFileSystemBuilder

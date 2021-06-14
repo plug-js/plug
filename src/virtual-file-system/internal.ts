@@ -197,7 +197,7 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
     return file
   }
 
-  list(): Readonly<VirtualFile[]> {
+  list(): readonly VirtualFile[] {
     return [ ...this.#files ]
   }
 
