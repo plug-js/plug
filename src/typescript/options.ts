@@ -10,7 +10,7 @@ import {
 import { VirtualFile, VirtualFileSystem } from '../virtual-file-system'
 import { AbsolutePath, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
 
-type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: Diagnostic[] }
+type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: readonly Diagnostic[] }
 
 /** Load compiler options from a "tsconfig.json" file */
 export function getCompilerOptions(fileSystem: VirtualFileSystem, fileName?: string): CompilerOptionsAndDiagnostics {
