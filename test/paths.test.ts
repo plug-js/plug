@@ -1,4 +1,5 @@
 import { expect } from 'chai'
+import { resolve } from 'path'
 import {
   AbsolutePath,
   RelativePath,
@@ -19,6 +20,9 @@ describe('Paths', () => {
 
   it('should return the current working directory', () => {
     expect(getCurrentDirectoryPath()).to.equal(process.cwd())
+    expect(getCurrentDirectoryPath('.')).to.equal(resolve(process.cwd()))
+    expect(getCurrentDirectoryPath('..')).to.equal(resolve(process.cwd(), '..'))
+    expect(getCurrentDirectoryPath('foo')).to.equal(resolve(process.cwd(), 'foo'))
   })
 
   it('should get a directory path', () => {
