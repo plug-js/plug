@@ -11,18 +11,10 @@ import {
   createSourceFile,
   getDefaultLibFilePath,
   FormatDiagnosticsHost,
-  Diagnostic,
-  getDefaultCompilerOptions,
-  readJsonConfigFile,
-  DiagnosticCategory,
-  convertToObject,
-  convertCompilerOptionsFromJson,
 } from 'typescript'
 
-import { VirtualFile, VirtualFileSystem, VirtualFileSystemBuilder } from '../virtual-file-system'
-import { AbsolutePath, caseSensitivePaths, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
-
-type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: Diagnostic[] }
+import { VirtualFileSystem } from '../virtual-file-system'
+import { caseSensitivePaths } from '../utils/paths'
 
 /* ========================================================================== *
  * CACHING - works out of the SHA256 of the contents of a file an it's shared *
@@ -51,87 +43,10 @@ function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
  */
 export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
   #fileSystem: VirtualFileSystem
-  #fileSystemBuilder: VirtualFileSystemBuilder
 
   /** Create a new `TypeScriptHost` */
   constructor(fileSystem: VirtualFileSystem) {
     this.#fileSystem = fileSystem
-    this.#fileSystemBuilder = fileSystem.builder()
-  }
-
-  /**
-   * Build a virtual file system out of the files written by this instance's
-   * `writeFile(...)` function.
-   *
-   * When this method is called, a new file stystem builder is created.
-   */
-  buildFileSystem(): VirtualFileSystem {
-    const fileSystem = this.#fileSystemBuilder.build()
-    this.#fileSystemBuilder = this.#fileSystem.builder()
-    return fileSystem
-  }
-
-  /** Load compiler options from a "tsconfig.json" file */
-  getCompilerOptions(fileName?: string): CompilerOptionsAndDiagnostics {
-    let file = undefined as VirtualFile | undefined
-
-    // If there's no file, we load either "tsconfig.json" or the defaults
-    if (fileName) {
-      file = this.#fileSystem.get(fileName)
-    } else {
-      file = this.#fileSystem.get('tsconfig.json')
-      if (! file.existsSync()) {
-        return { options: getDefaultCompilerOptions(), diagnostics: [] }
-      }
-    }
-
-    const readFile = this.readFile.bind(this)
-    const fileSystem = this.#fileSystem
-
-    function loadOptions(
-        fileName: AbsolutePath,
-        diagnostics: Diagnostic[],
-        resolutionStack: AbsolutePath[] = [],
-    ): CompilerOptions {
-      const sourceFile = readJsonConfigFile(fileName, readFile)
-      const { compilerOptions, extends: extendsPath } = convertToObject(sourceFile, diagnostics)
-      const { options, errors } = convertCompilerOptionsFromJson(compilerOptions, fileSystem.directoryPath, fileName)
-
-      if (errors.length) {
-        errors.forEach((error) => error.file = sourceFile)
-        diagnostics.push( ...errors )
-        return {}
-      }
-
-      if (extendsPath) {
-        const directory = getDirectory(fileName)
-        const absolutePath = getAbsolutePath(directory, extendsPath)
-        if (resolutionStack.indexOf(absolutePath) >= 0) {
-          const relativePath = getRelativePath(directory, absolutePath)
-          const stack = resolutionStack.map((path) => getRelativePath(directory, path)).join('\n - ')
-          diagnostics.push({
-            messageText: `Circularity detected while resolving configuration "${relativePath}\n - ${stack}"`,
-            category: DiagnosticCategory.Error,
-            code: 0,
-            start: undefined,
-            length: undefined,
-            file: sourceFile,
-          })
-          return {}
-        } else {
-          resolutionStack.push(absolutePath)
-          const extendsOptions = loadOptions(absolutePath, diagnostics, resolutionStack)
-          resolutionStack.pop()
-          return Object.assign({}, extendsOptions, options)
-        }
-      }
-
-      return options
-    }
-
-    const diagnostics: Diagnostic[] = []
-    const options = loadOptions(file.absolutePath, diagnostics)
-    return { options, diagnostics }
   }
 
   /* ======================================================================== */
@@ -186,13 +101,9 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
       onError?: (message: string) => void,
       sourceFiles?: readonly SourceFile[],
   ): void {
-    try {
-      void sourceFiles // prevent ESLint from whining!
-      this.#fileSystemBuilder.add(fileName, data)
-    } catch (error) {
-      if (! onError) throw error
-      onError(error.message)
-    }
+    void sourceFiles // prevent eslint from complaining
+    if (onError) onError('Politely refusing to write files')
+    else throw new Error('Cowardly refusing to write ' + fileName)
   }
 
   /** [TS] Get the default library associated with the given options */
