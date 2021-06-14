@@ -152,12 +152,36 @@ describe('TypeScript Host', () => {
     expect(host.getSourceFile('bar.json', ScriptTarget.ES2019)).to.equal(json)
     expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020)).to.equal(txt)
 
-    // can not test negative cache easily, as TS uses its own caches internally, too!
-    // expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015, undefined, false)).not.to.equal(ts)
-    // expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016, undefined, false)).not.to.equal(tsx)
-    // expect(host.getSourceFile('bar.js', ScriptTarget.ES2017, undefined, false)).not.to.equal(js)
-    // expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018, undefined, false)).not.to.equal(jsx)
-    // expect(host.getSourceFile('bar.json', ScriptTarget.ES2019, undefined, false)).not.to.equal(json)
-    // expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020, undefined, false)).not.to.equal(txt)
+    // cache with "shouldCreateNewSourceFile = false"
+    expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015, undefined, false)).to.equal(ts)
+    expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016, undefined, false)).to.equal(tsx)
+    expect(host.getSourceFile('bar.js', ScriptTarget.ES2017, undefined, false)).to.equal(js)
+    expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018, undefined, false)).to.equal(jsx)
+    expect(host.getSourceFile('bar.json', ScriptTarget.ES2019, undefined, false)).to.equal(json)
+    expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020, undefined, false)).to.equal(txt)
+
+    // cache with "shouldCreateNewSourceFile = true"
+    expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015, undefined, true)).not.to.equal(ts)
+    expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016, undefined, true)).not.to.equal(tsx)
+    expect(host.getSourceFile('bar.js', ScriptTarget.ES2017, undefined, true)).not.to.equal(js)
+    expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018, undefined, true)).not.to.equal(jsx)
+    expect(host.getSourceFile('bar.json', ScriptTarget.ES2019, undefined, true)).not.to.equal(json)
+    expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020, undefined, true)).not.to.equal(txt)
+
+    // cache with "shouldCreateNewSourceFile = false" but new copy from above is cached
+    expect(host.getSourceFile('bar.ts', ScriptTarget.ES2015, undefined, false)).not.to.equal(ts)
+    expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2016, undefined, false)).not.to.equal(tsx)
+    expect(host.getSourceFile('bar.js', ScriptTarget.ES2017, undefined, false)).not.to.equal(js)
+    expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2018, undefined, false)).not.to.equal(jsx)
+    expect(host.getSourceFile('bar.json', ScriptTarget.ES2019, undefined, false)).not.to.equal(json)
+    expect(host.getSourceFile('bar.txt', ScriptTarget.ES2020, undefined, false)).not.to.equal(txt)
+
+    // cache with different "languageVersion"
+    expect(host.getSourceFile('bar.ts', ScriptTarget.ES2020)).to.not.equal(ts)
+    expect(host.getSourceFile('bar.tsx', ScriptTarget.ES2019)).to.not.equal(tsx)
+    expect(host.getSourceFile('bar.js', ScriptTarget.ES2018)).to.not.equal(js)
+    expect(host.getSourceFile('bar.jsx', ScriptTarget.ES2017)).to.not.equal(jsx)
+    expect(host.getSourceFile('bar.json', ScriptTarget.ES2016)).to.not.equal(json)
+    expect(host.getSourceFile('bar.txt', ScriptTarget.ES2015)).to.not.equal(txt)
   })
 })

@@ -20,7 +20,7 @@ import {
 } from 'typescript'
 
 import { VirtualFile, VirtualFileSystem, VirtualFileSystemBuilder } from '../virtual-file-system'
-import { AbsolutePath, caseSensitivePaths, getAbsolutePath, getDirectory } from '../utils/paths'
+import { AbsolutePath, caseSensitivePaths, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: Diagnostic[] }
 
@@ -34,8 +34,12 @@ type CacheKey = string & { __cache_key: any }
 
 const cache = new Map<CacheKey, SourceFile>()
 
-function cacheKey(data: string): CacheKey {
-  return createHash('sha256').update(data, 'utf8').digest('hex') as CacheKey
+function hashString(data: string): string {
+  return createHash('sha256').update(data, 'utf8').digest('hex')
+}
+
+function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
+  return `${hashString(data)}/${languageVersion}` as CacheKey
 }
 
 /* ========================================================================== *
@@ -103,8 +107,10 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
         const directory = getDirectory(fileName)
         const absolutePath = getAbsolutePath(directory, extendsPath)
         if (resolutionStack.indexOf(absolutePath) >= 0) {
+          const relativePath = getRelativePath(directory, absolutePath)
+          const stack = resolutionStack.map((path) => getRelativePath(directory, path)).join('\n - ')
           diagnostics.push({
-            messageText: `Cyclical dependency reading "${extendsPath}"`,
+            messageText: `Circularity detected while resolving configuration "${relativePath}\n - ${stack}"`,
             category: DiagnosticCategory.Error,
             code: 0,
             start: undefined,
@@ -143,11 +149,6 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
       const data = file.contentsSync()
       const path = file.absolutePath
-      const hash = cacheKey(data)
-
-      // Don't recreate unless we have to
-      const cached = cache.get(hash)
-      if (cached && (! shouldCreateNewSourceFile)) return cached
 
       // Determine the script kind from the extension
       const extension = extname(file.absolutePath).toLowerCase()
@@ -159,9 +160,14 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
           extension == '.json' ? ScriptKind.JSON :
           ScriptKind.Unknown
 
+      // Don't recreate unless we have to
+      const key = cacheKey(data, languageVersion)
+      const cached = cache.get(key)
+      if (cached && (! shouldCreateNewSourceFile)) return cached
+
       // Create the source file and cache it
       const source = createSourceFile(path, data, languageVersion, false, kind)
-      cache.set(hash, source)
+      cache.set(key, source)
       return source
     } catch (error) {
       if (! onError) throw error
@@ -222,7 +228,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Create a hash for the given string, uses SHA256(HEX) */
   createHash(data: string): string {
-    return cacheKey(data)
+    return hashString(data)
   }
 
   /** [TS] Return the new line sequence used by this platform */
