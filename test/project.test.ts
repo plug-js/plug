@@ -1,7 +1,7 @@
 import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { relative } from 'path'
-import { getProjectDirectory, setProjectDirectory } from '../src/project'
+import { getProjectDirectory, setProjectDirectory } from '../src'
 
 describe('Project', () => {
   it('should set the project directory', () => {

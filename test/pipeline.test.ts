@@ -1,8 +1,6 @@
 import { expect } from 'chai'
 import { relative } from 'path'
-import { Plug } from '../src/plug'
-import { Pipeline } from '../src/pipeline'
-import { getProjectDirectory } from '../src/project'
+import { Plug, Pipeline, getProjectDirectory } from '../src'
 
 describe('Plug Pipelines', () => {
   it('should construct a simple pipeline', async () => {
