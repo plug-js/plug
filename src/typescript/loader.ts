@@ -13,6 +13,7 @@ import { getCompilerOptions } from './options'
 import { VirtualFileSystem } from '../virtual-file-system'
 import { TypeScriptHost } from './host'
 import { extname } from 'path'
+import { getAbsolutePath, getCurrentDirectoryPath } from '../utils/paths'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })
@@ -55,11 +56,13 @@ export function reportAndFail(diagnostics: readonly Diagnostic[], host: TypeScri
 /**
  * Load our build file from TypeScript (or JavaScript)
  */
-export function loadBuildFile(fileSystem: VirtualFileSystem, fileName: string, tsConfig?: string): any {
-  const path = fileSystem.get(fileName).absolutePath
-  if (extname(path) === '.js') return require(path)
+export function loadBuildFile(directory: string, fileName: string, tsConfig?: string): any {
+  const directoryPath = getCurrentDirectoryPath(directory)
+  const absolutePath = getAbsolutePath(directoryPath, fileName)
+  if (extname(absolutePath) === '.js') return require(absolutePath)
 
   // Create our host (compiler / reporter / ...)
+  const fileSystem = new VirtualFileSystem(directoryPath)
   const host = new TypeScriptHost(fileSystem)
 
   // Read our compiler options and fail on error
@@ -78,8 +81,8 @@ export function loadBuildFile(fileSystem: VirtualFileSystem, fileName: string, t
   options.listEmittedFiles = true
 
   // Our directories here for the loader
-  options.outDir = fileSystem.directoryPath
-  options.rootDir = fileSystem.directoryPath
+  options.outDir = directoryPath
+  options.rootDir = directoryPath
   options.rootDirs = undefined
   options.noEmit = false
 
@@ -101,5 +104,5 @@ export function loadBuildFile(fileSystem: VirtualFileSystem, fileName: string, t
 
   // Build our output file system and require our build file
   loaderFileSystem = builder.build()
-  return require(path)
+  return require(absolutePath)
 }
