@@ -76,6 +76,20 @@ export interface VirtualFileSystemBuilder {
   /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileSystem` */
   add(path: string, contents: string, sourceMap: RawSourceMap): this
 
+  /** Add a `VirtualFile` to the `VirtualFileSystem` */
+  addFile(path: string): VirtualFile
+  /** Add a `VirtualFile` with the specified contents to the `VirtualFileSystem` */
+  addFile(path: string, contents: string): VirtualFile
+  /**
+   * Add a `VirtualFile` with the specified contents to the `VirtualFileSystem`.
+   *
+   * When `sourceMap` is `true` (default) the source map of the virtual file
+   * will be read parsing the contents specified.
+   */
+  addFile(path: string, contents: string, sourceMap: boolean): VirtualFile
+  /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileSystem` */
+  addFile(path: string, contents: string, sourceMap: RawSourceMap): VirtualFile
+
   /** Return the `VirtualFileSystem` instance being built */
   build(): VirtualFileSystem
 }

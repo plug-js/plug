@@ -111,6 +111,15 @@ describe('Virtual File System', () => {
     expect(virtualFileSystem.list()).not.to.equal(files) // same instance
   })
 
+  it('should return files while building a VirtualFileSystem', () => {
+    const builder = VirtualFileSystem.builder('/foo')
+    const file = builder.addFile('bar.txt')
+    const fileSystem = builder.build()
+
+    expect(file.fileSystem).to.equal(fileSystem)
+    expect(fileSystem.get('bar.txt')).to.equal(file)
+  })
+
   it('should not continue building a VirtualFileSystem', () => {
     const builder = VirtualFileSystem.builder()
     builder.build() // should block the building

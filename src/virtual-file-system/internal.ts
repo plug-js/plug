@@ -158,7 +158,6 @@ class VirtualFileImpl implements VirtualFile {
   async sourceMap(): Promise<RawSourceMap | undefined> {
     if (this.#sourceMap === false) return undefined
     if (this.#sourceMap) return this.#sourceMap
-
     const sourceMapFile = (await this.#read()).sourceMapFile
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
@@ -209,19 +208,27 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
   static builder(path?: string): VirtualFileSystemBuilder {
     let fileSystem = new VirtualFileSystemImpl(path) as VirtualFileSystemImpl | undefined
 
-    return {
-      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        if (! fileSystem) throw new Error('Virtual file system already built')
+    function add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
+      if (! fileSystem) throw new Error('Virtual file system already built')
 
-        const absolutePath = getAbsolutePath(fileSystem.directoryPath, path)
-        const file = new VirtualFileImpl(fileSystem, absolutePath, contents, sourceMap)
-        fileSystem.#cache.set(file.canonicalPath, file)
-        fileSystem.#files.push(file)
+      const absolutePath = getAbsolutePath(fileSystem.directoryPath, path)
+      const file = new VirtualFileImpl(fileSystem, absolutePath, contents, sourceMap)
+      fileSystem.#cache.set(file.canonicalPath, file)
+      fileSystem.#files.push(file)
+      return file
+    }
+
+    return {
+      add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
+        add(path, contents, sourceMap)
         return this
       },
 
-      build(): VirtualFileSystem {
+      addFile(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
+        return add(path, contents, sourceMap)
+      },
+
+      build() {
         if (! fileSystem) throw new Error('Virtual file system already built')
         const builtFileSystem = fileSystem
         fileSystem = undefined
