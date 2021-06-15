@@ -9,7 +9,13 @@ import { DirectoryPath } from './paths'
 export type GlobOptions = Pick<Options, 'baseNameMatch'
   | 'braceExpansion' | 'caseSensitiveMatch' | 'concurrency' | 'deep'
   | 'dot' | 'extglob' | 'followSymbolicLinks' | 'globstar' | 'ignore'
-  | 'throwErrorOnBrokenSymbolicLink'>
+  | 'throwErrorOnBrokenSymbolicLink'> & {
+  /**
+   * Include `node_modules` in glob matching
+   * @default false
+   */
+  includeNodeModules?: boolean
+}
 
 const defaults: Options = {
   absolute: false, // VFS always does the resolution
@@ -34,6 +40,12 @@ export async function glob(
 ): Promise<VirtualFileSystem> {
   // Prepare the glob options, assigning our defaults and current directory
   const opts: Options = Object.assign({}, options, defaults, { cwd: directory })
+
+  // istanbul ignore else - Ignore node modules by default
+  if (! options.includeNodeModules) {
+    opts.ignore = options.ignore || []
+    opts.ignore.push('**/node_modules')
+  }
 
   // As we stream globs, we read their contents. This ensures that files
   // can be read and processed later on, and optimises TypeScript which uses
