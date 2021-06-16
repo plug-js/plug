@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFileListImpl } from './internal'
+import { VirtualFileListImpl } from './list'
 import { AbsolutePath, RelativePath, CanonicalPath, DirectoryPath } from '../utils/paths'
 
 /**
