@@ -8,6 +8,7 @@ import {
   getAbsolutePath,
   getCurrentDirectoryPath,
   getDirectoryPath,
+  AbsolutePath,
 } from '../utils/paths'
 import { VirtualFileImpl } from './file'
 
@@ -15,9 +16,33 @@ import { VirtualFileImpl } from './file'
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
  * ========================================================================== */
 
+class VirtualFileListBuilderImpl implements VirtualFileListBuilder {
+  #list?: VirtualFileListImpl
+
+  constructor(list: VirtualFileListImpl) {
+    this.#list = list
+  }
+
+  add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): this {
+    if (! this.#list) throw new Error('Virtual file list already built')
+    this.#list.add(pathOrFile, contents, sourceMap)
+    return this
+  }
+
+  build(): VirtualFileList {
+    if (! this.#list) throw new Error('Virtual file list already built')
+    try {
+      return this.#list
+    } finally {
+      this.#list = undefined
+    }
+  }
+}
+
+
 export class VirtualFileListImpl implements VirtualFileList {
   #cache = new Map<CanonicalPath, VirtualFile>()
-  #files = [] as VirtualFile[]
+  #files = new Map<AbsolutePath, VirtualFile>()
 
   readonly directoryPath: DirectoryPath
 
@@ -39,12 +64,17 @@ export class VirtualFileListImpl implements VirtualFileList {
   }
 
   list(): readonly VirtualFile[] {
-    return [ ...this.#files ]
+    return [ ...this.#files.values() ]
   }
 
   builder(path?: string): VirtualFileListBuilder {
     const directory = getDirectoryPath(this.directoryPath, path)
     return VirtualFileListImpl.builder(directory)
+  }
+
+  clone(path?: string): VirtualFileList {
+    // const directory = getDirectoryPath(this.directoryPath, path)
+    throw new Error()
   }
 
   add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
@@ -57,26 +87,11 @@ export class VirtualFileListImpl implements VirtualFileList {
     }
 
     this.#cache.set(file.canonicalPath, file)
-    this.#files.push(file)
+    this.#files.set(file.absolutePath, file)
     return file
   }
 
   static builder(path?: string): VirtualFileListBuilder {
-    let files = new VirtualFileListImpl(path) as VirtualFileListImpl | undefined
-
-    return {
-      add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        if (! files) throw new Error('Virtual file list already built')
-        files.add(pathOrFile, contents, sourceMap)
-        return this
-      },
-
-      build() {
-        if (! files) throw new Error('Virtual file list already built')
-        const built = files
-        files = undefined
-        return built
-      },
-    }
+    return new VirtualFileListBuilderImpl(new VirtualFileListImpl(path))
   }
 }
