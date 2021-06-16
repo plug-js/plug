@@ -37,6 +37,9 @@ export interface VirtualFile {
 
   /** Return a `VirtualFile` whose path is relative to this one */
   get(path: string): VirtualFile
+
+  /** Return this same `VirtualFile` in another with a different file system */
+  clone(fileSystem: VirtualFileSystem): VirtualFile
 }
 
 /**
@@ -55,6 +58,22 @@ export interface VirtualFileSystem {
 
   /** Create a new `VirtualFileSystemBuilder` */
   builder(path?: string): VirtualFileSystemBuilder
+
+  /** Add a `VirtualFile` to this `VirtualFileSystem` */
+  add(file: VirtualFile): VirtualFile
+  /** Add a `VirtualFile` to this `VirtualFileSystem` */
+  add(path: string): VirtualFile
+  /** Add a `VirtualFile` with the specified contents to this `VirtualFileSystem` */
+  add(path: string, contents: string): VirtualFile
+  /** Add a `VirtualFile` with the specified contents and source map to this `VirtualFileSystem` */
+  add(path: string, contents: string, sourceMap: RawSourceMap): VirtualFile
+  /**
+   * Add a `VirtualFile` with the specified contents to this `VirtualFileSystem`.
+   *
+   * When `sourceMap` is `true` (default) the source map of the virtual file
+   * will be read parsing the contents specified.
+   */
+  add(path: string, contents: string, sourceMap: boolean): VirtualFile
 }
 
 /**
@@ -63,9 +82,13 @@ export interface VirtualFileSystem {
  */
 export interface VirtualFileSystemBuilder {
   /** Add a `VirtualFile` to the `VirtualFileSystem` */
+  add(file: VirtualFile): this
+  /** Add a `VirtualFile` to the `VirtualFileSystem` */
   add(path: string): this
   /** Add a `VirtualFile` with the specified contents to the `VirtualFileSystem` */
   add(path: string, contents: string): this
+  /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileSystem` */
+  add(path: string, contents: string, sourceMap: RawSourceMap): this
   /**
    * Add a `VirtualFile` with the specified contents to the `VirtualFileSystem`.
    *
@@ -73,22 +96,6 @@ export interface VirtualFileSystemBuilder {
    * will be read parsing the contents specified.
    */
   add(path: string, contents: string, sourceMap: boolean): this
-  /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileSystem` */
-  add(path: string, contents: string, sourceMap: RawSourceMap): this
-
-  /** Add a `VirtualFile` to the `VirtualFileSystem` */
-  addFile(path: string): VirtualFile
-  /** Add a `VirtualFile` with the specified contents to the `VirtualFileSystem` */
-  addFile(path: string, contents: string): VirtualFile
-  /**
-   * Add a `VirtualFile` with the specified contents to the `VirtualFileSystem`.
-   *
-   * When `sourceMap` is `true` (default) the source map of the virtual file
-   * will be read parsing the contents specified.
-   */
-  addFile(path: string, contents: string, sourceMap: boolean): VirtualFile
-  /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileSystem` */
-  addFile(path: string, contents: string, sourceMap: RawSourceMap): VirtualFile
 
   /** Return the `VirtualFileSystem` instance being built */
   build(): VirtualFileSystem

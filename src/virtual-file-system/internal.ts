@@ -26,8 +26,6 @@ type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?:
 class VirtualFileImpl implements VirtualFile {
   readonly fileSystem: VirtualFileSystem
   readonly absolutePath: AbsolutePath
-  readonly relativePath: RelativePath
-  readonly canonicalPath: CanonicalPath
 
   #promise?: Promise<VirtualFileData>
   #data?: VirtualFileData
@@ -39,13 +37,8 @@ class VirtualFileImpl implements VirtualFile {
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
   ) {
-    const relativePath = getRelativePath(fileSystem.directoryPath, absolutePath)
-    const canonicalPath = getCanonicalPath(absolutePath)
-
     this.fileSystem = fileSystem
     this.absolutePath = absolutePath
-    this.relativePath = relativePath
-    this.canonicalPath = canonicalPath
 
     if (contents != undefined) {
       const lastModified = Date.now()
@@ -58,10 +51,26 @@ class VirtualFileImpl implements VirtualFile {
     }
   }
 
+  get relativePath(): RelativePath {
+    return getRelativePath(this.fileSystem.directoryPath, this.absolutePath)
+  }
+
+  get canonicalPath(): CanonicalPath {
+    return getCanonicalPath(this.absolutePath)
+  }
+
   get(path: string): VirtualFile {
     const directory = getDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
     return this.fileSystem.get(absolutePath)
+  }
+
+  clone(fileSystem: VirtualFileSystem): VirtualFile {
+    const file = new VirtualFileImpl(fileSystem, this.absolutePath)
+    file.#sourceMap = this.#sourceMap
+    file.#promise = this.#promise
+    file.#data = this.#data
+    return file
   }
 
   /* ======================================================================== *
@@ -205,27 +214,28 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
     return VirtualFileSystemImpl.builder(directory)
   }
 
+  add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
+    let file = undefined as VirtualFile | undefined
+    if (typeof pathOrFile === 'string') {
+      const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
+      file = new VirtualFileImpl(this, absolutePath, contents, sourceMap)
+    } else {
+      file = pathOrFile.fileSystem === this ? pathOrFile : pathOrFile.clone(this)
+    }
+
+    this.#cache.set(file.canonicalPath, file)
+    this.#files.push(file)
+    return file
+  }
+
   static builder(path?: string): VirtualFileSystemBuilder {
     let fileSystem = new VirtualFileSystemImpl(path) as VirtualFileSystemImpl | undefined
 
-    function add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
-      if (! fileSystem) throw new Error('Virtual file system already built')
-
-      const absolutePath = getAbsolutePath(fileSystem.directoryPath, path)
-      const file = new VirtualFileImpl(fileSystem, absolutePath, contents, sourceMap)
-      fileSystem.#cache.set(file.canonicalPath, file)
-      fileSystem.#files.push(file)
-      return file
-    }
-
     return {
-      add(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        add(path, contents, sourceMap)
+      add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap) {
+        if (! fileSystem) throw new Error('Virtual file system already built')
+        fileSystem.add(pathOrFile, contents, sourceMap)
         return this
-      },
-
-      addFile(path: string, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        return add(path, contents, sourceMap)
       },
 
       build() {

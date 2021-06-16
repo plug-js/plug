@@ -111,13 +111,36 @@ describe('Virtual File System', () => {
     expect(virtualFileSystem.list()).not.to.equal(files) // same instance
   })
 
-  it('should return files while building a VirtualFileSystem', () => {
-    const builder = VirtualFileSystem.builder('/foo')
-    const file = builder.addFile('bar.txt')
-    const fileSystem = builder.build()
+  it('should add files to an existing VirtualFileSystem', () => {
+    const fileSystem = new VirtualFileSystem('/foo')
+    const file = fileSystem.add('bar.txt')
 
     expect(file.fileSystem).to.equal(fileSystem)
     expect(fileSystem.get('bar.txt')).to.equal(file)
+
+    expect(fileSystem.add(file)).to.equal(file)
+
+    const fileSystem2 = new VirtualFileSystem('/foo/bar')
+    const file2 = fileSystem2.add(file)
+
+    expect(file2.relativePath).to.equal('../bar.txt')
+
+    expect(file2.fileSystem).to.equal(fileSystem2)
+    expect(fileSystem2.get('../bar.txt')).to.equal(file2)
+    expect(fileSystem2.get('/foo/bar.txt')).to.equal(file2)
+
+    expect(fileSystem2.add(file2)).to.equal(file2)
+
+    expect(file).not.to.equal(file2)
+
+    const file3 = fileSystem.add('hello.txt', 'hello, world!', { test: true } as any)
+    const file4 = file3.clone(fileSystem2)
+
+    expect(file4.fileSystem).to.equal(fileSystem2)
+    expect(file4.absolutePath).to.equal('/foo/hello.txt')
+    expect(file4.relativePath).to.equal('../hello.txt')
+    expect(file4.contentsSync()).to.equal('hello, world!')
+    expect(file4.sourceMapSync()).to.eql({ test: true })
   })
 
   it('should not continue building a VirtualFileSystem', () => {
