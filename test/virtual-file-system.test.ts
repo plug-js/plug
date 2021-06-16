@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { VirtualFile, VirtualFileSystem } from '../src/virtual-file-system'
+import { VirtualFile, VirtualFileSystem } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'

@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { DiagnosticCategory, getDefaultCompilerOptions, ModuleKind } from 'typescript'
 import { getCompilerOptions } from '../src/typescript/options'
-import { VirtualFileSystem } from '../src/virtual-file-system'
+import { VirtualFileSystem } from '../src/files'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {

@@ -4,7 +4,7 @@ import { basename, isAbsolute } from 'path'
 import { ScriptKind, ScriptTarget } from 'typescript'
 import { TypeScriptHost } from '../src/typescript/host'
 import { caseSensitivePaths } from '../src/utils/paths'
-import { VirtualFileSystem } from '../src/virtual-file-system'
+import { VirtualFileSystem } from '../src/files'
 
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {

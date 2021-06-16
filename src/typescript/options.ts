@@ -7,7 +7,7 @@ import {
   readConfigFile,
 } from 'typescript'
 
-import { VirtualFile, VirtualFileSystem } from '../virtual-file-system'
+import { VirtualFile, VirtualFileSystem } from '../files'
 import { AbsolutePath, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: readonly Diagnostic[] }

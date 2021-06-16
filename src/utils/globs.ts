@@ -1,5 +1,5 @@
 import { Options, stream } from 'fast-glob'
-import { VirtualFileSystem } from '../virtual-file-system'
+import { VirtualFileSystem } from '../files'
 import { DirectoryPath } from './paths'
 
 /**

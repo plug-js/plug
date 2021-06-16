@@ -13,7 +13,7 @@ import {
   FormatDiagnosticsHost,
 } from 'typescript'
 
-import { VirtualFileSystem } from '../virtual-file-system'
+import { VirtualFileSystem } from '../files'
 import { caseSensitivePaths } from '../utils/paths'
 
 /* ========================================================================== *

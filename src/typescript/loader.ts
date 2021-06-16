@@ -10,7 +10,7 @@ import {
 
 import { TypeScriptFailure } from './diagnostic'
 import { getCompilerOptions } from './options'
-import { VirtualFileSystem } from '../virtual-file-system'
+import { VirtualFileSystem } from '../files'
 import { TypeScriptHost } from './host'
 import { extname } from 'path'
 import { getAbsolutePath, getCurrentDirectoryPath } from '../utils/paths'

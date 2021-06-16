@@ -4,7 +4,7 @@ import { Plug } from './index'
 import { getProjectDirectory } from './project'
 import { glob, GlobOptions } from './utils/globs'
 import { getDirectoryPath } from './utils/paths'
-import { VirtualFileSystem } from './virtual-file-system'
+import { VirtualFileSystem } from './files'
 
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
