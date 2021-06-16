@@ -14,9 +14,9 @@ export class Pipe implements Plug {
     this.#plug = plug
   }
 
-  async process(list: VirtualFileList): Promise<VirtualFileList> {
-    if (this.#parent) list = await this.#parent.process(list)
-    if (this.#plug) list = await this.#plug.process(list)
+  async process(list: VirtualFileList, taskNames?: readonly string[]): Promise<VirtualFileList> {
+    if (this.#parent) list = await this.#parent.process(list, taskNames)
+    if (this.#plug) list = await this.#plug.process(list, taskNames)
     return list
   }
 

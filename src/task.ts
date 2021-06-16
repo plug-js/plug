@@ -2,7 +2,7 @@ import assert from 'assert'
 import { Plug } from '.'
 import { VirtualFileList } from './files'
 import { Pipe } from './pipe'
-import { getProjectDirectory } from './project'
+import { getProjectDirectory, getTaskName } from './project'
 
 export type TaskCall = (() => Pipe) & {
   readonly run: (input?: VirtualFileList) => Promise<VirtualFileList>
@@ -13,7 +13,8 @@ function makeCall(task: Task): TaskCall {
   // Our task call returns a Pipe initially plugged with the task's process
   const call = (): Pipe => Pipe.pipe().plug(task.process.bind(task))
   // The "run()" (convenience) method runs the task from the project directory
-  call.run = async (input?: VirtualFileList) => task.process(input || new VirtualFileList(getProjectDirectory()))
+  call.run = async (input?: VirtualFileList) =>
+    task.process(input || new VirtualFileList(getProjectDirectory()), [])
   // And we just remember our task, too, before returning
   call.task = task
   return call
@@ -26,9 +27,9 @@ class Parallel implements Plug {
     this.#tasks = tasks
   }
 
-  async process(input: VirtualFileList): Promise<VirtualFileList> {
+  async process(input: VirtualFileList, taskNames?: readonly string[]): Promise<VirtualFileList> {
     // Start each of our taks, processing the same file list, our input
-    const promises = this.#tasks.map((task) => task.task.process(input))
+    const promises = this.#tasks.map((task) => task.task.process(input, taskNames))
     // Make sure all tasks run correctly and get all output file lists
     const outputs = await Promise.all(promises)
 
@@ -54,8 +55,8 @@ export class Task implements Plug {
     return this.#description
   }
 
-  process(input: VirtualFileList): VirtualFileList | Promise<VirtualFileList> {
-    return this.#source().process(input)
+  process(input: VirtualFileList, taskNames: readonly string[] = []): VirtualFileList | Promise<VirtualFileList> {
+    return this.#source().process(input, [ ...taskNames, getTaskName(this) ])
   }
 
   /* ======================================================================== */
