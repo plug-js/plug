@@ -7,13 +7,13 @@ import {
   readConfigFile,
 } from 'typescript'
 
-import { VirtualFile, VirtualFileSystem } from '../files'
+import { VirtualFile, VirtualFileList } from '../files'
 import { AbsolutePath, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: readonly Diagnostic[] }
 
 /** Load compiler options from a "tsconfig.json" file */
-export function getCompilerOptions(fileSystem: VirtualFileSystem, fileName?: string): CompilerOptionsAndDiagnostics {
+export function getCompilerOptions(fileSystem: VirtualFileList, fileName?: string): CompilerOptionsAndDiagnostics {
   let file = undefined as VirtualFile | undefined
 
   // If there's no file, we load either "tsconfig.json" or the defaults

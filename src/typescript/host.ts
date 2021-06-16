@@ -13,7 +13,7 @@ import {
   FormatDiagnosticsHost,
 } from 'typescript'
 
-import { VirtualFileSystem } from '../files'
+import { VirtualFileList } from '../files'
 import { caseSensitivePaths } from '../utils/paths'
 
 /* ========================================================================== *
@@ -42,10 +42,10 @@ function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
  * Implementation of a TypeScript compiler host wrapping our virtual file system
  */
 export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
-  #fileSystem: VirtualFileSystem
+  #fileSystem: VirtualFileList
 
   /** Create a new `TypeScriptHost` */
-  constructor(fileSystem: VirtualFileSystem) {
+  constructor(fileSystem: VirtualFileList) {
     this.#fileSystem = fileSystem
   }
 

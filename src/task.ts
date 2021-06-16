@@ -21,14 +21,15 @@ export class PlugTask extends Pipeline {
 
   /* ======================================================================== */
 
-  static task(source: TaskSource): PlugTask
-  static task(description: string, source: TaskSource): PlugTask
+  static task(source: TaskSource): () => PlugTask
+  static task(description: string, source: TaskSource): () => PlugTask
 
-  static task(descriptionOrSource: string | TaskSource, optionalSource?: TaskSource): PlugTask {
+  static task(descriptionOrSource: string | TaskSource, optionalSource?: TaskSource): () => PlugTask {
     const { description, source } = typeof descriptionOrSource === 'string' ?
       { description: descriptionOrSource, source: optionalSource } :
       { description: undefined, source: descriptionOrSource }
     assert(source, 'Task source missing')
-    return new PlugTask(source, description)
+    // return new PlugTask(source, description)
+    throw new Error()
   }
 }

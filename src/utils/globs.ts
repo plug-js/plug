@@ -1,5 +1,5 @@
 import { Options, stream } from 'fast-glob'
-import { VirtualFileSystem } from '../files'
+import { VirtualFileList } from '../files'
 import { DirectoryPath } from './paths'
 
 /**
@@ -28,7 +28,7 @@ const defaults: Options = {
 }
 
 /**
- * Create a `VirtualFileSystem` out of a glob match executed in a directory.
+ * Create a `VirtualFileList` out of a glob match executed in a directory.
  *
  * This will also read and cache the contents of the files while streaming the
  * directory, in order to validate their readability and speed up later stages.
@@ -37,7 +37,7 @@ export async function glob(
     directory: DirectoryPath,
     globs: string[],
     options: GlobOptions = {},
-): Promise<VirtualFileSystem> {
+): Promise<VirtualFileList> {
   // Prepare the glob options, assigning our defaults and current directory
   const opts: Options = Object.assign({}, options, defaults, { cwd: directory })
 
@@ -53,7 +53,7 @@ export async function glob(
   const promises: Promise<string>[] = []
 
   // Create our builder, stream our entries, and read the files
-  const fileSystem = new VirtualFileSystem(directory)
+  const fileSystem = new VirtualFileList(directory)
   for await (const entry of stream(globs, opts)) {
     const file = fileSystem.add(entry.toString())
     promises.push(file.contents())

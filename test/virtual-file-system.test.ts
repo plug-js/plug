@@ -1,52 +1,52 @@
 import { expect } from 'chai'
-import { VirtualFile, VirtualFileSystem } from '../src/files'
+import { VirtualFile, VirtualFileList } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
 
 describe('Virtual File System', () => {
-  it('should create a new VirtualFileSystem', () => {
-    expect(new VirtualFileSystem())
-        .to.be.instanceOf(VirtualFileSystem)
+  it('should create a new VirtualFileList', () => {
+    expect(new VirtualFileList())
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', process.cwd())
-    expect(new VirtualFileSystem('foo'))
-        .to.be.instanceOf(VirtualFileSystem)
+    expect(new VirtualFileList('foo'))
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', process.cwd() + '/foo')
-    expect(new VirtualFileSystem('/foo'))
-        .to.be.instanceOf(VirtualFileSystem)
+    expect(new VirtualFileList('/foo'))
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
 
-    expect(VirtualFileSystem.builder().build())
-        .to.be.instanceOf(VirtualFileSystem)
+    expect(VirtualFileList.builder().build())
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', process.cwd())
-    expect(VirtualFileSystem.builder('foo').build())
-        .to.be.instanceOf(VirtualFileSystem)
+    expect(VirtualFileList.builder('foo').build())
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', process.cwd() + '/foo')
-    expect(VirtualFileSystem.builder('/foo').build())
-        .to.be.instanceOf(VirtualFileSystem)
+    expect(VirtualFileList.builder('/foo').build())
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
 
-    const virtualFileSystem = new VirtualFileSystem('/foo/bar')
+    const virtualFileSystem = new VirtualFileList('/foo/bar')
 
     expect(virtualFileSystem.builder().build())
-        .to.be.instanceOf(VirtualFileSystem)
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/bar')
     expect(virtualFileSystem.builder('baz').build())
-        .to.be.instanceOf(VirtualFileSystem)
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/bar/baz')
     expect(virtualFileSystem.builder('..').build())
-        .to.be.instanceOf(VirtualFileSystem)
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
     expect(virtualFileSystem.builder('../baz').build())
-        .to.be.instanceOf(VirtualFileSystem)
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/baz')
     expect(virtualFileSystem.builder('/baz').build())
-        .to.be.instanceOf(VirtualFileSystem)
+        .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/baz')
   })
 
-  it('should build a VirtualFileSystem with files', () => {
-    const virtualFileSystem = VirtualFileSystem
+  it('should build a VirtualFileList with files', () => {
+    const virtualFileSystem = VirtualFileList
         .builder('/foo')
         .add('one.txt')
         .build()
@@ -111,8 +111,8 @@ describe('Virtual File System', () => {
     expect(virtualFileSystem.list()).not.to.equal(files) // same instance
   })
 
-  it('should add files to an existing VirtualFileSystem', () => {
-    const fileSystem = new VirtualFileSystem('/foo')
+  it('should add files to an existing VirtualFileList', () => {
+    const fileSystem = new VirtualFileList('/foo')
     const file = fileSystem.add('bar.txt')
 
     expect(file.fileSystem).to.equal(fileSystem)
@@ -120,7 +120,7 @@ describe('Virtual File System', () => {
 
     expect(fileSystem.add(file)).to.equal(file)
 
-    const fileSystem2 = new VirtualFileSystem('/foo/bar')
+    const fileSystem2 = new VirtualFileList('/foo/bar')
     const file2 = fileSystem2.add(file)
 
     expect(file2.relativePath).to.equal('../bar.txt')
@@ -143,8 +143,8 @@ describe('Virtual File System', () => {
     expect(file4.sourceMapSync()).to.eql({ test: true })
   })
 
-  it('should not continue building a VirtualFileSystem', () => {
-    const builder = VirtualFileSystem.builder()
+  it('should not continue building a VirtualFileList', () => {
+    const builder = VirtualFileList.builder()
     builder.build() // should block the building
 
     expect(() => builder.build()).to.throw(Error, 'Virtual file system already built')
@@ -152,7 +152,7 @@ describe('Virtual File System', () => {
   })
 
   it('should honor the case sensitivity of the filesystem', () => {
-    const fileSystem = VirtualFileSystem
+    const fileSystem = VirtualFileList
         .builder(__dirname)
         .add(__filename)
         .build()
@@ -185,7 +185,7 @@ describe('Virtual File System', () => {
 
   describe('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
-      const file1 = new VirtualFileSystem(__dirname).get('this does not exist')
+      const file1 = new VirtualFileList(__dirname).get('this does not exist')
       expect(await file1.exists()).to.be.false
       await expect(file1.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
@@ -194,7 +194,7 @@ describe('Virtual File System', () => {
       await expect(file1.lastModified()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
 
-      const file2 = new VirtualFileSystem(__dirname).get(__dirname)
+      const file2 = new VirtualFileList(__dirname).get(__dirname)
       await expect(file2.exists()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('EISDIR'))
       await expect(file2.contents()).to.be.rejectedWith(Error)
@@ -207,7 +207,7 @@ describe('Virtual File System', () => {
 
     it('should create a VirtualFile', async () => {
       function create(contents: string): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', contents)
             .build()
@@ -231,7 +231,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .build()
@@ -267,7 +267,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .add('bar.js.map', '{"foo":"bar"}')
@@ -304,7 +304,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .build()
@@ -337,7 +337,7 @@ describe('Virtual File System', () => {
     })
 
     it('should read a VirtualFile from disk', async () => {
-      const fileSystem = new VirtualFileSystem(__dirname)
+      const fileSystem = new VirtualFileList(__dirname)
       const file = fileSystem.get(__filename)
       const relative = basename(__filename)
 
@@ -364,13 +364,13 @@ describe('Virtual File System', () => {
 
   describe('Synchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', () => {
-      const file1 = new VirtualFileSystem(__dirname).get('this does not exist')
+      const file1 = new VirtualFileList(__dirname).get('this does not exist')
       expect(file1.existsSync()).to.be.false
       expect(() => file1.contentsSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.sourceMapSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.lastModifiedSync()).to.throw(Error).with.property('code', 'ENOENT')
 
-      const file2 = new VirtualFileSystem(__dirname).get(__dirname)
+      const file2 = new VirtualFileList(__dirname).get(__dirname)
       expect(() => file2.existsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
@@ -379,7 +379,7 @@ describe('Virtual File System', () => {
 
     it('should create a VirtualFile', () => {
       function create(contents: string): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', contents)
             .build()
@@ -403,7 +403,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .build()
@@ -439,7 +439,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .add('bar.js.map', '{"foo":"bar"}')
@@ -476,7 +476,7 @@ describe('Virtual File System', () => {
       const data = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileSystem
+        return VirtualFileList
             .builder('/foo')
             .add('bar.js', data, sourceMap)
             .build()
@@ -509,7 +509,7 @@ describe('Virtual File System', () => {
     })
 
     it('should read a VirtualFile from disk', () => {
-      const fileSystem = new VirtualFileSystem(__dirname)
+      const fileSystem = new VirtualFileList(__dirname)
       const file = fileSystem.get(__filename)
       const relative = basename(__filename)
 

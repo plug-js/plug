@@ -1,14 +1,14 @@
-import { VirtualFileSystem } from './files'
+import { VirtualFileList } from './files'
 
 /**
  * The main interface defining a plug _processor_, a coponent of a plug pipe.
  */
 export interface Plug {
-  process: (input: VirtualFileSystem) => VirtualFileSystem | Promise<VirtualFileSystem>
+  process: (input: VirtualFileList) => VirtualFileList | Promise<VirtualFileList>
 }
 
 export { Pipeline } from './pipeline'
-export { VirtualFileSystem, VirtualFile } from './files'
+export { VirtualFileList as VirtualFileList, VirtualFile } from './files'
 export { getProjectDirectory, setProjectDirectory } from './project'
 
 import { Pipeline } from './pipeline'

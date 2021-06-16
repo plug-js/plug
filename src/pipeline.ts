@@ -4,7 +4,7 @@ import { Plug } from './index'
 import { getProjectDirectory } from './project'
 import { glob, GlobOptions } from './utils/globs'
 import { getDirectoryPath } from './utils/paths'
-import { VirtualFileSystem } from './files'
+import { VirtualFileList } from './files'
 
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
@@ -28,9 +28,9 @@ export type PlugExtension<C extends PlugConstructor<I>, I extends Plug = Plug> =
 
 export class Pipeline {
   #plugs: PlugProcessor[] = []
-  #read: () => Promise<VirtualFileSystem>
+  #read: () => Promise<VirtualFileList>
 
-  protected constructor(read: () => Promise<VirtualFileSystem>) {
+  protected constructor(read: () => Promise<VirtualFileList>) {
     this.#read = read
   }
 
@@ -41,7 +41,7 @@ export class Pipeline {
 
   /* ======================================================================== */
 
-  static async run(pipeline: Pipeline): Promise<VirtualFileSystem> {
+  static async run(pipeline: Pipeline): Promise<VirtualFileList> {
     let fs = await pipeline.#read()
     for (const plug of pipeline.#plugs) fs = await plug(fs)
     return fs

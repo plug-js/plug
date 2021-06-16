@@ -1,11 +1,11 @@
 import { expect } from 'chai'
 import { DiagnosticCategory, getDefaultCompilerOptions, ModuleKind } from 'typescript'
 import { getCompilerOptions } from '../src/typescript/options'
-import { VirtualFileSystem } from '../src/files'
+import { VirtualFileList } from '../src/files'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {
-    const fileSystem = VirtualFileSystem.builder('/foo').build()
+    const fileSystem = VirtualFileList.builder('/foo').build()
 
     let { options, diagnostics } = getCompilerOptions(fileSystem)
     expect(options).to.eql(getDefaultCompilerOptions())
@@ -28,7 +28,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read a basic configuration file', () => {
-    const fileSystem = VirtualFileSystem
+    const fileSystem = VirtualFileList
         .builder('/foo')
         .add('tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
         .add('wrong.json', '{"compilerOptions":{"module":"wrong"}}')
@@ -50,7 +50,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read an extended configuration file', () => {
-    const fileSystem = VirtualFileSystem
+    const fileSystem = VirtualFileList
         .builder('/foo')
         .add('base/tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
         .add('base/wrong.json', '{"compilerOptions":{"module":"wrong"}}')
@@ -83,7 +83,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should detect circular dependencies when reading extended configurations', () => {
-    const fileSystem = VirtualFileSystem
+    const fileSystem = VirtualFileList
         .builder('/foo')
         .add('tsconfig.json', '{"extends":"./one/tsconfig.json"}')
         .add('one/tsconfig.json', '{"extends":"../two/tsconfig.json"}')

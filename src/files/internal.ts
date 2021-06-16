@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFile, VirtualFileSystem, VirtualFileSystemBuilder } from './index'
+import { VirtualFile, VirtualFileList, VirtualFileListBuilder } from './index'
 import { readFileSync, statSync, promises as fs } from 'fs'
 import { extractSourceMap } from '../utils/source-maps'
 
@@ -24,7 +24,7 @@ import {
 type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 class VirtualFileImpl implements VirtualFile {
-  readonly fileSystem: VirtualFileSystem
+  readonly fileSystem: VirtualFileList
   readonly absolutePath: AbsolutePath
 
   #promise?: Promise<VirtualFileData>
@@ -32,7 +32,7 @@ class VirtualFileImpl implements VirtualFile {
   #sourceMap?: RawSourceMap | false
 
   constructor(
-      fileSystem: VirtualFileSystem,
+      fileSystem: VirtualFileList,
       absolutePath: AbsolutePath,
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
@@ -65,7 +65,7 @@ class VirtualFileImpl implements VirtualFile {
     return this.fileSystem.get(absolutePath)
   }
 
-  clone(fileSystem: VirtualFileSystem): VirtualFile {
+  clone(fileSystem: VirtualFileList): VirtualFile {
     const file = new VirtualFileImpl(fileSystem, this.absolutePath)
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
@@ -182,7 +182,7 @@ class VirtualFileImpl implements VirtualFile {
  * VIRTUAL FILE SYSTEM IMPLEMENTATION                                         *
  * ========================================================================== */
 
-export class VirtualFileSystemImpl implements VirtualFileSystem {
+export class VirtualFileListImpl implements VirtualFileList {
   #cache = new Map<CanonicalPath, VirtualFile>()
   #files = [] as VirtualFile[]
 
@@ -209,9 +209,9 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
     return [ ...this.#files ]
   }
 
-  builder(path?: string): VirtualFileSystemBuilder {
+  builder(path?: string): VirtualFileListBuilder {
     const directory = getDirectoryPath(this.directoryPath, path)
-    return VirtualFileSystemImpl.builder(directory)
+    return VirtualFileListImpl.builder(directory)
   }
 
   add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
@@ -228,8 +228,8 @@ export class VirtualFileSystemImpl implements VirtualFileSystem {
     return file
   }
 
-  static builder(path?: string): VirtualFileSystemBuilder {
-    let fileSystem = new VirtualFileSystemImpl(path) as VirtualFileSystemImpl | undefined
+  static builder(path?: string): VirtualFileListBuilder {
+    let fileSystem = new VirtualFileListImpl(path) as VirtualFileListImpl | undefined
 
     return {
       add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap) {

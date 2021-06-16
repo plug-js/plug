@@ -1,4 +1,4 @@
-import { Plug, Pipeline, VirtualFileSystem } from '..'
+import { Plug, Pipeline, VirtualFileList } from '..'
 
 declare module '../pipeline' {
   interface Pipeline {
@@ -11,7 +11,7 @@ class SavePlug implements Plug {
     void directory
   }
 
-  async process(fs: VirtualFileSystem): Promise<VirtualFileSystem> {
+  async process(fs: VirtualFileList): Promise<VirtualFileList> {
     return fs
   }
 }

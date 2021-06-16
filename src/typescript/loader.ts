@@ -10,7 +10,7 @@ import {
 
 import { TypeScriptFailure } from './diagnostic'
 import { getCompilerOptions } from './options'
-import { VirtualFileSystem } from '../files'
+import { VirtualFileList } from '../files'
 import { TypeScriptHost } from './host'
 import { extname } from 'path'
 import { getAbsolutePath, getCurrentDirectoryPath } from '../utils/paths'
@@ -21,7 +21,7 @@ sourceMapSupport.install({ environment: 'node' })
 // HACK ZONE - intercept requests for ".ts" files in Node's loader. Note that
 // files _must exist_ on disk in order for this to work, so we'll just present
 // the compiled ".js" as ".ts" via our virtual file system interface
-let loaderFileSystem = undefined as VirtualFileSystem | undefined
+let loaderFileSystem = undefined as VirtualFileList | undefined
 
 const plugTsHandler = Symbol()
 type ModuleCompiler = { _compile: (content: string, fileName: string ) => void }
@@ -62,7 +62,7 @@ export function loadBuildFile(directory: string, fileName: string, tsConfig?: st
   if (extname(absolutePath) === '.js') return require(absolutePath)
 
   // Create our host (compiler / reporter / ...)
-  const fileSystem = new VirtualFileSystem(directoryPath)
+  const fileSystem = new VirtualFileList(directoryPath)
   const host = new TypeScriptHost(fileSystem)
 
   // Read our compiler options and fail on error
