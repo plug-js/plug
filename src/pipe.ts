@@ -1,8 +1,5 @@
-import type { Plug } from './index'
+import type { Plug, PlugProcessor } from './index'
 import type { VirtualFileList } from './files'
-
-// The signature of `plug.process(...)`
-type PlugProcessor = Plug['process']
 
 /* ========================================================================== *
  * CORE PIPELINE IMPLEMENTATION                                               *
@@ -32,7 +29,7 @@ export class Pipe implements Plug {
 
   /* ======================================================================== */
 
-  static pipe(): Pipe {
-    return new Pipe()
+  static pipe(plug?: Plug): Pipe {
+    return new Pipe(plug)
   }
 }

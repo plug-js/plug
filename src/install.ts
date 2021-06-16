@@ -12,9 +12,6 @@ export type PlugExtension<C extends PlugConstructor<I>, I extends Plug = Plug> =
 // A convenience type describing a `Plug` constructor
 type PlugConstructor<PlugInstance extends Plug> = new (...args: any) => PlugInstance
 
-// The signature of `plug.process(...)`
-type PlugProcessor = Plug['process']
-
 /* ========================================================================== *
  * SETUP: Freeze the "plug" and "process" methods in Pipe's prototype so that *
  * noone can overwrite them with "install"                                    *
@@ -35,10 +32,11 @@ Object.defineProperties(Pipe.prototype, {
 export function install<C extends PlugConstructor<I>, I extends Plug>(
     name: string,
     constructor: C,
-): (...args: ConstructorOverloads<C>) => PlugProcessor {
-  function create<P extends any[] = ConstructorParameters<C>>(...args: P): PlugProcessor {
+): (...args: ConstructorOverloads<C>) => Pipe {
+  function create<P extends any[] = ConstructorParameters<C>>(...args: P): Pipe {
     const instance = new constructor(...args)
-    return instance.process.bind(instance)
+    const pipe = Pipe.pipe(instance)
+    return pipe
   }
 
   Object.defineProperty(Pipe.prototype, name, {

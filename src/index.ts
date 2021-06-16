@@ -1,10 +1,12 @@
 import { VirtualFileList } from './files'
 
+export type PlugProcessor = (input: VirtualFileList) => VirtualFileList | Promise<VirtualFileList>
+
 /**
  * The main interface defining a plug _processor_, a coponent of a plug pipe.
  */
 export interface Plug {
-  process: (input: VirtualFileList) => VirtualFileList | Promise<VirtualFileList>
+  process: PlugProcessor
 }
 
 import { Pipe } from './pipe'

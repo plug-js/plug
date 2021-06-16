@@ -20,7 +20,7 @@ describe('Plug Extensions', () => {
     const installed = install('test123', TestPlug)
 
     const processor = installed(0)
-    expect(processor('foo' as any)).to.equal('foo...[0]')
+    expect(await processor.process('foo' as any)).to.equal('foo...[0]')
 
     const pipe = Pipe.pipe()
 
