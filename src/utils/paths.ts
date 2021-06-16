@@ -24,12 +24,12 @@ export type DirectoryPath = AbsolutePath & {
 /*
  * This is a bit of a hack: we determine case sensitivity on _this_ file
  * but maybe a VirtualFileList from another directory might use a different
- * underlying file system... This is good enough for now!
+ * underlying filesystem... This is good enough for now!
  */
 const __lfilename = __filename.toLowerCase()
 const __ufilename = __filename.toUpperCase()
 
-/** Indicates whether the underlying file system is case sensitive or not */
+/** Indicates whether the underlying filesystem is case sensitive or not */
 export const caseSensitivePaths = !(existsSync(__lfilename) && existsSync(__ufilename))
 
 /** Return the absolute path resolving the given path from a directory */
@@ -44,7 +44,7 @@ export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): R
 
 /** Return the canonical path from an absolute path, considering filesystem case sensitivity */
 export function getCanonicalPath(name: AbsolutePath): CanonicalPath {
-  // istanbul ignore next - dependant on underlying file system
+  // istanbul ignore next - dependant on underlying filesystem
   return (caseSensitivePaths ? name : name.toLowerCase()) as CanonicalPath
 }
 

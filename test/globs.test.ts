@@ -14,15 +14,15 @@ function findDirectory(directory: string): string {
 // This directory _may_ be relocated under build, so find it...
 const directory = resolve(findDirectory(__dirname), 'test', 'support') as DirectoryPath
 
-describe('Virtual File System Globs', () => {
-  it('should prepare a virtual file system from some globs', async () => {
+describe('Virtual File List Globs', () => {
+  it('should prepare a virtual file list from some globs', async () => {
     const list = await glob(directory, [ '*' ])
     const files = list.list().map((file) => file.relativePath)
     expect(files).to.have.length.greaterThan(1)
     expect(files).to.include('build.ts')
   })
 
-  it('should prepare a virtual file system from some globs and options', async () => {
+  it('should prepare a virtual file list from some globs and options', async () => {
     const list = await glob(directory, [ '*' ], { ignore: [ '*.ts' ] })
     const files = list.list().map((file) => file.relativePath)
     expect(files).to.have.length.greaterThan(1)

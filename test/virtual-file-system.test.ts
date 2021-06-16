@@ -4,7 +4,7 @@ import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
 
-describe('Virtual File System', () => {
+describe('Virtual File List', () => {
   it('should create a new VirtualFileList', () => {
     expect(new VirtualFileList())
         .to.be.instanceOf(VirtualFileList)
@@ -26,61 +26,61 @@ describe('Virtual File System', () => {
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
 
-    const virtualFileSystem = new VirtualFileList('/foo/bar')
+    const list = new VirtualFileList('/foo/bar')
 
-    expect(virtualFileSystem.builder().build())
+    expect(list.builder().build())
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/bar')
-    expect(virtualFileSystem.builder('baz').build())
+    expect(list.builder('baz').build())
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/bar/baz')
-    expect(virtualFileSystem.builder('..').build())
+    expect(list.builder('..').build())
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
-    expect(virtualFileSystem.builder('../baz').build())
+    expect(list.builder('../baz').build())
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo/baz')
-    expect(virtualFileSystem.builder('/baz').build())
+    expect(list.builder('/baz').build())
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/baz')
   })
 
   it('should build a VirtualFileList with files', () => {
-    const virtualFileSystem = VirtualFileList
+    const list = VirtualFileList
         .builder('/foo')
         .add('one.txt')
         .build()
 
-    expect(virtualFileSystem.directoryPath).to.equal('/foo')
+    expect(list.directoryPath).to.equal('/foo')
 
-    const files = virtualFileSystem.list()
+    const files = list.list()
     expect(files.length).to.equal(1)
 
     const file1 = files[0]
     expect(file1.absolutePath).to.equal('/foo/one.txt')
     expect(file1.relativePath).to.equal('one.txt')
-    expect(file1.files).to.equal(virtualFileSystem)
+    expect(file1.files).to.equal(list)
 
-    expect(virtualFileSystem.get('one.txt')).to.equal(file1) // same instance
-    expect(virtualFileSystem.get('./one.txt')).to.equal(file1) // same instance
-    expect(virtualFileSystem.get('/foo/one.txt')).to.equal(file1) // same instance
+    expect(list.get('one.txt')).to.equal(file1) // same instance
+    expect(list.get('./one.txt')).to.equal(file1) // same instance
+    expect(list.get('/foo/one.txt')).to.equal(file1) // same instance
 
-    const file2 = virtualFileSystem.get('./two.bin')
+    const file2 = list.get('./two.bin')
     expect(file2.absolutePath).to.equal('/foo/two.bin')
     expect(file2.relativePath).to.equal('two.bin')
-    expect(file2.files).to.equal(virtualFileSystem)
+    expect(file2.files).to.equal(list)
 
-    expect(virtualFileSystem.get('two.bin')).to.equal(file2) // same instance
-    expect(virtualFileSystem.get('./two.bin')).to.equal(file2) // same instance
-    expect(virtualFileSystem.get('/foo/two.bin')).to.equal(file2) // same instance
+    expect(list.get('two.bin')).to.equal(file2) // same instance
+    expect(list.get('./two.bin')).to.equal(file2) // same instance
+    expect(list.get('/foo/two.bin')).to.equal(file2) // same instance
 
-    const file3 = virtualFileSystem.get('/three.out')
+    const file3 = list.get('/three.out')
     expect(file3.absolutePath).to.equal('/three.out')
     expect(file3.relativePath).to.equal('../three.out')
-    expect(file3.files).to.equal(virtualFileSystem)
+    expect(file3.files).to.equal(list)
 
-    expect(virtualFileSystem.get('../three.out')).to.equal(file3) // same instance
-    expect(virtualFileSystem.get('/three.out')).to.equal(file3) // same instance
+    expect(list.get('../three.out')).to.equal(file3) // same instance
+    expect(list.get('/three.out')).to.equal(file3) // same instance
 
     // relative access
     expect(file1.get('one.txt')).to.equal(file1)
@@ -106,9 +106,9 @@ describe('Virtual File System', () => {
     expect(file2.get('/three.out')).to.equal(file3)
 
     // list of files must _not_ change
-    expect(virtualFileSystem.list().length).to.equal(1)
-    expect(virtualFileSystem.list()[0]).to.equal(file1)
-    expect(virtualFileSystem.list()).not.to.equal(files) // same instance
+    expect(list.list().length).to.equal(1)
+    expect(list.list()[0]).to.equal(file1)
+    expect(list.list()).not.to.equal(files) // same instance
   })
 
   it('should add files to an existing VirtualFileList', () => {
@@ -147,8 +147,8 @@ describe('Virtual File System', () => {
     const builder = VirtualFileList.builder()
     builder.build() // should block the building
 
-    expect(() => builder.build()).to.throw(Error, 'Virtual file system already built')
-    expect(() => builder.add('foo')).to.throw(Error, 'Virtual file system already built')
+    expect(() => builder.build()).to.throw(Error, 'Virtual file list already built')
+    expect(() => builder.add('foo')).to.throw(Error, 'Virtual file list already built')
   })
 
   it('should honor the case sensitivity of the filesystem', () => {

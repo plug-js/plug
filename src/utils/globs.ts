@@ -62,6 +62,6 @@ export async function glob(
   // Await for _all_ files to be read (and cached)
   await Promise.all(promises)
 
-  // Return our filesystem
+  // Return our file list
   return files
 }

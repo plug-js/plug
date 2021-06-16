@@ -38,13 +38,13 @@ export interface VirtualFile {
   /** Return a `VirtualFile` whose path is relative to this one */
   get(path: string): VirtualFile
 
-  /** Return this same `VirtualFile` in another with a different file system */
+  /** Return this same `VirtualFile` in another virtual file lis */
   clone(files: VirtualFileList): VirtualFile
 }
 
 /**
  * The `VirtualFileList` interface represents an extremely simple view over
- * the _physical_ file system where a number of `VirtualFile`s can be accessed.
+ * the _physical_ filesystem where a number of `VirtualFile`s can be accessed.
  */
 export interface VirtualFileList {
   /** The base directory of this `VirtualFileList` */

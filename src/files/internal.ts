@@ -179,7 +179,7 @@ class VirtualFileImpl implements VirtualFile {
 }
 
 /* ========================================================================== *
- * VIRTUAL FILE SYSTEM IMPLEMENTATION                                         *
+ * VIRTUAL FILE LIST IMPLEMENTATION                                           *
  * ========================================================================== */
 
 export class VirtualFileListImpl implements VirtualFileList {
@@ -233,16 +233,16 @@ export class VirtualFileListImpl implements VirtualFileList {
 
     return {
       add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        if (! files) throw new Error('Virtual file system already built')
+        if (! files) throw new Error('Virtual file list already built')
         files.add(pathOrFile, contents, sourceMap)
         return this
       },
 
       build() {
-        if (! files) throw new Error('Virtual file system already built')
-        const builtFileSystem = files
+        if (! files) throw new Error('Virtual file list already built')
+        const built = files
         files = undefined
-        return builtFileSystem
+        return built
       },
     }
   }

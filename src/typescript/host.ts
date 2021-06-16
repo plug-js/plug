@@ -39,7 +39,7 @@ function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
  * ========================================================================== */
 
 /**
- * Implementation of a TypeScript compiler host wrapping our virtual file system
+ * Implementation of a TypeScript compiler host wrapping our virtual file list
  */
 export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
   #files: VirtualFileList
@@ -90,10 +90,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
     }
   }
 
-  /**
-   * Conveniently write a file to a new virtual file system. All written files
-   * can be accessed when calling `buildFileSystem()` on this instance.
-   */
+  /** [TS] Never write any files */
   writeFile(
       fileName: string,
       data: string,
