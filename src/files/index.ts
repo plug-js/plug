@@ -7,7 +7,7 @@ import { AbsolutePath, RelativePath, CanonicalPath, DirectoryPath } from '../uti
  */
 export interface VirtualFile {
   /** The `VirtualFileList` associated with this `VirtualFile` */
-  readonly files: VirtualFileList
+  readonly fileList: VirtualFileList
   /** The _absolute_ path of this `VirtualFile` */
   readonly absolutePath: AbsolutePath
   /** The path of this `VirtualFile` relative to its `VirtualFileList`'s `baseDir` */
@@ -56,8 +56,17 @@ export interface VirtualFileList {
   /** Return all `VirtualFile`s this `VirtualFileList` was build with */
   list(): readonly VirtualFile[]
 
-  /** Create a new `VirtualFileListBuilder` */
+  /**
+   * Create a new `VirtualFileListBuilder` whose directory path is
+   * relative to this one.
+   *
+   * Cached files by this instance (including any virtual content) will be
+   * preserved by the resulting `VirtualFileList` but no files will be added.
+   */
   builder(path?: string): VirtualFileListBuilder
+
+  /** Clone this `VirtualFileList` preserving all files listed by this */
+  clone(path?: string): VirtualFileList
 
   /** Add a `VirtualFile` to this `VirtualFileList` */
   add(file: VirtualFile): VirtualFile
