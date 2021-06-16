@@ -15,8 +15,8 @@ class FromPlug implements Plug {
     this.#directory = directory
   }
 
-  process(fs: VirtualFileList): VirtualFileList {
-    return fs.clone(this.#directory)
+  process(files: VirtualFileList): VirtualFileList {
+    return files.clone(this.#directory)
   }
 }
 

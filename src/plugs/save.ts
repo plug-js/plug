@@ -13,8 +13,8 @@ class SavePlug implements Plug {
     void directory
   }
 
-  async process(fs: VirtualFileList): Promise<VirtualFileList> {
-    return fs
+  async process(files: VirtualFileList): Promise<VirtualFileList> {
+    return files
   }
 }
 
