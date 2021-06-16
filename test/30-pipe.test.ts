@@ -2,16 +2,16 @@ import { expect } from 'chai'
 import { VirtualFileList } from '../src/files'
 import { Pipe } from '../src/pipe'
 
-describe('Plug Pipelines', () => {
+describe('Plug Pipes', () => {
   it('should construct a simple pipeline', async () => {
     const list = new VirtualFileList('/foo')
-    const pipe = new Pipe()
+    const pipe = Pipe.pipe()
     const result = await pipe.process(list)
     expect(result).to.equal(list)
   })
 
   it('should construct and run a multi-stage pipeline', async () => {
-    const pipe = new Pipe()
+    const pipe = Pipe.pipe()
 
     const p1 = pipe.plug((input) => input + '...1' as any)
     expect(p1).to.equal(pipe)

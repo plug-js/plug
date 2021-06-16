@@ -12,5 +12,5 @@ import { Task } from './task'
 
 export * from './plugs'
 
-export const pipe = (): Pipe => new Pipe()
+export const pipe = Pipe.pipe
 export const task = Task.task

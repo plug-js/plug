@@ -9,9 +9,10 @@ type PlugProcessor = Plug['process']
  * ========================================================================== */
 
 export class Pipe implements Plug {
-  #plugs: PlugProcessor[] = []
+  #plugs: PlugProcessor[]
 
-  constructor() {
+  private constructor() {
+    this.#plugs = []
   }
 
   async process(list: VirtualFileList): Promise<VirtualFileList> {
@@ -22,5 +23,11 @@ export class Pipe implements Plug {
   plug(plug: PlugProcessor): this {
     this.#plugs.push(plug)
     return this
+  }
+
+  /* ======================================================================== */
+
+  static pipe(): Pipe {
+    return new Pipe()
   }
 }
