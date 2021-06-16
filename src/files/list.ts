@@ -80,8 +80,20 @@ export class VirtualFileListImpl implements VirtualFileList {
   }
 
   clone(path?: string): VirtualFileList {
-    // const directory = getDirectoryPath(this.directoryPath, path)
-    throw new Error()
+    const directory = getDirectoryPath(this.directoryPath, path)
+    const list = new VirtualFileListImpl(directory)
+
+    for (const file of this.#cache.values()) {
+      const clone = file.clone(list)
+      list.#cache.set(clone.canonicalPath, clone)
+
+      // Preserve file list
+      if (this.#files.has(file.absolutePath)) {
+        list.#files.set(clone.absolutePath, clone)
+      }
+    }
+
+    return list
   }
 
   add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {

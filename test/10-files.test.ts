@@ -154,7 +154,30 @@ describe('Virtual File List', () => {
     const file2 = files2.get('foo/bar.txt')
 
     expect(file2).not.to.equal(file1)
+
     expect(files2.list()).to.eql([]) // empty list
+
+    expect(file2.fileList).to.equal(files2)
+    expect(file2.absolutePath).to.equal('/foo/bar.txt')
+    expect(file2.relativePath).to.equal('foo/bar.txt')
+    expect(file2.contentsSync()).to.equal('hello, world!')
+    expect(file2.sourceMapSync()).to.eql({ test: true })
+  })
+
+  it('should preserve caches and lists when cloning a VirtualFileList', () => {
+    const files1 = new VirtualFileList('/foo')
+    const file1 = files1.add('bar.txt', 'hello, world!', { test: true } as any)
+
+    expect(files1.list()).to.eql([ file1 ])
+    expect(files1.list()[0]).to.equal(file1)
+
+    const files2 = files1.clone('/')
+    const file2 = files2.get('foo/bar.txt')
+
+    expect(file2).not.to.equal(file1)
+
+    expect(files2.list()).to.eql([ file2 ])
+    expect(files2.list()[0]).to.equal(file2)
 
     expect(file2.fileList).to.equal(files2)
     expect(file2.absolutePath).to.equal('/foo/bar.txt')
