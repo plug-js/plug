@@ -43,7 +43,7 @@ export function install<C extends PlugConstructor<I>, I extends Plug>(
 
   Object.defineProperty(Pipe.prototype, name, {
     value: function<P extends any[] = ConstructorParameters<C>>(this: Pipe, ...args: P) {
-      const created = create(args)
+      const created = new constructor(...args)
       return this.plug(created)
     },
   })
