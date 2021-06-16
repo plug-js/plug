@@ -12,18 +12,10 @@ describe('Plug Pipes', () => {
 
   it('should construct and run a multi-stage pipeline', async () => {
     const pipe = Pipe.pipe()
-
-    const p1 = pipe.plug((input) => input + '...1' as any)
-    expect(p1).to.equal(pipe)
-
-    const p2 = pipe.plug((input) => Promise.resolve(input + '...2' as any))
-    expect(p2).to.equal(pipe)
-
-    const p3 = pipe.plug({ process: (input) => input + '...3' as any })
-    expect(p3).to.equal(pipe)
-
-    const p4 = pipe.plug({ process: (input) => Promise.resolve(input + '...4' as any) })
-    expect(p4).to.equal(pipe)
+        .plug((input) => input + '...1' as any)
+        .plug((input) => Promise.resolve(input + '...2' as any))
+        .plug({ process: (input) => input + '...3' as any })
+        .plug({ process: (input) => Promise.resolve(input + '...4' as any) })
 
     expect(await pipe.process('0' as any)).to.equal('0...1...2...3...4')
   })
