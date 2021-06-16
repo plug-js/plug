@@ -1,26 +1,12 @@
 import { expect } from 'chai'
-import { relative } from 'path'
 import { Plug, Pipeline, getProjectDirectory } from '../src'
 
 describe('Plug Pipelines', () => {
   it('should construct a simple pipeline', async () => {
-    const pipe = Pipeline.from(__dirname).read('**/*')
-    const list = await Pipeline.run(pipe)
-    expect(list.directoryPath).to.equal(__dirname)
-
-    const files = list.list().map((file) => file.absolutePath)
-    expect(files).to.include(__filename)
-  })
-
-  it('should construct a simple pipeline from the project directory', async () => {
-    const file = relative(getProjectDirectory(), __filename)
-    const pipe = Pipeline.read('**/*', { ignore: [ file ], deep: 1 })
+    const pipe = Pipeline.pipe()
     const list = await Pipeline.run(pipe)
     expect(list.directoryPath).to.equal(getProjectDirectory())
-
-    const files = list.list().map((file) => file.absolutePath)
-    expect(files).to.have.length.greaterThan(1)
-    expect(files).not.to.include(__filename)
+    expect(list.list()).to.eql([])
   })
 
   it('should construct and run a multi-stage pipeline', async () => {

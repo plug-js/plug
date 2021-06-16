@@ -1,13 +1,8 @@
 import type { ConstructorOverloads } from './types/overloads'
 
 import { Plug } from './index'
-import { getProjectDirectory } from './project'
-import { glob, GlobOptions } from './utils/globs'
-import { getDirectoryPath } from './utils/paths'
 import { VirtualFileList } from './files'
-
-// At least one glob, and optional options at the end
-type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
+import { getProjectDirectory } from './project'
 
 // A convenience type describing a `Plug` constructor
 type PlugConstructor<PlugInstance extends Plug> = new (...args: any) => PlugInstance
@@ -27,11 +22,11 @@ export type PlugExtension<C extends PlugConstructor<I>, I extends Plug = Plug> =
  * ========================================================================== */
 
 export class Pipeline {
+  #start: () => VirtualFileList | Promise<VirtualFileList>
   #plugs: PlugProcessor[] = []
-  #read: () => Promise<VirtualFileList>
 
-  protected constructor(read: () => Promise<VirtualFileList>) {
-    this.#read = read
+  protected constructor(start: () => VirtualFileList | Promise<VirtualFileList>) {
+    this.#start = start
   }
 
   plug(plug: PlugProcessor): this {
@@ -41,44 +36,17 @@ export class Pipeline {
 
   /* ======================================================================== */
 
+  static pipe(): Pipeline {
+    return new Pipeline(() => new VirtualFileList(getProjectDirectory()))
+  }
+
   static async run(pipeline: Pipeline): Promise<VirtualFileList> {
-    let fs = await pipeline.#read()
+    let fs = await pipeline.#start()
     for (const plug of pipeline.#plugs) fs = await plug(fs)
     return fs
   }
 
   /* ======================================================================== */
-
-  /**
-   * Contextualize a pipeline's base directory: any `read(...)` operation
-   * performed by such contextualized pipeline will process globs from the
-   * directory specified here.
-   */
-  static from(directory: string): { read: typeof Pipeline.read } {
-    const projectDir = getProjectDirectory()
-    const baseDir = directory ? getDirectoryPath(projectDir, directory) : projectDir
-
-    return { read: (...args: ReadArguments) => new Pipeline(async () => {
-      const last = args.splice(-1)[0]
-      const { globs, options } = typeof last === 'string' ? {
-        globs: [ ...args as string[], last ],
-        options: {},
-      } : {
-        globs: [ ...args as string[] ],
-        options: last,
-      }
-
-      return await glob(baseDir, globs, options)
-    }) }
-  }
-
-  /**
-   * Create a pipeline reading the files identified by the specified globs
-   * in the current project directory.
-   */
-  static read(...args: ReadArguments): Pipeline {
-    return Pipeline.from('').read(...args)
-  }
 
   /**
    * Install the specified plug processor as a standard element in our pipelines.
