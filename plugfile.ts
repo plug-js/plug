@@ -1,12 +1,11 @@
-import { pipe, task } from './src'
+import { from, task } from './src'
 
 const typescript: any = null
 const eslint: any = null
 const mocha: any = null
 
 const sources = task('Read source code', () =>
-  pipe()
-      .from('src')
+  from('src')
       .read('**/*.ts'))
 
 export const lint = task('Lint sources', () =>
