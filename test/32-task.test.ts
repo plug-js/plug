@@ -53,7 +53,7 @@ describe('Plug Tasks', () => {
 
     const list = new VirtualFileList('/abc')
 
-    const result1 = await task3.task.process(list)
+    const result1 = await task3.run(list)
     expect(result1.directoryPath).to.equal('/abc')
     expect(result1.list()).to.have.length(3)
     expect(result1.list().map((f) => f.absolutePath).sort()).to.eql([
@@ -61,5 +61,67 @@ describe('Plug Tasks', () => {
       '/abc/bar2.txt',
       '/abc/baz3.txt',
     ].sort())
+  })
+
+  it('should create a parallel task', async () => {
+    const slow = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+    const files = new VirtualFileList('/abc')
+
+    let counter = 0
+    const task1 = Task.task(() => Pipe.pipe().plug(async (input) => {
+      expect(input).to.equal(files)
+      await slow(100) // finish last!
+      const list = input.clone()
+      list.add(`foo${++ counter}.txt`)
+      list.add('xxx.txt', 'first')
+      return list
+    }))
+
+    const task2 = Task.task(() => Pipe.pipe().plug(async (input) => {
+      expect(input).to.equal(files)
+      await slow(50) // finish in between!
+      const list = input.clone()
+      list.add(`bar${++ counter}.txt`)
+      list.add('xxx.txt', 'second')
+      return list
+    }))
+
+    const task3 = Task.task(() => Pipe.pipe().plug((input) => {
+      expect(input).to.equal(files)
+      // immediate!
+      const list = input.clone()
+      list.add(`baz${++ counter}.txt`)
+      list.add('xxx.txt', 'third')
+      return Promise.resolve(list)
+    }))
+
+    counter = 0
+    const taskA = Task.parallel(task1, task2, task3)
+    const resultA = await taskA.run(files)
+
+    expect(taskA.task.description).to.be.undefined
+    expect(resultA.list().map((f) => f.absolutePath).sort()).to.eql([
+      '/abc/foo3.txt', // ran last
+      '/abc/bar2.txt', // in between
+      '/abc/baz1.txt', // fastest
+      '/abc/xxx.txt',
+    ].sort())
+    expect(resultA.get('xxx.txt').contentsSync()).to.equal('third') // task3 is last
+
+    // REVERSE THE ORDER!
+
+    counter = 0
+    const taskB = Task.parallel('reversed', task3, task2, task1)
+    const resultB = await taskB.run(files)
+
+    expect(taskB.task.description).to.equal('reversed')
+    expect(resultB.list().map((f) => f.absolutePath).sort()).to.eql([
+      '/abc/foo3.txt', // ran last
+      '/abc/bar2.txt', // in between
+      '/abc/baz1.txt', // fastest
+      '/abc/xxx.txt',
+    ].sort())
+    expect(resultB.get('xxx.txt').contentsSync()).to.equal('first') // task1 is last
   })
 })
