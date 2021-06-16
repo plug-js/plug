@@ -69,7 +69,14 @@ export class VirtualFileListImpl implements VirtualFileList {
 
   builder(path?: string): VirtualFileListBuilder {
     const directory = getDirectoryPath(this.directoryPath, path)
-    return VirtualFileListImpl.builder(directory)
+    const list = new VirtualFileListImpl(directory)
+
+    for (const file of this.#cache.values()) {
+      const clone = file.clone(list)
+      list.#cache.set(clone.canonicalPath, clone)
+    }
+
+    return new VirtualFileListBuilderImpl(list)
   }
 
   clone(path?: string): VirtualFileList {
@@ -83,7 +90,7 @@ export class VirtualFileListImpl implements VirtualFileList {
       const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
       file = new VirtualFileImpl(this, absolutePath, contents, sourceMap)
     } else {
-      file = pathOrFile.files === this ? pathOrFile : pathOrFile.clone(this)
+      file = pathOrFile.fileList === this ? pathOrFile : pathOrFile.clone(this)
     }
 
     this.#cache.set(file.canonicalPath, file)

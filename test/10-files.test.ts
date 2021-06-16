@@ -59,7 +59,7 @@ describe('Virtual File List', () => {
     const file1 = files[0]
     expect(file1.absolutePath).to.equal('/foo/one.txt')
     expect(file1.relativePath).to.equal('one.txt')
-    expect(file1.files).to.equal(list)
+    expect(file1.fileList).to.equal(list)
 
     expect(list.get('one.txt')).to.equal(file1) // same instance
     expect(list.get('./one.txt')).to.equal(file1) // same instance
@@ -68,7 +68,7 @@ describe('Virtual File List', () => {
     const file2 = list.get('./two.bin')
     expect(file2.absolutePath).to.equal('/foo/two.bin')
     expect(file2.relativePath).to.equal('two.bin')
-    expect(file2.files).to.equal(list)
+    expect(file2.fileList).to.equal(list)
 
     expect(list.get('two.bin')).to.equal(file2) // same instance
     expect(list.get('./two.bin')).to.equal(file2) // same instance
@@ -77,7 +77,7 @@ describe('Virtual File List', () => {
     const file3 = list.get('/three.out')
     expect(file3.absolutePath).to.equal('/three.out')
     expect(file3.relativePath).to.equal('../three.out')
-    expect(file3.files).to.equal(list)
+    expect(file3.fileList).to.equal(list)
 
     expect(list.get('../three.out')).to.equal(file3) // same instance
     expect(list.get('/three.out')).to.equal(file3) // same instance
@@ -115,7 +115,7 @@ describe('Virtual File List', () => {
     const files = new VirtualFileList('/foo')
     const file = files.add('bar.txt')
 
-    expect(file.files).to.equal(files)
+    expect(file.fileList).to.equal(files)
     expect(files.get('bar.txt')).to.equal(file)
 
     expect(files.add(file)).to.equal(file)
@@ -125,7 +125,7 @@ describe('Virtual File List', () => {
 
     expect(file2.relativePath).to.equal('../bar.txt')
 
-    expect(file2.files).to.equal(files2)
+    expect(file2.fileList).to.equal(files2)
     expect(files2.get('../bar.txt')).to.equal(file2)
     expect(files2.get('/foo/bar.txt')).to.equal(file2)
 
@@ -136,11 +136,31 @@ describe('Virtual File List', () => {
     const file3 = files.add('hello.txt', 'hello, world!', { test: true } as any)
     const file4 = file3.clone(files2)
 
-    expect(file4.files).to.equal(files2)
+    expect(file4.fileList).to.equal(files2)
     expect(file4.absolutePath).to.equal('/foo/hello.txt')
     expect(file4.relativePath).to.equal('../hello.txt')
     expect(file4.contentsSync()).to.equal('hello, world!')
     expect(file4.sourceMapSync()).to.eql({ test: true })
+  })
+
+  it('should preserve caches when creating a builder from a VirtualFileList', () => {
+    const files1 = new VirtualFileList('/foo')
+    const file1 = files1.add('bar.txt', 'hello, world!', { test: true } as any)
+
+    expect(files1.list()).to.eql([ file1 ])
+    expect(files1.list()[0]).to.equal(file1)
+
+    const files2 = files1.builder('/').build()
+    const file2 = files2.get('foo/bar.txt')
+
+    expect(file2).not.to.equal(file1)
+    expect(files2.list()).to.eql([]) // empty list
+
+    expect(file2.fileList).to.equal(files2)
+    expect(file2.absolutePath).to.equal('/foo/bar.txt')
+    expect(file2.relativePath).to.equal('foo/bar.txt')
+    expect(file2.contentsSync()).to.equal('hello, world!')
+    expect(file2.sourceMapSync()).to.eql({ test: true })
   })
 
   it('should not continue building a VirtualFileList', () => {
