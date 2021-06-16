@@ -21,7 +21,7 @@ import {
 type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 export class VirtualFileImpl implements VirtualFile {
-  readonly files: VirtualFileList
+  readonly fileList: VirtualFileList
   readonly absolutePath: AbsolutePath
 
   #promise?: Promise<VirtualFileData>
@@ -34,7 +34,7 @@ export class VirtualFileImpl implements VirtualFile {
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
   ) {
-    this.files = files
+    this.fileList = files
     this.absolutePath = absolutePath
 
     if (contents != undefined) {
@@ -49,7 +49,7 @@ export class VirtualFileImpl implements VirtualFile {
   }
 
   get relativePath(): RelativePath {
-    return getRelativePath(this.files.directoryPath, this.absolutePath)
+    return getRelativePath(this.fileList.directoryPath, this.absolutePath)
   }
 
   get canonicalPath(): CanonicalPath {
@@ -59,7 +59,7 @@ export class VirtualFileImpl implements VirtualFile {
   get(path: string): VirtualFile {
     const directory = getDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
-    return this.files.get(absolutePath)
+    return this.fileList.get(absolutePath)
   }
 
   clone(files: VirtualFileList): VirtualFile {
@@ -134,7 +134,7 @@ export class VirtualFileImpl implements VirtualFile {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.files.get(sourceMapFile)
+    const file = this.fileList.get(sourceMapFile)
     if (! file.existsSync()) return
 
     return this.#sourceMap = JSON.parse(file.contentsSync())
@@ -168,7 +168,7 @@ export class VirtualFileImpl implements VirtualFile {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.files.get(sourceMapFile)
+    const file = this.fileList.get(sourceMapFile)
     if (! await file.exists()) return
 
     return this.#sourceMap = JSON.parse(await file.contents())
