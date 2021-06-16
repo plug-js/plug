@@ -38,7 +38,7 @@ describe('TypeScript Host', () => {
   })
 
   it('should create some source files', () => {
-    const fileSystem = VirtualFileList.builder('/foo')
+    const files = VirtualFileList.builder('/foo')
         .add('bar.ts', '// ts')
         .add('bar.tsx', '// tsx')
         .add('bar.js', '// js')
@@ -47,7 +47,7 @@ describe('TypeScript Host', () => {
         .add('bar.txt', '// txt')
         .build()
 
-    const host = new TypeScriptHost(fileSystem)
+    const host = new TypeScriptHost(files)
 
     const bin = host.getSourceFile('bar.bin', ScriptTarget.ES2021)
     expect(bin).to.be.undefined

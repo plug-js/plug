@@ -53,9 +53,9 @@ export async function glob(
   const promises: Promise<string>[] = []
 
   // Create our builder, stream our entries, and read the files
-  const fileSystem = new VirtualFileList(directory)
+  const files = new VirtualFileList(directory)
   for await (const entry of stream(globs, opts)) {
-    const file = fileSystem.add(entry.toString())
+    const file = files.add(entry.toString())
     promises.push(file.contents())
   }
 
@@ -63,5 +63,5 @@ export async function glob(
   await Promise.all(promises)
 
   // Return our filesystem
-  return fileSystem
+  return files
 }

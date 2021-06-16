@@ -24,7 +24,7 @@ import {
 type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 class VirtualFileImpl implements VirtualFile {
-  readonly fileSystem: VirtualFileList
+  readonly files: VirtualFileList
   readonly absolutePath: AbsolutePath
 
   #promise?: Promise<VirtualFileData>
@@ -32,12 +32,12 @@ class VirtualFileImpl implements VirtualFile {
   #sourceMap?: RawSourceMap | false
 
   constructor(
-      fileSystem: VirtualFileList,
+      files: VirtualFileList,
       absolutePath: AbsolutePath,
       contents: string | undefined = undefined,
       sourceMap: boolean | RawSourceMap = true,
   ) {
-    this.fileSystem = fileSystem
+    this.files = files
     this.absolutePath = absolutePath
 
     if (contents != undefined) {
@@ -52,7 +52,7 @@ class VirtualFileImpl implements VirtualFile {
   }
 
   get relativePath(): RelativePath {
-    return getRelativePath(this.fileSystem.directoryPath, this.absolutePath)
+    return getRelativePath(this.files.directoryPath, this.absolutePath)
   }
 
   get canonicalPath(): CanonicalPath {
@@ -62,11 +62,11 @@ class VirtualFileImpl implements VirtualFile {
   get(path: string): VirtualFile {
     const directory = getDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
-    return this.fileSystem.get(absolutePath)
+    return this.files.get(absolutePath)
   }
 
-  clone(fileSystem: VirtualFileList): VirtualFile {
-    const file = new VirtualFileImpl(fileSystem, this.absolutePath)
+  clone(files: VirtualFileList): VirtualFile {
+    const file = new VirtualFileImpl(files, this.absolutePath)
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
     file.#data = this.#data
@@ -137,7 +137,7 @@ class VirtualFileImpl implements VirtualFile {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.fileSystem.get(sourceMapFile)
+    const file = this.files.get(sourceMapFile)
     if (! file.existsSync()) return
 
     return this.#sourceMap = JSON.parse(file.contentsSync())
@@ -171,7 +171,7 @@ class VirtualFileImpl implements VirtualFile {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.fileSystem.get(sourceMapFile)
+    const file = this.files.get(sourceMapFile)
     if (! await file.exists()) return
 
     return this.#sourceMap = JSON.parse(await file.contents())
@@ -220,7 +220,7 @@ export class VirtualFileListImpl implements VirtualFileList {
       const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
       file = new VirtualFileImpl(this, absolutePath, contents, sourceMap)
     } else {
-      file = pathOrFile.fileSystem === this ? pathOrFile : pathOrFile.clone(this)
+      file = pathOrFile.files === this ? pathOrFile : pathOrFile.clone(this)
     }
 
     this.#cache.set(file.canonicalPath, file)
@@ -229,19 +229,19 @@ export class VirtualFileListImpl implements VirtualFileList {
   }
 
   static builder(path?: string): VirtualFileListBuilder {
-    let fileSystem = new VirtualFileListImpl(path) as VirtualFileListImpl | undefined
+    let files = new VirtualFileListImpl(path) as VirtualFileListImpl | undefined
 
     return {
       add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap) {
-        if (! fileSystem) throw new Error('Virtual file system already built')
-        fileSystem.add(pathOrFile, contents, sourceMap)
+        if (! files) throw new Error('Virtual file system already built')
+        files.add(pathOrFile, contents, sourceMap)
         return this
       },
 
       build() {
-        if (! fileSystem) throw new Error('Virtual file system already built')
-        const builtFileSystem = fileSystem
-        fileSystem = undefined
+        if (! files) throw new Error('Virtual file system already built')
+        const builtFileSystem = files
+        files = undefined
         return builtFileSystem
       },
     }

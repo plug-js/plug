@@ -7,7 +7,7 @@ import { AbsolutePath, RelativePath, CanonicalPath, DirectoryPath } from '../uti
  */
 export interface VirtualFile {
   /** The `VirtualFileList` associated with this `VirtualFile` */
-  readonly fileSystem: VirtualFileList
+  readonly files: VirtualFileList
   /** The _absolute_ path of this `VirtualFile` */
   readonly absolutePath: AbsolutePath
   /** The path of this `VirtualFile` relative to its `VirtualFileList`'s `baseDir` */
@@ -39,7 +39,7 @@ export interface VirtualFile {
   get(path: string): VirtualFile
 
   /** Return this same `VirtualFile` in another with a different file system */
-  clone(fileSystem: VirtualFileList): VirtualFile
+  clone(files: VirtualFileList): VirtualFile
 }
 
 /**

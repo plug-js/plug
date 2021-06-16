@@ -13,21 +13,21 @@ import { AbsolutePath, getAbsolutePath, getDirectory, getRelativePath } from '..
 type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: readonly Diagnostic[] }
 
 /** Load compiler options from a "tsconfig.json" file */
-export function getCompilerOptions(fileSystem: VirtualFileList, fileName?: string): CompilerOptionsAndDiagnostics {
+export function getCompilerOptions(files: VirtualFileList, fileName?: string): CompilerOptionsAndDiagnostics {
   let file = undefined as VirtualFile | undefined
 
   // If there's no file, we load either "tsconfig.json" or the defaults
   if (fileName) {
-    file = fileSystem.get(fileName)
+    file = files.get(fileName)
   } else {
-    file = fileSystem.get('tsconfig.json')
+    file = files.get('tsconfig.json')
     if (! file.existsSync()) {
       return { options: getDefaultCompilerOptions(), diagnostics: [] }
     }
   }
 
   function readFile(fileName: string): string | undefined {
-    const file = fileSystem.get(fileName)
+    const file = files.get(fileName)
     if (file.existsSync()) return file.contentsSync()
   }
 
@@ -52,7 +52,7 @@ export function getCompilerOptions(fileSystem: VirtualFileList, fileName?: strin
     }
 
     // Convert "compilerOptions" parsing the JSON format and returning it with proper enums and validations
-    const { options, errors } = convertCompilerOptionsFromJson(compilerOptions, fileSystem.directoryPath, fileName)
+    const { options, errors } = convertCompilerOptionsFromJson(compilerOptions, files.directoryPath, fileName)
 
     if (errors.length) {
       diagnostics.push(...errors)
@@ -62,7 +62,7 @@ export function getCompilerOptions(fileSystem: VirtualFileList, fileName?: strin
     if (extendsPath) {
       const absolutePath = getAbsolutePath(getDirectory(fileName), extendsPath)
       if (resolutionStack.indexOf(absolutePath) >= 0) {
-        const directory = fileSystem.directoryPath
+        const directory = files.directoryPath
         const relativePath = getRelativePath(directory, absolutePath)
         const stack = resolutionStack.reverse().map((path) => getRelativePath(directory, path)).join('\n - ')
         diagnostics.push({

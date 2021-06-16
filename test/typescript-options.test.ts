@@ -5,21 +5,21 @@ import { VirtualFileList } from '../src/files'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {
-    const fileSystem = VirtualFileList.builder('/foo').build()
+    const files = VirtualFileList.builder('/foo').build()
 
-    let { options, diagnostics } = getCompilerOptions(fileSystem)
+    let { options, diagnostics } = getCompilerOptions(files)
     expect(options).to.eql(getDefaultCompilerOptions())
     expect(diagnostics.length).to.eql(0)
 
 
-    ;({ options, diagnostics } = getCompilerOptions(fileSystem, 'tsconfig.json'))
+    ;({ options, diagnostics } = getCompilerOptions(files, 'tsconfig.json'))
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(5083)
     expect(diagnostics[0].messageText).to.match(/tsconfig\.json/)
     expect(diagnostics[0].category).to.equal(DiagnosticCategory.Error)
 
-    ;({ options, diagnostics } = getCompilerOptions(fileSystem, 'foobar.json'))
+    ;({ options, diagnostics } = getCompilerOptions(files, 'foobar.json'))
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(5083)
@@ -28,20 +28,20 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read a basic configuration file', () => {
-    const fileSystem = VirtualFileList
+    const files = VirtualFileList
         .builder('/foo')
         .add('tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
         .add('wrong.json', '{"compilerOptions":{"module":"wrong"}}')
         .build()
 
-    let { options, diagnostics } = getCompilerOptions(fileSystem)
+    let { options, diagnostics } = getCompilerOptions(files)
     expect(options).to.eql({
       configFilePath: '/foo/tsconfig.json',
       module: ModuleKind.CommonJS,
     })
     expect(diagnostics.length).to.eql(0)
 
-    ;({ options, diagnostics } = getCompilerOptions(fileSystem, 'wrong.json'))
+    ;({ options, diagnostics } = getCompilerOptions(files, 'wrong.json'))
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(6046)
@@ -50,7 +50,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read an extended configuration file', () => {
-    const fileSystem = VirtualFileList
+    const files = VirtualFileList
         .builder('/foo')
         .add('base/tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
         .add('base/wrong.json', '{"compilerOptions":{"module":"wrong"}}')
@@ -59,14 +59,14 @@ describe('TypeScript Compiler Options', () => {
         .add('wrong/tsconfig.json', '{"extends":"../base/wrong.json"}')
         .build()
 
-    let { options, diagnostics } = getCompilerOptions(fileSystem, 'ext/tsconfig.json')
+    let { options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json')
     expect(options).to.eql({
       configFilePath: '/foo/ext/tsconfig.json',
       module: ModuleKind.CommonJS,
     })
     expect(diagnostics.length).to.eql(0)
 
-    ;({ options, diagnostics } = getCompilerOptions(fileSystem, 'miss/tsconfig.json'))
+    ;({ options, diagnostics } = getCompilerOptions(files, 'miss/tsconfig.json'))
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(5083)
@@ -74,7 +74,7 @@ describe('TypeScript Compiler Options', () => {
     expect(diagnostics[0].category).to.equal(DiagnosticCategory.Error)
 
     // hmm... here we seem to loose that "module" was declared in another file
-    ;({ options, diagnostics } = getCompilerOptions(fileSystem, 'wrong/tsconfig.json'))
+    ;({ options, diagnostics } = getCompilerOptions(files, 'wrong/tsconfig.json'))
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(6046)
@@ -83,14 +83,14 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should detect circular dependencies when reading extended configurations', () => {
-    const fileSystem = VirtualFileList
+    const files = VirtualFileList
         .builder('/foo')
         .add('tsconfig.json', '{"extends":"./one/tsconfig.json"}')
         .add('one/tsconfig.json', '{"extends":"../two/tsconfig.json"}')
         .add('two/tsconfig.json', '{"extends":"../tsconfig.json"}')
         .build()
 
-    const { options, diagnostics } = getCompilerOptions(fileSystem, 'tsconfig.json')
+    const { options, diagnostics } = getCompilerOptions(files, 'tsconfig.json')
     expect(options).to.eql({})
     expect(diagnostics.length).to.eql(1)
     expect(diagnostics[0].code).to.equal(18000)

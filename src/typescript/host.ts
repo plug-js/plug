@@ -42,11 +42,11 @@ function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
  * Implementation of a TypeScript compiler host wrapping our virtual file system
  */
 export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
-  #fileSystem: VirtualFileList
+  #files: VirtualFileList
 
   /** Create a new `TypeScriptHost` */
-  constructor(fileSystem: VirtualFileList) {
-    this.#fileSystem = fileSystem
+  constructor(files: VirtualFileList) {
+    this.#files = files
   }
 
   /* ======================================================================== */
@@ -59,7 +59,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
       shouldCreateNewSourceFile?: boolean,
   ): SourceFile | undefined {
     try {
-      const file = this.#fileSystem.get(fileName)
+      const file = this.#files.get(fileName)
       if (! file.existsSync()) return
 
       const data = file.contentsSync()
@@ -118,23 +118,23 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Check for the existence of a given file */
   fileExists(fileName: string): boolean {
-    return this.#fileSystem.get(fileName).existsSync()
+    return this.#files.get(fileName).existsSync()
   }
 
   /** [TS] Read the file if it exists, otherwise return undefined */
   readFile(fileName: string): string | undefined {
-    const file = this.#fileSystem.get(fileName)
+    const file = this.#files.get(fileName)
     if (file.existsSync()) return file.contentsSync()
   }
 
   /** [TS] Return the current working directory */
   getCurrentDirectory(): string {
-    return this.#fileSystem.directoryPath
+    return this.#files.directoryPath
   }
 
   /** [TS] Return the canonical name for the specified file */
   getCanonicalFileName(fileName: string): string {
-    return this.#fileSystem.get(fileName).canonicalPath
+    return this.#files.get(fileName).canonicalPath
   }
 
   /** [TS] Create a hash for the given string, uses SHA256(HEX) */

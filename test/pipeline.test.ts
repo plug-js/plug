@@ -5,20 +5,20 @@ import { Plug, Pipeline, getProjectDirectory } from '../src'
 describe('Plug Pipelines', () => {
   it('should construct a simple pipeline', async () => {
     const pipe = Pipeline.from(__dirname).read('**/*')
-    const fileSystem = await Pipeline.run(pipe)
-    expect(fileSystem.directoryPath).to.equal(__dirname)
+    const list = await Pipeline.run(pipe)
+    expect(list.directoryPath).to.equal(__dirname)
 
-    const files = fileSystem.list().map((file) => file.absolutePath)
+    const files = list.list().map((file) => file.absolutePath)
     expect(files).to.include(__filename)
   })
 
   it('should construct a simple pipeline from the project directory', async () => {
     const file = relative(getProjectDirectory(), __filename)
     const pipe = Pipeline.read('**/*', { ignore: [ file ], deep: 1 })
-    const fileSystem = await Pipeline.run(pipe)
-    expect(fileSystem.directoryPath).to.equal(getProjectDirectory())
+    const list = await Pipeline.run(pipe)
+    expect(list.directoryPath).to.equal(getProjectDirectory())
 
-    const files = fileSystem.list().map((file) => file.absolutePath)
+    const files = list.list().map((file) => file.absolutePath)
     expect(files).to.have.length.greaterThan(1)
     expect(files).not.to.include(__filename)
   })

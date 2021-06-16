@@ -59,7 +59,7 @@ describe('Virtual File System', () => {
     const file1 = files[0]
     expect(file1.absolutePath).to.equal('/foo/one.txt')
     expect(file1.relativePath).to.equal('one.txt')
-    expect(file1.fileSystem).to.equal(virtualFileSystem)
+    expect(file1.files).to.equal(virtualFileSystem)
 
     expect(virtualFileSystem.get('one.txt')).to.equal(file1) // same instance
     expect(virtualFileSystem.get('./one.txt')).to.equal(file1) // same instance
@@ -68,7 +68,7 @@ describe('Virtual File System', () => {
     const file2 = virtualFileSystem.get('./two.bin')
     expect(file2.absolutePath).to.equal('/foo/two.bin')
     expect(file2.relativePath).to.equal('two.bin')
-    expect(file2.fileSystem).to.equal(virtualFileSystem)
+    expect(file2.files).to.equal(virtualFileSystem)
 
     expect(virtualFileSystem.get('two.bin')).to.equal(file2) // same instance
     expect(virtualFileSystem.get('./two.bin')).to.equal(file2) // same instance
@@ -77,7 +77,7 @@ describe('Virtual File System', () => {
     const file3 = virtualFileSystem.get('/three.out')
     expect(file3.absolutePath).to.equal('/three.out')
     expect(file3.relativePath).to.equal('../three.out')
-    expect(file3.fileSystem).to.equal(virtualFileSystem)
+    expect(file3.files).to.equal(virtualFileSystem)
 
     expect(virtualFileSystem.get('../three.out')).to.equal(file3) // same instance
     expect(virtualFileSystem.get('/three.out')).to.equal(file3) // same instance
@@ -112,31 +112,31 @@ describe('Virtual File System', () => {
   })
 
   it('should add files to an existing VirtualFileList', () => {
-    const fileSystem = new VirtualFileList('/foo')
-    const file = fileSystem.add('bar.txt')
+    const files = new VirtualFileList('/foo')
+    const file = files.add('bar.txt')
 
-    expect(file.fileSystem).to.equal(fileSystem)
-    expect(fileSystem.get('bar.txt')).to.equal(file)
+    expect(file.files).to.equal(files)
+    expect(files.get('bar.txt')).to.equal(file)
 
-    expect(fileSystem.add(file)).to.equal(file)
+    expect(files.add(file)).to.equal(file)
 
-    const fileSystem2 = new VirtualFileList('/foo/bar')
-    const file2 = fileSystem2.add(file)
+    const files2 = new VirtualFileList('/foo/bar')
+    const file2 = files2.add(file)
 
     expect(file2.relativePath).to.equal('../bar.txt')
 
-    expect(file2.fileSystem).to.equal(fileSystem2)
-    expect(fileSystem2.get('../bar.txt')).to.equal(file2)
-    expect(fileSystem2.get('/foo/bar.txt')).to.equal(file2)
+    expect(file2.files).to.equal(files2)
+    expect(files2.get('../bar.txt')).to.equal(file2)
+    expect(files2.get('/foo/bar.txt')).to.equal(file2)
 
-    expect(fileSystem2.add(file2)).to.equal(file2)
+    expect(files2.add(file2)).to.equal(file2)
 
     expect(file).not.to.equal(file2)
 
-    const file3 = fileSystem.add('hello.txt', 'hello, world!', { test: true } as any)
-    const file4 = file3.clone(fileSystem2)
+    const file3 = files.add('hello.txt', 'hello, world!', { test: true } as any)
+    const file4 = file3.clone(files2)
 
-    expect(file4.fileSystem).to.equal(fileSystem2)
+    expect(file4.files).to.equal(files2)
     expect(file4.absolutePath).to.equal('/foo/hello.txt')
     expect(file4.relativePath).to.equal('../hello.txt')
     expect(file4.contentsSync()).to.equal('hello, world!')
@@ -152,15 +152,15 @@ describe('Virtual File System', () => {
   })
 
   it('should honor the case sensitivity of the filesystem', () => {
-    const fileSystem = VirtualFileList
+    const files = VirtualFileList
         .builder(__dirname)
         .add(__filename)
         .build()
 
-    const file = fileSystem.get(__filename)
-    const fileAdded = fileSystem.list()[0]
-    const fileLower = fileSystem.get(__filename.toLowerCase())
-    const fileUpper = fileSystem.get(__filename.toUpperCase())
+    const file = files.get(__filename)
+    const fileAdded = files.list()[0]
+    const fileLower = files.get(__filename.toLowerCase())
+    const fileUpper = files.get(__filename.toUpperCase())
 
     if (caseSensitivePaths) {
       expect(file).to.equal(fileAdded)
@@ -337,8 +337,8 @@ describe('Virtual File System', () => {
     })
 
     it('should read a VirtualFile from disk', async () => {
-      const fileSystem = new VirtualFileList(__dirname)
-      const file = fileSystem.get(__filename)
+      const files = new VirtualFileList(__dirname)
+      const file = files.get(__filename)
       const relative = basename(__filename)
 
       expect(file.absolutePath).to.equal(__filename)
@@ -509,8 +509,8 @@ describe('Virtual File System', () => {
     })
 
     it('should read a VirtualFile from disk', () => {
-      const fileSystem = new VirtualFileList(__dirname)
-      const file = fileSystem.get(__filename)
+      const files = new VirtualFileList(__dirname)
+      const file = files.get(__filename)
       const relative = basename(__filename)
 
       expect(file.absolutePath).to.equal(__filename)

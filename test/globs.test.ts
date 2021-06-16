@@ -16,15 +16,15 @@ const directory = resolve(findDirectory(__dirname), 'test', 'support') as Direct
 
 describe('Virtual File System Globs', () => {
   it('should prepare a virtual file system from some globs', async () => {
-    const fileSystem = await glob(directory, [ '*' ])
-    const files = fileSystem.list().map((file) => file.relativePath)
+    const list = await glob(directory, [ '*' ])
+    const files = list.list().map((file) => file.relativePath)
     expect(files).to.have.length.greaterThan(1)
     expect(files).to.include('build.ts')
   })
 
   it('should prepare a virtual file system from some globs and options', async () => {
-    const fileSystem = await glob(directory, [ '*' ], { ignore: [ '*.ts' ] })
-    const files = fileSystem.list().map((file) => file.relativePath)
+    const list = await glob(directory, [ '*' ], { ignore: [ '*.ts' ] })
+    const files = list.list().map((file) => file.relativePath)
     expect(files).to.have.length.greaterThan(1)
     expect(files).not.to.include('build.ts')
   })
