@@ -1,5 +1,4 @@
 import { Options, stream } from 'fast-glob'
-import { VirtualFileList } from '../files'
 import { DirectoryPath } from './paths'
 
 /**
@@ -28,16 +27,14 @@ const defaults: Options = {
 }
 
 /**
- * Create a `VirtualFileList` out of a glob match executed in a directory.
- *
- * This will also read and cache the contents of the files while streaming the
- * directory, in order to validate their readability and speed up later stages.
+ * Process globs .
  */
 export async function glob(
     directory: DirectoryPath,
     globs: string[],
-    options: GlobOptions = {},
-): Promise<VirtualFileList> {
+    options: GlobOptions,
+    callback: (entry: string) => void | Promise<void>,
+): Promise<void> {
   // Prepare the glob options, assigning our defaults and current directory
   const opts: Options = Object.assign({}, options, defaults, { cwd: directory })
 
@@ -47,21 +44,8 @@ export async function glob(
     opts.ignore.push('**/node_modules')
   }
 
-  // As we stream globs, we read their contents. This ensures that files
-  // can be read and processed later on, and optimises TypeScript which uses
-  // only synchronous methods...
-  const promises: Promise<string>[] = []
-
-  // Create our builder, stream our entries, and read the files
-  const files = new VirtualFileList(directory)
+  // Invoke the callback for each of our matched files
   for await (const entry of stream(globs, opts)) {
-    const file = files.add(entry.toString())
-    promises.push(file.contents())
+    await callback(entry.toString())
   }
-
-  // Await for _all_ files to be read (and cached)
-  await Promise.all(promises)
-
-  // Return our file list
-  return files
 }

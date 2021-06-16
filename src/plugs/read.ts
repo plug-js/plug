@@ -28,8 +28,14 @@ class ReadPlug implements Plug {
     this.#globs = globs
   }
 
-  async process(fs: VirtualFileList): Promise<VirtualFileList> {
-    return await glob(fs.directoryPath, this.#globs, this.#options)
+  async process(files: VirtualFileList): Promise<VirtualFileList> {
+    const list = files.clone()
+
+    await glob(files.directoryPath, this.#globs, this.#options, (path) => {
+      return list.add(path).contents().then(() => void 0)
+    })
+
+    return list
   }
 }
 
