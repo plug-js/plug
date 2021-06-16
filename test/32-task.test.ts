@@ -71,7 +71,7 @@ describe('Plug Tasks', () => {
     let counter = 0
     const task1 = Task.task(() => Pipe.pipe().plug(async (input) => {
       expect(input).to.equal(files)
-      await slow(100) // finish last!
+      await slow(20) // finish last!
       const list = input.clone()
       list.add(`foo${++ counter}.txt`)
       list.add('xxx.txt', 'first')
@@ -80,7 +80,7 @@ describe('Plug Tasks', () => {
 
     const task2 = Task.task(() => Pipe.pipe().plug(async (input) => {
       expect(input).to.equal(files)
-      await slow(50) // finish in between!
+      await slow(10) // finish in between!
       const list = input.clone()
       list.add(`bar${++ counter}.txt`)
       list.add('xxx.txt', 'second')
