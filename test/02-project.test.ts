@@ -1,7 +1,7 @@
 import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { relative } from 'path'
-import { getProjectDirectory, setProjectDirectory } from '../src/project'
+import { getProjectDirectory, getTaskName, setTaskName, setProjectDirectory } from '../src/project'
 
 describe('Project', () => {
   it('should set the project directory', () => {
@@ -24,5 +24,12 @@ describe('Project', () => {
     } finally {
       setProjectDirectory(old)
     }
+  })
+
+  it('should register and return a task name', () => {
+    const task = {} as any
+    expect(getTaskName(task)).to.equal('unknown')
+    setTaskName(task, 'foobar')
+    expect(getTaskName(task)).to.equal('foobar')
   })
 })
