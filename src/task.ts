@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { VirtualFileList } from './files'
-import { Pipe } from './pipeline'
+import { Pipe } from './pipe'
 
 type TaskCall = (() => Pipe) & {
   readonly task: Task

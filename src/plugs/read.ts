@@ -1,7 +1,7 @@
 import { Plug, Pipe, VirtualFileList } from '..'
 import { glob, GlobOptions } from '../utils/globs'
 
-declare module '../pipeline' {
+declare module '../pipe' {
   interface Pipe {
     read: PlugExtension<typeof ReadPlug>
   }

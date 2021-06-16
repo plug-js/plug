@@ -7,11 +7,11 @@ export interface Plug {
   process: (input: VirtualFileList) => VirtualFileList | Promise<VirtualFileList>
 }
 
-export { Pipe } from './pipeline'
+export { Pipe } from './pipe'
 export { VirtualFileList, VirtualFile } from './files'
 export { getProjectDirectory, setProjectDirectory } from './project'
 
-import { Pipe } from './pipeline'
+import { Pipe } from './pipe'
 import { Task } from './task'
 
 export * from './plugs'

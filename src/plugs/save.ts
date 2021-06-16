@@ -1,6 +1,6 @@
 import { Plug, Pipe, VirtualFileList } from '..'
 
-declare module '../pipeline' {
+declare module '../pipe' {
   interface Pipe {
     save: PlugExtension<typeof SavePlug>
   }
