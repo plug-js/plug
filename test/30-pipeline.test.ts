@@ -1,16 +1,16 @@
 import { expect } from 'chai'
-import { Plug, Pipeline, getProjectDirectory } from '../src'
+import { Plug, Pipe, getProjectDirectory } from '../src'
 
 describe('Plug Pipelines', () => {
   it('should construct a simple pipeline', async () => {
-    const pipe = Pipeline.pipe()
-    const list = await Pipeline.run(pipe)
+    const pipe = Pipe.pipe()
+    const list = await Pipe.run(pipe)
     expect(list.directoryPath).to.equal(getProjectDirectory())
     expect(list.list()).to.eql([])
   })
 
   it('should construct and run a multi-stage pipeline', async () => {
-    const pipe = new class extends Pipeline {
+    const pipe = new class extends Pipe {
       constructor() {
         super(() => Promise.resolve('0' as any))
       }
@@ -22,7 +22,7 @@ describe('Plug Pipelines', () => {
     const p2 = pipe.plug((input) => Promise.resolve(input + '...2' as any))
     expect(p2).to.equal(pipe)
 
-    expect(await Pipeline.run(pipe)).to.equal('0...1...2')
+    expect(await Pipe.run(pipe)).to.equal('0...1...2')
   })
 
   it('should install a plug in the pipeline', async () => {
@@ -38,12 +38,12 @@ describe('Plug Pipelines', () => {
       }
     }
 
-    const installed = Pipeline.install('test123', TestPlug)
+    const installed = Pipe.install('test123', TestPlug)
 
     const processor = installed(0)
     expect(processor('foo' as any)).to.equal('foo...[0]')
 
-    const pipe = new class extends Pipeline {
+    const pipe = new class extends Pipe {
       constructor() {
         super(() => Promise.resolve('0' as any))
       }
@@ -63,6 +63,6 @@ describe('Plug Pipelines', () => {
     const p4 = pipe.plug((input) => Promise.resolve(input + '...4' as any))
     expect(p4).to.equal(pipe)
 
-    expect(await Pipeline.run(pipe)).to.equal('0...1...[2]...[3]...4')
+    expect(await Pipe.run(pipe)).to.equal('0...1...[2]...[3]...4')
   })
 })

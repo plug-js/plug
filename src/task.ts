@@ -1,35 +1,48 @@
 import assert from 'assert'
-import { Pipeline } from './pipeline'
+import { VirtualFileList } from './files'
+import { Pipe } from './pipeline'
 
-type TaskSource = (() => Pipeline) | Pipeline
+type TaskCall = (() => Pipe) & {
+  readonly task: Task
+}
 
-export class PlugTask extends Pipeline {
+export class Task {
   #description: string | undefined
+  #source: () => Pipe
 
-  protected constructor(source: TaskSource, description?: string) {
-    super(() => Pipeline.run(typeof source === 'function' ? source() : source))
+  private constructor(source: () => Pipe, description?: string) {
     this.#description = description
+    this.#source = source
   }
 
   get description(): string | undefined {
     return this.#description
   }
 
-  run(): Promise<void> {
-    return Pipeline.run(this).then(() => {})
+  run(): Promise<VirtualFileList> {
+    return Pipe.run(this.#source())
   }
 
   /* ======================================================================== */
 
-  static task(source: TaskSource): () => PlugTask
-  static task(description: string, source: TaskSource): () => PlugTask
+  static task(source: () => Pipe): TaskCall
+  static task(description: string, source: () => Pipe): TaskCall
 
-  static task(descriptionOrSource: string | TaskSource, optionalSource?: TaskSource): () => PlugTask {
+  static task(descriptionOrSource: string | (() => Pipe), optionalSource?: () => Pipe): TaskCall {
     const { description, source } = typeof descriptionOrSource === 'string' ?
       { description: descriptionOrSource, source: optionalSource } :
       { description: undefined, source: descriptionOrSource }
     assert(source, 'Task source missing')
-    // return new PlugTask(source, description)
-    throw new Error()
+
+    const task = new Task(source, description)
+
+    const pipe = new Pipe(task.run.bind(task))
+
+    function call(): Pipe {
+      return pipe
+    }
+    call.task = task
+
+    return call
   }
 }

@@ -7,19 +7,14 @@ export interface Plug {
   process: (input: VirtualFileList) => VirtualFileList | Promise<VirtualFileList>
 }
 
-export { Pipeline } from './pipeline'
-export { VirtualFileList as VirtualFileList, VirtualFile } from './files'
+export { Pipe } from './pipeline'
+export { VirtualFileList, VirtualFile } from './files'
 export { getProjectDirectory, setProjectDirectory } from './project'
 
-import { Pipeline } from './pipeline'
-import { PlugTask } from './task'
-
-export function pipe(): Pipeline {
-  throw new Error()
-}
+import { Pipe } from './pipeline'
+import { Task } from './task'
 
 export * from './plugs'
 
-export const read = Pipeline.read
-export const from = Pipeline.from
-export const task = PlugTask.task
+export const pipe = Pipe.pipe
+export const task = Task.task

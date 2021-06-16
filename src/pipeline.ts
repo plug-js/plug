@@ -15,17 +15,17 @@ type PlugProcessor = Plug['process']
  * to the pipeline with install.
  */
 export type PlugExtension<C extends PlugConstructor<I>, I extends Plug = Plug> =
-    (...args: ConstructorOverloads<C>) => Pipeline
+    (...args: ConstructorOverloads<C>) => Pipe
 
 /* ========================================================================== *
  * CORE PIPELINE IMPLEMENTATION                                               *
  * ========================================================================== */
 
-export class Pipeline {
+export class Pipe {
   #start: () => VirtualFileList | Promise<VirtualFileList>
   #plugs: PlugProcessor[] = []
 
-  protected constructor(start: () => VirtualFileList | Promise<VirtualFileList>) {
+  constructor(start: () => VirtualFileList | Promise<VirtualFileList>) {
     this.#start = start
   }
 
@@ -36,11 +36,11 @@ export class Pipeline {
 
   /* ======================================================================== */
 
-  static pipe(): Pipeline {
-    return new Pipeline(() => new VirtualFileList(getProjectDirectory()))
+  static pipe(): Pipe {
+    return new Pipe(() => new VirtualFileList(getProjectDirectory()))
   }
 
-  static async run(pipeline: Pipeline): Promise<VirtualFileList> {
+  static async run(pipeline: Pipe): Promise<VirtualFileList> {
     let fs = await pipeline.#start()
     for (const plug of pipeline.#plugs) fs = await plug(fs)
     return fs
@@ -63,8 +63,8 @@ export class Pipeline {
       return instance.process.bind(instance)
     }
 
-    Object.defineProperty(Pipeline.prototype, name, {
-      value: function<P extends any[] = ConstructorParameters<C>>(this: Pipeline, ...args: P) {
+    Object.defineProperty(Pipe.prototype, name, {
+      value: function<P extends any[] = ConstructorParameters<C>>(this: Pipe, ...args: P) {
         const created = create(args)
         return this.plug(created)
       },
@@ -78,8 +78,8 @@ export class Pipeline {
 
 // Freeze our "plug" method in the prototype so that noone can overwrite
 // it with "install" from Plug
-Object.defineProperty(Pipeline.prototype, 'plug', {
-  value: Pipeline.prototype.plug,
+Object.defineProperty(Pipe.prototype, 'plug', {
+  value: Pipe.prototype.plug,
   configurable: false,
   enumerable: false,
   writable: false,
