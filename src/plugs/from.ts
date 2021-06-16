@@ -1,4 +1,6 @@
-import { Plug, Pipe, VirtualFileList } from '..'
+import { Plug } from '..'
+import { VirtualFileList } from '../files'
+import { install, PlugExtension } from '../install'
 
 declare module '../pipe' {
   interface Pipe {
@@ -18,4 +20,4 @@ class FromPlug implements Plug {
   }
 }
 
-export const from = Pipe.install('from', FromPlug)
+export const from = install('from', FromPlug)

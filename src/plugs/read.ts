@@ -1,5 +1,10 @@
-import { Plug, Pipe, VirtualFileList } from '..'
-import { glob, GlobOptions } from '../utils/globs'
+import { Plug } from '..'
+import { VirtualFileList } from '../files'
+import { install, PlugExtension } from '../install'
+import {
+  GlobOptions,
+  glob,
+} from '../utils/globs'
 
 declare module '../pipe' {
   interface Pipe {
@@ -39,4 +44,4 @@ class ReadPlug implements Plug {
   }
 }
 
-export const read = Pipe.install('read', ReadPlug)
+export const read = install('read', ReadPlug)

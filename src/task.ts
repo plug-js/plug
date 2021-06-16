@@ -3,6 +3,7 @@ import { VirtualFileList } from './files'
 import { Pipe } from './pipe'
 
 type TaskCall = (() => Pipe) & {
+  readonly run: () => Promise<void>
   readonly task: Task
 }
 
@@ -20,7 +21,8 @@ export class Task {
   }
 
   run(): Promise<VirtualFileList> {
-    return Pipe.run(this.#source())
+    // return Pipe.run(this.#source())\
+    throw new Error()
   }
 
   /* ======================================================================== */
@@ -29,20 +31,19 @@ export class Task {
   static task(description: string, source: () => Pipe): TaskCall
 
   static task(descriptionOrSource: string | (() => Pipe), optionalSource?: () => Pipe): TaskCall {
-    const { description, source } = typeof descriptionOrSource === 'string' ?
-      { description: descriptionOrSource, source: optionalSource } :
-      { description: undefined, source: descriptionOrSource }
-    assert(source, 'Task source missing')
+    // const { description, source } = typeof descriptionOrSource === 'string' ?
+    //   { description: descriptionOrSource, source: optionalSource } :
+    //   { description: undefined, source: descriptionOrSource }
+    // assert(source, 'Task source missing')
 
-    const task = new Task(source, description)
+    // const task = new Task(source, description)
 
-    const pipe = new Pipe(task.run.bind(task))
+    // const call = (): Pipe => new Pipe(() => task.run())
+    // call.run = () => task.run().then(() => void 0)
+    // call.task = task
 
-    function call(): Pipe {
-      return pipe
-    }
-    call.task = task
+    // return call
 
-    return call
+    throw new Error('')
   }
 }

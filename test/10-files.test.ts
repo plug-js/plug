@@ -167,6 +167,7 @@ describe('Virtual File List', () => {
   it('should preserve caches and lists when cloning a VirtualFileList', () => {
     const files1 = new VirtualFileList('/foo')
     const file1 = files1.add('bar.txt', 'hello, world!', { test: true } as any)
+    files1.get('baz.txt') // cached but not in list
 
     expect(files1.list()).to.eql([ file1 ])
     expect(files1.list()[0]).to.equal(file1)
