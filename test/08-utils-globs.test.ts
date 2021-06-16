@@ -14,7 +14,7 @@ function findDirectory(directory: string): string {
 // This directory _may_ be relocated under build, so find it...
 const directory = resolve(findDirectory(__dirname), 'test', 'support') as DirectoryPath
 
-describe.only('Virtual File List Globs', () => {
+describe('Virtual File List Globs', () => {
   it('should prepare a virtual file list from some globs', async () => {
     const files: string[] = []
     await glob(directory, [ '*' ], {}, (path) => void files.push(path))
