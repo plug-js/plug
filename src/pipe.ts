@@ -9,18 +9,21 @@ type PlugProcessor = Plug['process']
  * ========================================================================== */
 
 export class Pipe implements Plug {
-  #plugs: PlugProcessor[]
+  #plugs: Plug[]
 
   private constructor() {
     this.#plugs = []
   }
 
   async process(list: VirtualFileList): Promise<VirtualFileList> {
-    for (const plug of this.#plugs) list = await plug(list)
+    for (const plug of this.#plugs) list = await plug.process(list)
     return list
   }
 
-  plug(plug: PlugProcessor): this {
+  plug(plug: Plug): this
+  plug(plug: PlugProcessor): this
+  plug(plug: Plug | PlugProcessor): this {
+    if (typeof plug === 'function') plug = { process: plug }
     this.#plugs.push(plug)
     return this
   }

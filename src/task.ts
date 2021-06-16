@@ -60,10 +60,10 @@ export class Task implements Plug {
 
   /* ======================================================================== */
 
-  static task(source: () => Pipe): TaskCall
-  static task(description: string, source: () => Pipe): TaskCall
+  static task(source: () => Plug): TaskCall
+  static task(description: string, source: () => Plug): TaskCall
 
-  static task(descriptionOrSource: string | (() => Pipe), optionalSource?: () => Pipe): TaskCall {
+  static task(descriptionOrSource: string | (() => Plug), optionalSource?: () => Plug): TaskCall {
     const { description, source } = typeof descriptionOrSource === 'string' ?
         { description: descriptionOrSource, source: optionalSource } :
         { description: undefined, source: descriptionOrSource }
