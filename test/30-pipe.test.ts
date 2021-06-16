@@ -19,6 +19,12 @@ describe('Plug Pipes', () => {
     const p2 = pipe.plug((input) => Promise.resolve(input + '...2' as any))
     expect(p2).to.equal(pipe)
 
-    expect(await pipe.process('0' as any)).to.equal('0...1...2')
+    const p3 = pipe.plug({ process: (input) => input + '...3' as any })
+    expect(p3).to.equal(pipe)
+
+    const p4 = pipe.plug({ process: (input) => Promise.resolve(input + '...4' as any) })
+    expect(p4).to.equal(pipe)
+
+    expect(await pipe.process('0' as any)).to.equal('0...1...2...3...4')
   })
 })
