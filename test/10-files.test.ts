@@ -113,9 +113,13 @@ describe('Virtual File List', () => {
 
   it('should add files to an existing VirtualFileList', () => {
     const files = new VirtualFileList('/foo')
-    const file = files.add('bar.txt')
+    const file = files.add('bar.txt', { originalPath: 'bar.src' })
 
     expect(file.fileList).to.equal(files)
+    expect(file.relativePath).to.equal('bar.txt')
+    expect(file.absolutePath).to.equal('/foo/bar.txt')
+    expect(file.originalPath).to.equal('/foo/bar.src')
+
     expect(files.get('bar.txt')).to.equal(file)
 
     expect(files.add(file)).to.equal(file)
@@ -123,7 +127,10 @@ describe('Virtual File List', () => {
     const files2 = new VirtualFileList('/foo/bar')
     const file2 = files2.add(file)
 
+    expect(file.fileList).to.equal(files)
     expect(file2.relativePath).to.equal('../bar.txt')
+    expect(file.absolutePath).to.equal('/foo/bar.txt')
+    expect(file.originalPath).to.equal('/foo/bar.src')
 
     expect(file2.fileList).to.equal(files2)
     expect(files2.get('../bar.txt')).to.equal(file2)
@@ -156,12 +163,19 @@ describe('Virtual File List', () => {
     expect(files1.list()).to.eql([ file1 ])
     expect(files1.list()[0]).to.equal(file1)
 
+    expect(files1.has('bar.txt')).to.be.true
+    expect(files1.has('/foo/bar.txt')).to.be.true
+
     const files2 = files1.builder('/').build()
     const file2 = files2.get('foo/bar.txt')
 
     expect(file2).not.to.equal(file1)
 
     expect(files2.list()).to.eql([]) // empty list
+    files2.add(file2)
+    expect(files2.list()).to.eql([ file2 ])
+    expect(files2.list()[0]).to.equal(file2)
+    expect(files2.get('foo/bar.txt')).to.equal(file2)
 
     expect(file2.fileList).to.equal(files2)
     expect(file2.absolutePath).to.equal('/foo/bar.txt')
