@@ -48,11 +48,6 @@ export function getCanonicalPath(name: AbsolutePath): CanonicalPath {
   return (caseSensitivePaths ? name : name.toLowerCase()) as CanonicalPath
 }
 
-/** Get the current working directory (or a path relative to it) as a directory path */
-export function getCurrentDirectoryPath(path?: string): DirectoryPath {
-  return (path ? resolve(process.cwd(), path) : process.cwd()) as DirectoryPath
-}
-
 /** Get a directory path resolving the specified path */
 export function getDirectoryPath(directory: DirectoryPath, path?: string): DirectoryPath {
   return path ? resolve(directory, path) as DirectoryPath : directory
