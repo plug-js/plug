@@ -133,7 +133,10 @@ describe('Virtual File List', () => {
 
     expect(file).not.to.equal(file2)
 
-    const file3 = files.add('hello.txt', 'hello, world!', { test: true } as any)
+    const file3 = files.add('hello.txt', {
+      contents: 'hello, world!',
+      sourceMap: { test: true } as any,
+    })
     const file4 = file3.clone(files2)
 
     expect(file4.fileList).to.equal(files2)
@@ -145,7 +148,10 @@ describe('Virtual File List', () => {
 
   it('should preserve caches when creating a builder from a VirtualFileList', () => {
     const files1 = new VirtualFileList('/foo')
-    const file1 = files1.add('bar.txt', 'hello, world!', { test: true } as any)
+    const file1 = files1.add('bar.txt', {
+      contents: 'hello, world!',
+      sourceMap: { test: true } as any,
+    })
 
     expect(files1.list()).to.eql([ file1 ])
     expect(files1.list()[0]).to.equal(file1)
@@ -166,7 +172,10 @@ describe('Virtual File List', () => {
 
   it('should preserve caches and lists when cloning a VirtualFileList', () => {
     const files1 = new VirtualFileList('/foo')
-    const file1 = files1.add('bar.txt', 'hello, world!', { test: true } as any)
+    const file1 = files1.add('bar.txt', {
+      contents: 'hello, world!',
+      sourceMap: { test: true } as any,
+    })
     files1.get('baz.txt') // cached but not in list
 
     expect(files1.list()).to.eql([ file1 ])
@@ -253,7 +262,7 @@ describe('Virtual File List', () => {
       function create(contents: string): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', contents)
+            .add('bar.js', { contents })
             .build()
             .get('bar.js')
       }
@@ -272,12 +281,12 @@ describe('Virtual File List', () => {
     })
 
     it('should create a VirtualFile with an inline source map', async () => {
-      const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
+      const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
+            .add('bar.js', { contents, sourceMap })
             .build()
             .get('bar.js')
       }
@@ -296,25 +305,25 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
-      expect(await file3.contents()).to.equal(data)
+      expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
       expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
-      expect(await file4.contents()).to.equal(data)
+      expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should create a VirtualFile with an external source map', async () => {
-      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
-            .add('bar.js.map', '{"foo":"bar"}')
+            .add('bar.js', { contents, sourceMap })
+            .add('bar.js.map', { contents: '{"foo":"bar"}' })
             .build()
             .get('bar.js')
       }
@@ -333,24 +342,24 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
-      expect(await file3.contents()).to.equal(data)
+      expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
       expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
-      expect(await file4.contents()).to.equal(data)
+      expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should create a VirtualFile with a missing external source map', async () => {
-      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
+            .add('bar.js', { contents, sourceMap })
             .build()
             .get('bar.js')
       }
@@ -369,13 +378,13 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
-      expect(await file3.contents()).to.equal(data)
+      expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
       expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
-      expect(await file4.contents()).to.equal(data)
+      expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
     })
@@ -425,7 +434,7 @@ describe('Virtual File List', () => {
       function create(contents: string): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', contents)
+            .add('bar.js', { contents })
             .build()
             .get('bar.js')
       }
@@ -444,12 +453,12 @@ describe('Virtual File List', () => {
     })
 
     it('should create a VirtualFile with an inline source map', async () => {
-      const data = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
+      const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
+            .add('bar.js', { contents, sourceMap })
             .build()
             .get('bar.js')
       }
@@ -468,25 +477,25 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
-      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
       expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
-      expect(file4.contentsSync()).to.equal(data)
+      expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should create a VirtualFile with an external source map', async () => {
-      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
-            .add('bar.js.map', '{"foo":"bar"}')
+            .add('bar.js', { contents, sourceMap })
+            .add('bar.js.map', { contents: '{"foo":"bar"}' })
             .build()
             .get('bar.js')
       }
@@ -505,24 +514,24 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
-      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
       expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
-      expect(file4.contentsSync()).to.equal(data)
+      expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
     })
 
     it('should create a VirtualFile with a missing external source map', async () => {
-      const data = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
         return VirtualFileList
             .builder('/foo')
-            .add('bar.js', data, sourceMap)
+            .add('bar.js', { contents, sourceMap })
             .build()
             .get('bar.js')
       }
@@ -541,13 +550,13 @@ describe('Virtual File List', () => {
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
-      expect(file3.contentsSync()).to.equal(data)
+      expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
       expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
-      expect(file4.contentsSync()).to.equal(data)
+      expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
     })

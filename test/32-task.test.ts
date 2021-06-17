@@ -84,8 +84,8 @@ describe('Plug Tasks', () => {
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add(`foo${++ counter}.txt`, `${taskNames?.join()}`)
-      list.add('xxx.txt', 'first')
+      list.add(`foo${++ counter}.txt`, { contents: `${taskNames?.join()}` })
+      list.add('xxx.txt', { contents: 'first' })
       return list
     }))
 
@@ -94,8 +94,8 @@ describe('Plug Tasks', () => {
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add(`bar${++ counter}.txt`, `${taskNames?.join()}`)
-      list.add('xxx.txt', 'second')
+      list.add(`bar${++ counter}.txt`, { contents: `${taskNames?.join()}` })
+      list.add('xxx.txt', { contents: 'second' })
       return list
     }))
 
@@ -104,8 +104,8 @@ describe('Plug Tasks', () => {
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add(`baz${++ counter}.txt`, `${taskNames?.join()}`)
-      list.add('xxx.txt', 'third')
+      list.add(`baz${++ counter}.txt`, { contents: `${taskNames?.join()}` })
+      list.add('xxx.txt', { contents: 'third' })
       return Promise.resolve(list)
     }))
 

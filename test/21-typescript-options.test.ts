@@ -30,8 +30,8 @@ describe('TypeScript Compiler Options', () => {
   it('should read a basic configuration file', () => {
     const files = VirtualFileList
         .builder('/foo')
-        .add('tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
-        .add('wrong.json', '{"compilerOptions":{"module":"wrong"}}')
+        .add('tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
+        .add('wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
         .build()
 
     let { options, diagnostics } = getCompilerOptions(files)
@@ -52,11 +52,11 @@ describe('TypeScript Compiler Options', () => {
   it('should read an extended configuration file', () => {
     const files = VirtualFileList
         .builder('/foo')
-        .add('base/tsconfig.json', '{"compilerOptions":{"module":"commonjs"}}')
-        .add('base/wrong.json', '{"compilerOptions":{"module":"wrong"}}')
-        .add('ext/tsconfig.json', '{"extends":"../base/tsconfig.json"}')
-        .add('miss/tsconfig.json', '{"extends":"../base/missing.json"}')
-        .add('wrong/tsconfig.json', '{"extends":"../base/wrong.json"}')
+        .add('base/tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
+        .add('base/wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
+        .add('ext/tsconfig.json', { contents: '{"extends":"../base/tsconfig.json"}' })
+        .add('miss/tsconfig.json', { contents: '{"extends":"../base/missing.json"}' })
+        .add('wrong/tsconfig.json', { contents: '{"extends":"../base/wrong.json"}' })
         .build()
 
     let { options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json')
@@ -85,9 +85,9 @@ describe('TypeScript Compiler Options', () => {
   it('should detect circular dependencies when reading extended configurations', () => {
     const files = VirtualFileList
         .builder('/foo')
-        .add('tsconfig.json', '{"extends":"./one/tsconfig.json"}')
-        .add('one/tsconfig.json', '{"extends":"../two/tsconfig.json"}')
-        .add('two/tsconfig.json', '{"extends":"../tsconfig.json"}')
+        .add('tsconfig.json', { contents: '{"extends":"./one/tsconfig.json"}' })
+        .add('one/tsconfig.json', { contents: '{"extends":"../two/tsconfig.json"}' })
+        .add('two/tsconfig.json', { contents: '{"extends":"../tsconfig.json"}' })
         .build()
 
     const { options, diagnostics } = getCompilerOptions(files, 'tsconfig.json')

@@ -39,12 +39,12 @@ describe('TypeScript Host', () => {
 
   it('should create some source files', () => {
     const files = VirtualFileList.builder('/foo')
-        .add('bar.ts', '// ts')
-        .add('bar.tsx', '// tsx')
-        .add('bar.js', '// js')
-        .add('bar.jsx', '// jsx')
-        .add('bar.json', '// json')
-        .add('bar.txt', '// txt')
+        .add('bar.ts', { contents: '// ts' })
+        .add('bar.tsx', { contents: '// tsx' })
+        .add('bar.js', { contents: '// js' })
+        .add('bar.jsx', { contents: '// jsx' })
+        .add('bar.json', { contents: '// json' })
+        .add('bar.txt', { contents: '// txt' })
         .build()
 
     const host = new TypeScriptHost(files)
