@@ -1,20 +1,20 @@
 import sourceMapSupport from 'source-map-support'
 
+import { AbsolutePath } from '../utils/paths'
+import { TypeScriptFailure } from './diagnostic'
+import { TypeScriptHost } from './host'
+import { VirtualFileList } from '../files'
+import { extname } from 'path'
+import { getCompilerOptions } from './options'
+import { setupLoader } from '../utils/loader'
+
 import {
-  createProgram,
   Diagnostic,
-  getPreEmitDiagnostics,
   ModuleKind,
   ScriptTarget,
+  createProgram,
+  getPreEmitDiagnostics,
 } from 'typescript'
-
-import { TypeScriptFailure } from './diagnostic'
-import { getCompilerOptions } from './options'
-import { VirtualFileList } from '../files'
-import { TypeScriptHost } from './host'
-import { extname } from 'path'
-import { AbsolutePath } from '../utils/paths'
-import { setupLoader } from '../utils/loader'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })

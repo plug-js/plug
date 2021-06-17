@@ -1,7 +1,12 @@
 import { RawSourceMap } from 'source-map'
 import { VirtualFile, VirtualFileList } from './index'
-import { readFileSync, statSync, promises as fs } from 'fs'
 import { extractSourceMap } from '../utils/source-maps'
+
+import {
+  promises as fs,
+  readFileSync,
+  statSync,
+} from 'fs'
 
 import {
   AbsolutePath,

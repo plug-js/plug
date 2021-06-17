@@ -1,20 +1,19 @@
-import { extname } from 'path'
 import { EOL } from 'os'
+import { VirtualFileList } from '../files'
+import { caseSensitivePaths } from '../utils/paths'
 import { createHash } from 'crypto'
+import { extname } from 'path'
 
 import {
   CompilerHost,
   CompilerOptions,
+  FormatDiagnosticsHost,
   ScriptKind,
   ScriptTarget,
   SourceFile,
   createSourceFile,
   getDefaultLibFilePath,
-  FormatDiagnosticsHost,
 } from 'typescript'
-
-import { VirtualFileList } from '../files'
-import { caseSensitivePaths } from '../utils/paths'
 
 /* ========================================================================== *
  * CACHING - works out of the SHA256 of the contents of a file an it's shared *

@@ -1,6 +1,12 @@
 import { RawSourceMap } from 'source-map'
 import { VirtualFileListImpl } from './list'
-import { AbsolutePath, RelativePath, CanonicalPath, DirectoryPath } from '../utils/paths'
+
+import {
+  AbsolutePath,
+  CanonicalPath,
+  DirectoryPath,
+  RelativePath,
+} from '../utils/paths'
 
 /**
  * The `VirtualFile` interface represents a file in a `VirtualFileList`.

@@ -3,8 +3,8 @@ import { Failure } from '../failure'
 import {
   Diagnostic,
   DiagnosticCategory,
-  formatDiagnostics,
   FormatDiagnosticsHost,
+  formatDiagnostics,
   formatDiagnosticsWithColorAndContext,
 } from 'typescript'
 

@@ -1,14 +1,23 @@
 import {
   CompilerOptions,
   Diagnostic,
-  getDefaultCompilerOptions,
   DiagnosticCategory,
   convertCompilerOptionsFromJson,
+  getDefaultCompilerOptions,
   readConfigFile,
 } from 'typescript'
 
-import { VirtualFile, VirtualFileList } from '../files'
-import { AbsolutePath, getAbsolutePath, getDirectory, getRelativePath } from '../utils/paths'
+import {
+  VirtualFile,
+  VirtualFileList,
+} from '../files'
+
+import {
+  AbsolutePath,
+  getAbsolutePath,
+  getDirectory,
+  getRelativePath,
+} from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = { options: CompilerOptions, diagnostics: readonly Diagnostic[] }
 
