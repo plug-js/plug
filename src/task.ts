@@ -11,7 +11,7 @@ export type TaskCall = (() => Pipe) & {
 
 function makeCall(task: Task): TaskCall {
   // Our task call returns a Pipe initially plugged with the task's process
-  const call = (): Pipe => Pipe.pipe().plug(task.process.bind(task))
+  const call = (): Pipe => Pipe.pipe(task.process.bind(task))
   // The "run()" (convenience) method runs the task from the project directory
   call.run = async (input?: VirtualFileList) =>
     // TODO: create new "Run"

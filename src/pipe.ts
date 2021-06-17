@@ -29,7 +29,10 @@ export class Pipe implements Plug {
 
   /* ======================================================================== */
 
-  static pipe(plug?: Plug): Pipe {
+  static pipe(plug?: Plug): Pipe
+  static pipe(plug?: Processor): Pipe
+  static pipe(plug?: Plug | Processor): Pipe {
+    if (typeof plug === 'function') plug = { process: plug }
     return new Pipe(plug)
   }
 }
