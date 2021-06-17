@@ -13,7 +13,6 @@ import { getCompilerOptions } from './options'
 import { VirtualFileList } from '../files'
 import { TypeScriptHost } from './host'
 import { extname } from 'path'
-import { getAbsolutePath, getCurrentDirectoryPath } from '../utils/paths'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })
@@ -57,12 +56,12 @@ export function reportAndFail(diagnostics: readonly Diagnostic[], host: TypeScri
  * Load our build file from TypeScript (or JavaScript)
  */
 export function loadBuildFile(directory: string, fileName: string, tsConfig?: string): any {
-  const directoryPath = getCurrentDirectoryPath(directory)
-  const absolutePath = getAbsolutePath(directoryPath, fileName)
+  const files = new VirtualFileList(directory)
+  const directoryPath = files.directoryPath
+  const absolutePath = files.get(fileName).absolutePath
   if (extname(absolutePath) === '.js') return require(absolutePath)
 
   // Create our host (compiler / reporter / ...)
-  const files = new VirtualFileList(directoryPath)
   const host = new TypeScriptHost(files)
 
   // Read our compiler options and fail on error
