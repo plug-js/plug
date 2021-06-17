@@ -14,11 +14,20 @@ function makeCall(task: Task): TaskCall {
   const call = (): Pipe => Pipe.pipe(task.process.bind(task))
   // The "run()" (convenience) method runs the task from the project directory
   call.run = async (input?: VirtualFileList) =>
-    // TODO: create new "Run"
-    task.process(input || new VirtualFileList(getProjectDirectory()), { taskNames: [] })
+    task.process(input || new VirtualFileList(getProjectDirectory()), new TaskRun())
   // And we just remember our task, too, before returning
   call.task = task
   return call
+}
+
+class TaskRun implements Run {
+  taskNames: readonly string[]
+
+  constructor()
+  constructor(run: Run, task: Task)
+  constructor(run?: Run, task?: Task) {
+    this.taskNames = run ? [ ...run.taskNames, getTaskName(task!) ] : []
+  }
 }
 
 class Parallel implements Plug {
@@ -57,9 +66,7 @@ export class Task implements Plug {
   }
 
   process(input: VirtualFileList, run: Run): VirtualFileList | Promise<VirtualFileList> {
-    // TODO: properly clone the task run
-    const newRun = { taskNames: [ ...run.taskNames, getTaskName(this) ] }
-    return this.#source().process(input, newRun)
+    return this.#source().process(input, new TaskRun(run, this))
   }
 
   /* ======================================================================== */
