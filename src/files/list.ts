@@ -1,16 +1,21 @@
-import { RawSourceMap } from 'source-map'
-import { VirtualFile, VirtualFileList, VirtualFileListBuilder } from './index'
-
-import {
-  CanonicalPath,
-  DirectoryPath,
-  getCanonicalPath,
-  getAbsolutePath,
-  getDirectoryPath,
-  AbsolutePath,
-} from '../utils/paths'
 import { VirtualFileImpl } from './file'
 import { getProjectDirectory } from '../project'
+
+import {
+  VirtualFile,
+  VirtualFileList,
+  VirtualFileListBuilder,
+  VirtualFileOptions,
+} from './index'
+
+import {
+  AbsolutePath,
+  CanonicalPath,
+  DirectoryPath,
+  getAbsolutePath,
+  getCanonicalPath,
+  getDirectoryPath,
+} from '../utils/paths'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -23,13 +28,8 @@ class VirtualFileListBuilderImpl implements VirtualFileListBuilder {
     this.#list = list
   }
 
-  add(pathOrFile: string | VirtualFile,
-      contents?: string,
-      sourceMap?: boolean | RawSourceMap,
-      originalPath?: AbsolutePath,
-  ): this {
-    if (! this.#list) throw new Error('Virtual file list already built')
-    this.#list.add(pathOrFile, contents, sourceMap, originalPath)
+  add(pathOrFile: string | VirtualFile, options?: VirtualFileOptions): this {
+    this.#list?.add(pathOrFile, options)
     return this
   }
 
@@ -62,7 +62,7 @@ export class VirtualFileListImpl implements VirtualFileList {
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
-    const file = new VirtualFileImpl(this, { absolutePath })
+    const file = new VirtualFileImpl(this, absolutePath)
     this.#cache.set(file.canonicalPath, file)
     return file
   }
@@ -105,17 +105,17 @@ export class VirtualFileListImpl implements VirtualFileList {
     return list
   }
 
-  add(pathOrFile: string | VirtualFile,
-      contents?: string,
-      sourceMap?: boolean | RawSourceMap,
-      originalPath?: AbsolutePath,
-  ): VirtualFile {
+  add(pathOrFile: string | VirtualFile, options: VirtualFileOptions = {}): VirtualFile {
     let file = undefined as VirtualFile | undefined
+
     if (typeof pathOrFile === 'string') {
+      const { originalPath, contents, sourceMap } = options
       const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
-      file = new VirtualFileImpl(this, { absolutePath, contents, sourceMap, originalPath })
+      file = new VirtualFileImpl(this, absolutePath, { contents, sourceMap,
+        originalPath: originalPath ? getAbsolutePath(this.directoryPath, originalPath) : undefined,
+      })
     } else {
-      file = pathOrFile.fileList === this ? pathOrFile : pathOrFile.clone(this)
+      file = pathOrFile.clone(this)
     }
 
     this.#cache.set(file.canonicalPath, file)

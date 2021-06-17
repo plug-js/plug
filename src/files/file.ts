@@ -21,7 +21,6 @@ import {
 type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 interface VirtualFileImplOptions {
-  absolutePath: AbsolutePath,
   originalPath?: AbsolutePath,
   sourceMap?: boolean | RawSourceMap,
   contents?: string,
@@ -37,11 +36,12 @@ export class VirtualFileImpl implements VirtualFile {
   #promise?: Promise<VirtualFileData>
   #sourceMap?: RawSourceMap | false
 
-  constructor(fileList: VirtualFileList, options: VirtualFileImplOptions) {
-    const { absolutePath, contents,
-      originalPath = absolutePath, // default to absolute path
-      sourceMap = true, // defaults to "true" meaning extract from content
-    } = options
+  constructor(
+      fileList: VirtualFileList,
+      absolutePath: AbsolutePath,
+      options: VirtualFileImplOptions = {},
+  ) {
+    const { contents, originalPath = absolutePath, sourceMap = true } = options
 
     Object.defineProperties(this, {
       'fileList': { enumerable: false, value: fileList },
@@ -76,7 +76,7 @@ export class VirtualFileImpl implements VirtualFile {
 
   clone(files: VirtualFileList): VirtualFile {
     const { absolutePath, originalPath } = this
-    const file = new VirtualFileImpl(files, { absolutePath, originalPath })
+    const file = new VirtualFileImpl(files, absolutePath, { originalPath })
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
     file.#data = this.#data

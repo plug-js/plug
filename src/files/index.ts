@@ -45,10 +45,16 @@ export interface VirtualFile {
 }
 
 /** A type describing how to _add_ a virtual file to a list */
-export interface VirtualFileOptions {
-  path: string,
+export type VirtualFileOptions = {
+  /** The contents (if any) of the file to add */
   contents?: string,
+  /**
+   * A source map for this file or a boolean indicating whether the source
+   * map should be extracted from the file's contents themselves
+   * @default true
+   */
   sourceMap?: boolean | RawSourceMap,
+  /** The original path of the file (if any) defaulting to its path */
   originalPath?: string,
 }
 
@@ -84,23 +90,7 @@ export interface VirtualFileList {
   /** Add a `VirtualFile` to this `VirtualFileList` */
   add(file: VirtualFile): VirtualFile
   /** Add a `VirtualFile` to this `VirtualFileList` */
-  add(path: string): VirtualFile
-  /** Add a `VirtualFile` with the specified contents to this `VirtualFileList` */
-  add(path: string, contents: string): VirtualFile
-  /** Add a `VirtualFile` with the specified contents and source map to this `VirtualFileList` */
-  add(path: string, contents: string, sourceMap: RawSourceMap): VirtualFile
-  /**
-   * Add a `VirtualFile` with the specified contents to this `VirtualFileList`.
-   *
-   * When `sourceMap` is `true` (default) the source map of the virtual file
-   * will be read parsing the contents specified.
-   */
-  add(path: string, contents: string, sourceMap: boolean): VirtualFile
-  /**
-   * Add a `VirtualFile` with the specified contents to this `VirtualFileList`,
-   * remembering its _original_ path (where it was created from).
-   */
-  add(path: string, contents: string, sourceMap: RawSourceMap | boolean, originalPath?: AbsolutePath): VirtualFile
+  add(path: string, options?: VirtualFileOptions): VirtualFile
 }
 
 /**
@@ -111,23 +101,7 @@ export interface VirtualFileListBuilder {
   /** Add a `VirtualFile` to the `VirtualFileList` */
   add(file: VirtualFile): this
   /** Add a `VirtualFile` to the `VirtualFileList` */
-  add(path: string): this
-  /** Add a `VirtualFile` with the specified contents to the `VirtualFileList` */
-  add(path: string, contents: string): this
-  /** Add a `VirtualFile` with the specified contents and source map to the `VirtualFileList` */
-  add(path: string, contents: string, sourceMap: RawSourceMap): this
-  /**
-   * Add a `VirtualFile` with the specified contents to the `VirtualFileList`.
-   *
-   * When `sourceMap` is `true` (default) the source map of the virtual file
-   * will be read parsing the contents specified.
-   */
-  add(path: string, contents: string, sourceMap: boolean): this
-  /**
-   * Add a `VirtualFile` with the specified contents to this `VirtualFileList`,
-   * remembering its _original_ path (where it was created from).
-   */
-  add(path: string, contents: string, sourceMap: RawSourceMap | boolean, originalPath?: AbsolutePath): this
+  add(path: string, options?: VirtualFileOptions): this
 
   /** Return the `VirtualFileList` instance being built */
   build(): VirtualFileList
