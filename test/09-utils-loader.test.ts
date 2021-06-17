@@ -58,7 +58,7 @@ describe('Node Loader', () => {
       await new Promise((resolve) => setTimeout(resolve, 5))
       expect(warnings.length).to.be.greaterThan(0)
       for (const warning of warnings) {
-        expect(warning).to.equal('Circular dependency requiring "/abc/foo.js"')
+        expect(warning).to.equal('Circular dependency requiring "/abc/foo.js" from "/abc/baz.js"')
       }
     } finally {
       process.off('warning', listener)

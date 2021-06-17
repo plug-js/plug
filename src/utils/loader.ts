@@ -26,16 +26,16 @@ const marker = Symbol()
 const contentMap = new Map<AbsolutePath, string>()
 
 // Emit a warning when circular dependencies are found
-function emitCircularRequireWarning(file: string): void {
-  process.emitWarning(`Circular dependency requiring "${file}"`)
+function emitCircularRequireWarning(file: string, from: string): void {
+  process.emitWarning(`Circular dependency requiring "${file}" from "${from}"`)
 }
 
 // A proxy object used in lieu of module's exports warning about circular
 // dependencies - the target here is always {} so we don't even check...
-function createCircularWarningEmitter(file: string): object {
+function createCircularWarningEmitter(file: string, from: string): object {
   return new Proxy({} as any, {
-    getOwnPropertyDescriptor: () => void emitCircularRequireWarning(file),
-    get: () => void emitCircularRequireWarning(file),
+    getOwnPropertyDescriptor: () => void emitCircularRequireWarning(file, from),
+    get: () => void emitCircularRequireWarning(file, from),
   })
 }
 
@@ -64,11 +64,14 @@ cjs._load = function _load(request: any, parent?: Module, isMain?: boolean) {
         if (content === undefined) continue
 
         // Check caches, if we loaded this before...
-        if (file in cjs._cache) return cjs._cache[file].exports
+        if (file in cjs._cache) {
+          if (cjs._cache[file].loaded) return cjs._cache[file].exports
+          return createCircularWarningEmitter(file, parent.filename)
+        }
 
         // We have our content, create a new module and cache it
         const module = cjs._cache[file] = new Module(file, parent)
-        module.exports = createCircularWarningEmitter(file)
+        module.exports = {} // createCircularWarningEmitter(file)
         module.filename = file
         module[marker] = true
 
