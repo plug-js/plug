@@ -4,12 +4,10 @@ const typescript: any = null
 const eslint: any = null
 const mocha: any = null
 
-const sources = task('Read source code', () =>
-  from('src')
-      .read('**/*.ts'))
+const sources = from('src').read('**/*.ts')
 
 export const lint = task('Lint sources', () =>
-  sources()
+  sources
       .plug(eslint))
 
 export const compile = task('Compile source code', () =>
