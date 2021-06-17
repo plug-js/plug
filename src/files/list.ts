@@ -29,7 +29,8 @@ class VirtualFileListBuilderImpl implements VirtualFileListBuilder {
   }
 
   add(pathOrFile: string | VirtualFile, options?: VirtualFileOptions): this {
-    this.#list?.add(pathOrFile, options)
+    if (! this.#list) throw new Error('Virtual file list already built')
+    this.#list.add(pathOrFile, options)
     return this
   }
 
@@ -115,7 +116,7 @@ export class VirtualFileListImpl implements VirtualFileList {
         originalPath: originalPath ? getAbsolutePath(this.directoryPath, originalPath) : undefined,
       })
     } else {
-      file = pathOrFile.clone(this)
+      file = pathOrFile.fileList === this ? pathOrFile : pathOrFile.clone(this)
     }
 
     this.#cache.set(file.canonicalPath, file)
