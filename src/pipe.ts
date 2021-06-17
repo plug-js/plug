@@ -1,4 +1,4 @@
-import type { Plug, PlugProcessor } from './index'
+import type { Plug, Processor } from './index'
 import type { VirtualFileList } from './files'
 
 /* ========================================================================== *
@@ -21,8 +21,8 @@ export class Pipe implements Plug {
   }
 
   plug(plug: Plug): Pipe
-  plug(plug: PlugProcessor): Pipe
-  plug(plug: Plug | PlugProcessor): Pipe {
+  plug(plug: Processor): Pipe
+  plug(plug: Plug | Processor): Pipe {
     if (typeof plug === 'function') plug = { process: plug }
     return new Pipe(plug, this)
   }
