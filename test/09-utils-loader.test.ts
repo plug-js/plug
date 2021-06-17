@@ -6,10 +6,12 @@ describe('Node Loader', () => {
   it('should load some files and clear caches', () => {
     try {
       const map = new Map<AbsolutePath, string>()
-      map.set('/foo/bar.js' as AbsolutePath, 'module.exports = "foobar"')
+      map.set('/foo/bar.js' as AbsolutePath, 'module.exports = { test: true }')
       setupLoader(map)
 
-      expect(require('/foo/bar.js')).to.equal('foobar')
+      const first = require('/foo/bar.js')
+      expect(first).to.eql({ test: true })
+      expect(require('/foo/bar.js')).to.equal(first)
 
       setupLoader()
       expect(() => require('/foo/bar.js')).to.throw(Error, '/foo/bar.js')
