@@ -23,9 +23,13 @@ class VirtualFileListBuilderImpl implements VirtualFileListBuilder {
     this.#list = list
   }
 
-  add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): this {
+  add(pathOrFile: string | VirtualFile,
+      contents?: string,
+      sourceMap?: boolean | RawSourceMap,
+      originalPath?: AbsolutePath,
+  ): this {
     if (! this.#list) throw new Error('Virtual file list already built')
-    this.#list.add(pathOrFile, contents, sourceMap)
+    this.#list.add(pathOrFile, contents, sourceMap, originalPath)
     return this
   }
 
@@ -58,13 +62,18 @@ export class VirtualFileListImpl implements VirtualFileList {
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
-    const file = new VirtualFileImpl(this, absolutePath)
+    const file = new VirtualFileImpl(this, { absolutePath })
     this.#cache.set(file.canonicalPath, file)
     return file
   }
 
   list(): readonly VirtualFile[] {
     return [ ...this.#files.values() ]
+  }
+
+  has(path: string): boolean {
+    const absolutePath = getAbsolutePath(this.directoryPath, path)
+    return this.#files.has(absolutePath)
   }
 
   builder(path?: string): VirtualFileListBuilder {
@@ -96,11 +105,15 @@ export class VirtualFileListImpl implements VirtualFileList {
     return list
   }
 
-  add(pathOrFile: string | VirtualFile, contents?: string, sourceMap?: boolean | RawSourceMap): VirtualFile {
+  add(pathOrFile: string | VirtualFile,
+      contents?: string,
+      sourceMap?: boolean | RawSourceMap,
+      originalPath?: AbsolutePath,
+  ): VirtualFile {
     let file = undefined as VirtualFile | undefined
     if (typeof pathOrFile === 'string') {
       const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
-      file = new VirtualFileImpl(this, absolutePath, contents, sourceMap)
+      file = new VirtualFileImpl(this, { absolutePath, contents, sourceMap, originalPath })
     } else {
       file = pathOrFile.fileList === this ? pathOrFile : pathOrFile.clone(this)
     }

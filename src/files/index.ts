@@ -14,6 +14,8 @@ export interface VirtualFile {
   readonly relativePath: RelativePath
   /** The _canonical_ path of this `VirtualFile` (dependant on filesystem case sensitivity) */
   readonly canonicalPath: CanonicalPath
+  /** An optional array of absolute paths indicating how this file can be `require(...)`d */
+  readonly originalPath: AbsolutePath
 
   /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
   exists(): Promise<boolean>
@@ -42,6 +44,14 @@ export interface VirtualFile {
   clone(files: VirtualFileList): VirtualFile
 }
 
+/** A type describing how to _add_ a virtual file to a list */
+export interface VirtualFileOptions {
+  path: string,
+  contents?: string,
+  sourceMap?: boolean | RawSourceMap,
+  originalPath?: string,
+}
+
 /**
  * The `VirtualFileList` interface represents an extremely simple view over
  * the _physical_ filesystem where a number of `VirtualFile`s can be accessed.
@@ -55,6 +65,9 @@ export interface VirtualFileList {
 
   /** Return all `VirtualFile`s this `VirtualFileList` was build with */
   list(): readonly VirtualFile[]
+
+  /** Checks whether this `VirtualFileList` lists the given path */
+  has(path: string): boolean
 
   /**
    * Create a new `VirtualFileListBuilder` whose directory path is
@@ -83,6 +96,11 @@ export interface VirtualFileList {
    * will be read parsing the contents specified.
    */
   add(path: string, contents: string, sourceMap: boolean): VirtualFile
+  /**
+   * Add a `VirtualFile` with the specified contents to this `VirtualFileList`,
+   * remembering its _original_ path (where it was created from).
+   */
+  add(path: string, contents: string, sourceMap: RawSourceMap | boolean, originalPath?: AbsolutePath): VirtualFile
 }
 
 /**
@@ -105,6 +123,11 @@ export interface VirtualFileListBuilder {
    * will be read parsing the contents specified.
    */
   add(path: string, contents: string, sourceMap: boolean): this
+  /**
+   * Add a `VirtualFile` with the specified contents to this `VirtualFileList`,
+   * remembering its _original_ path (where it was created from).
+   */
+  add(path: string, contents: string, sourceMap: RawSourceMap | boolean, originalPath?: AbsolutePath): this
 
   /** Return the `VirtualFileList` instance being built */
   build(): VirtualFileList

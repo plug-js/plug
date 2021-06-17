@@ -20,22 +20,34 @@ import {
 /* Internal type associating content and an (optional) source map */
 type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
-export class VirtualFileImpl implements VirtualFile {
-  readonly fileList: VirtualFileList
-  readonly absolutePath: AbsolutePath
+interface VirtualFileImplOptions {
+  absolutePath: AbsolutePath,
+  originalPath?: AbsolutePath,
+  sourceMap?: boolean | RawSourceMap,
+  contents?: string,
+}
 
-  #promise?: Promise<VirtualFileData>
+/* Implementation of the VirtualFile interface */
+export class VirtualFileImpl implements VirtualFile {
+  readonly fileList!: VirtualFileList
+  readonly absolutePath!: AbsolutePath
+  readonly originalPath!: AbsolutePath
+
   #data?: VirtualFileData
+  #promise?: Promise<VirtualFileData>
   #sourceMap?: RawSourceMap | false
 
-  constructor(
-      files: VirtualFileList,
-      absolutePath: AbsolutePath,
-      contents: string | undefined = undefined,
-      sourceMap: boolean | RawSourceMap = true,
-  ) {
-    this.fileList = files
-    this.absolutePath = absolutePath
+  constructor(fileList: VirtualFileList, options: VirtualFileImplOptions) {
+    const { absolutePath, contents,
+      originalPath = absolutePath, // default to absolute path
+      sourceMap = true, // defaults to "true" meaning extract from content
+    } = options
+
+    Object.defineProperties(this, {
+      'fileList': { enumerable: false, value: fileList },
+      'absolutePath': { enumerable: true, value: absolutePath },
+      'originalPath': { enumerable: true, value: originalPath },
+    })
 
     if (contents != undefined) {
       const lastModified = Date.now()
@@ -63,7 +75,8 @@ export class VirtualFileImpl implements VirtualFile {
   }
 
   clone(files: VirtualFileList): VirtualFile {
-    const file = new VirtualFileImpl(files, this.absolutePath)
+    const { absolutePath, originalPath } = this
+    const file = new VirtualFileImpl(files, { absolutePath, originalPath })
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
     file.#data = this.#data
