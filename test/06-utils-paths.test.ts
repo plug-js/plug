@@ -1,5 +1,4 @@
 import { expect } from 'chai'
-import { resolve } from 'path'
 import {
   AbsolutePath,
   RelativePath,
@@ -7,7 +6,6 @@ import {
   getRelativePath,
   getCanonicalPath,
   getAbsolutePath,
-  getCurrentDirectoryPath,
   getDirectoryPath,
   getDirectory,
   caseSensitivePaths,
@@ -17,13 +15,6 @@ describe('Paths', () => {
   const dir = '/foo/bar' as DirectoryPath
   const file = '/foo/bar/baz.txt' as AbsolutePath
   const relative = 'baz.txt' as RelativePath
-
-  it('should return the current working directory', () => {
-    expect(getCurrentDirectoryPath()).to.equal(process.cwd())
-    expect(getCurrentDirectoryPath('.')).to.equal(resolve(process.cwd()))
-    expect(getCurrentDirectoryPath('..')).to.equal(resolve(process.cwd(), '..'))
-    expect(getCurrentDirectoryPath('foo')).to.equal(resolve(process.cwd(), 'foo'))
-  })
 
   it('should get a directory path', () => {
     expect(getDirectoryPath(dir)).to.equal('/foo/bar')
