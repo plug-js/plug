@@ -27,7 +27,14 @@ export interface VirtualFile {
   /** The last modified timestamp of this `VirtualFile` */
   lastModifiedSync(): number
 
-  /** Return the contents of this `VirtualFile` */
+  /**
+   * Return the contents of this `VirtualFile`
+   *
+   * _OCD Note_: `content` (without the S) implies there's some kind of meaning,
+   * and not just a string, or a sequence of bytes.
+   *
+   * @see https://english.stackexchange.com/questions/56831/file-content-vs-file-contents
+   */
   contents(): Promise<string>
   /** Return the contents of this `VirtualFile` */
   contentsSync(): string
