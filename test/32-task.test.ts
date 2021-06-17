@@ -7,7 +7,7 @@ import { Task } from '../src/task'
 describe('Plug Tasks', () => {
   it('should construct a task', async () => {
     let counter = 0
-    const task = Task.task('test task', () => Pipe.pipe().plug((input, taskNames) => {
+    const task = Task.task('test task', () => Pipe.pipe().plug((input, { taskNames }) => {
       expect(taskNames).eql([ 'testTask' ])
       input.add(`bar${++ counter}.txt`)
       return Promise.resolve(input)
@@ -22,7 +22,7 @@ describe('Plug Tasks', () => {
 
     const list = new VirtualFileList('/foo')
 
-    const result1 = await task.task.process(list)
+    const result1 = await task.task.process(list, { taskNames: [] })
     expect(result1.directoryPath).to.equal('/foo')
     expect(result1.list()).to.have.length(1)
     expect(result1.list()[0].absolutePath).to.equal('/foo/bar1.txt')
@@ -35,19 +35,19 @@ describe('Plug Tasks', () => {
 
   it('should chain multiple tasks', async () => {
     let counter = 0
-    const task1 = Task.task('test task', () => Pipe.pipe().plug((input, taskNames) => {
+    const task1 = Task.task('test task', () => Pipe.pipe().plug((input, { taskNames }) => {
       expect(taskNames).to.eql([ 'task3', 'task2', 'task1' ])
       input.add(`foo${++ counter}.txt`)
       return Promise.resolve(input)
     }))
 
-    const task2 = Task.task('', () => task1().plug((input, taskNames) => {
+    const task2 = Task.task('', () => task1().plug((input, { taskNames }) => {
       expect(taskNames).to.eql([ 'task3', 'task2' ])
       input.add(`bar${++ counter}.txt`)
       return Promise.resolve(input)
     }))
 
-    const task3 = Task.task(() => task2().plug((input, taskNames) => {
+    const task3 = Task.task(() => task2().plug((input, { taskNames }) => {
       expect(taskNames).to.eql([ 'task3' ])
       input.add(`baz${++ counter}.txt`)
       return Promise.resolve(input)
@@ -79,7 +79,7 @@ describe('Plug Tasks', () => {
     const files = new VirtualFileList('/abc')
 
     let counter = 0
-    const task1 = Task.task(() => Pipe.pipe().plug(async (input, taskNames) => {
+    const task1 = Task.task(() => Pipe.pipe().plug(async (input, { taskNames }) => {
       await slow(20) // finish last!
 
       expect(input).to.equal(files)
@@ -89,7 +89,7 @@ describe('Plug Tasks', () => {
       return list
     }))
 
-    const task2 = Task.task(() => Pipe.pipe().plug(async (input, taskNames) => {
+    const task2 = Task.task(() => Pipe.pipe().plug(async (input, { taskNames }) => {
       await slow(10) // finish in between!
 
       expect(input).to.equal(files)
@@ -99,7 +99,7 @@ describe('Plug Tasks', () => {
       return list
     }))
 
-    const task3 = Task.task(() => Pipe.pipe().plug((input, taskNames) => {
+    const task3 = Task.task(() => Pipe.pipe().plug((input, { taskNames }) => {
       // immediate!
 
       expect(input).to.equal(files)

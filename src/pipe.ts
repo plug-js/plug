@@ -1,4 +1,4 @@
-import type { Plug, Processor } from './index'
+import type { Plug, Processor, Run } from './index'
 import type { VirtualFileList } from './files'
 
 /* ========================================================================== *
@@ -14,9 +14,9 @@ export class Pipe implements Plug {
     this.#plug = plug
   }
 
-  async process(list: VirtualFileList, taskNames?: readonly string[]): Promise<VirtualFileList> {
-    if (this.#parent) list = await this.#parent.process(list, taskNames)
-    if (this.#plug) list = await this.#plug.process(list, taskNames)
+  async process(list: VirtualFileList, run: Run): Promise<VirtualFileList> {
+    if (this.#parent) list = await this.#parent.process(list, run)
+    if (this.#plug) list = await this.#plug.process(list, run)
     return list
   }
 

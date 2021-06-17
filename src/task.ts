@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { Plug } from '.'
+import type { Plug, Run } from '.'
 import { VirtualFileList } from './files'
 import { Pipe } from './pipe'
 import { getProjectDirectory, getTaskName } from './project'
@@ -14,7 +14,8 @@ function makeCall(task: Task): TaskCall {
   const call = (): Pipe => Pipe.pipe().plug(task.process.bind(task))
   // The "run()" (convenience) method runs the task from the project directory
   call.run = async (input?: VirtualFileList) =>
-    task.process(input || new VirtualFileList(getProjectDirectory()), [])
+    // TODO: create new "Run"
+    task.process(input || new VirtualFileList(getProjectDirectory()), { taskNames: [] })
   // And we just remember our task, too, before returning
   call.task = task
   return call
@@ -27,9 +28,9 @@ class Parallel implements Plug {
     this.#tasks = tasks
   }
 
-  async process(input: VirtualFileList, taskNames?: readonly string[]): Promise<VirtualFileList> {
+  async process(input: VirtualFileList, run: Run): Promise<VirtualFileList> {
     // Start each of our taks, processing the same file list, our input
-    const promises = this.#tasks.map((task) => task.task.process(input, taskNames))
+    const promises = this.#tasks.map((task) => task.task.process(input, run))
     // Make sure all tasks run correctly and get all output file lists
     const outputs = await Promise.all(promises)
 
@@ -55,8 +56,10 @@ export class Task implements Plug {
     return this.#description
   }
 
-  process(input: VirtualFileList, taskNames: readonly string[] = []): VirtualFileList | Promise<VirtualFileList> {
-    return this.#source().process(input, [ ...taskNames, getTaskName(this) ])
+  process(input: VirtualFileList, run: Run): VirtualFileList | Promise<VirtualFileList> {
+    // TODO: properly clone the task run
+    const newRun = { taskNames: [ ...run.taskNames, getTaskName(this) ] }
+    return this.#source().process(input, newRun)
   }
 
   /* ======================================================================== */

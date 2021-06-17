@@ -6,7 +6,7 @@ describe('Plug Pipes', () => {
   it('should construct a simple pipeline', async () => {
     const list = new VirtualFileList('/foo')
     const pipe = Pipe.pipe()
-    const result = await pipe.process(list)
+    const result = await pipe.process(list, null as any)
     expect(result).to.equal(list)
   })
 
@@ -17,6 +17,6 @@ describe('Plug Pipes', () => {
         .plug({ process: (input) => input + '...3' as any })
         .plug({ process: (input) => Promise.resolve(input + '...4' as any) })
 
-    expect(await pipe.process('0' as any)).to.equal('0...1...2...3...4')
+    expect(await pipe.process('0' as any, null as any)).to.equal('0...1...2...3...4')
   })
 })

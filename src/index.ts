@@ -1,9 +1,10 @@
 import { VirtualFileList } from './files'
 
-export type Processor = (
-  input: VirtualFileList,
-  taskNames?: readonly string[],
-) => VirtualFileList | Promise<VirtualFileList>
+export interface Run {
+  readonly taskNames: readonly string[]
+}
+
+export type Processor = (input: VirtualFileList, run: Run) => VirtualFileList | Promise<VirtualFileList>
 
 /**
  * The main interface defining a plug _processor_, a coponent of a plug pipe.
