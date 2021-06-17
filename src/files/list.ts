@@ -6,11 +6,11 @@ import {
   DirectoryPath,
   getCanonicalPath,
   getAbsolutePath,
-  getCurrentDirectoryPath,
   getDirectoryPath,
   AbsolutePath,
 } from '../utils/paths'
 import { VirtualFileImpl } from './file'
+import { getProjectDirectory } from '../project'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -47,7 +47,7 @@ export class VirtualFileListImpl implements VirtualFileList {
   readonly directoryPath: DirectoryPath
 
   constructor(path?: string) {
-    const currentDirectory = getCurrentDirectoryPath()
+    const currentDirectory = getProjectDirectory()
     this.directoryPath = getDirectoryPath(currentDirectory, path)
   }
 
