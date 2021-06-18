@@ -1,50 +1,142 @@
 import assert from 'assert'
-import type { Plug, Run } from '.'
 import { VirtualFileList } from './files'
-import { Pipe } from './pipe'
-import { getProjectDirectory, getTaskName } from './project'
+import { Run, PlugPipe, TaskPipe } from './pipe'
 
-export type TaskCall = (() => Pipe) & {
-  readonly run: (input?: VirtualFileList) => Promise<VirtualFileList>
+/**
+ * A `TaskCall` describes a function returning a `TaskPipe`, as a way to
+ * extend the execution of a `Task` with new `Pipe` elements.
+ */
+export type TaskCall = (() => TaskPipe) & {
   readonly task: Task
 }
 
+/**
+ * The `Task` interface describes one of the starting points of a project.
+ *
+ * Once a `Task` is run, in the context of a `Run`, its results are cached
+ * and the same task is never run again.
+ */
+export interface Task {
+  readonly description?: string
+  run(run: Run): Promise<VirtualFileList>
+}
+
+/* ========================================================================== *
+ * INTERNALS                                                                  *
+ * ========================================================================== */
+
+// Our caches [ run -> task -> list ] using weak maps
+const caches = new WeakMap<Run, WeakMap<Task, Promise<VirtualFileList>>>()
+
+// Task implementation, caching and running task only once
+abstract class AbstractTask {
+  readonly description?: string
+
+  protected constructor(description?: string) {
+    this.description = description
+  }
+
+  run(run: Run): Promise<VirtualFileList> {
+    // If we don't have a cache for this run, create one
+    let cache = caches.get(run)
+    if (! cache) caches.set(run, cache = new WeakMap())
+
+    // If we don't have anything cached, run this task
+    let cached = cache.get(this)
+    if (! cached) cache.set(this, cached = this.runTask(run))
+
+    // Return our cached promise
+    return cached
+  }
+
+  abstract runTask(run: Run): Promise<VirtualFileList>
+}
+
+// Create a `TaskCall` out of a `Task`
 function makeCall(task: Task): TaskCall {
-  // Our task call returns a Pipe initially plugged with the task's process
-  const call = (): Pipe => Pipe.pipe(task.process.bind(task))
-  // The "run()" (convenience) method runs the task from the project directory
-  call.run = async (input?: VirtualFileList) =>
-    task.process(input || new VirtualFileList(getProjectDirectory()), new TaskRun())
-  // And we just remember our task, too, before returning
+  const call = (): TaskPipe => new TaskPipe()
   call.task = task
   return call
 }
 
-class TaskRun implements Run {
-  taskNames: readonly string[]
+/* ========================================================================== *
+ * SIMPLE TASKS                                                               *
+ * ========================================================================== */
 
-  constructor()
-  constructor(run: Run, task: Task)
-  constructor(run?: Run, task?: Task) {
-    this.taskNames = run ? [ ...run.taskNames, getTaskName(task!) ] : []
+type TaskSource =
+  // Straight pipes or their promises
+  PlugPipe | TaskPipe |
+  Promise<PlugPipe | TaskPipe> |
+  // Functions returning pipes or their promises
+  (() => PlugPipe | TaskPipe) |
+  (() => Promise<PlugPipe | TaskPipe>)
+
+// Our simple task, wrapping pipelines or void functions
+class SimpleTask extends AbstractTask {
+  #source: TaskSource
+
+  constructor(description: string | undefined, source: TaskSource) {
+    super(description)
+    this.#source = source
+  }
+
+  async runTask(run: Run): Promise<VirtualFileList> {
+    // Unwrap any function call from our source
+    const source = typeof this.#source == 'function' ? this.#source() : this.#source
+    // Unwrap any promise and get our task result
+    const result = await source
+    // What to do, what to do?
+    const files =
+        // If the result is a plug pipe, then we process it with a new file list
+        result instanceof PlugPipe ? result.process(new VirtualFileList(), run) :
+        // If the result is a task pipe, then we run it directly
+        result instanceof TaskPipe ? result.run(run) :
+        // Someone returned us a result??? Bad!
+        assert.fail('Invalid task source')
+    // All done, we can return...
+    return files
   }
 }
 
-class Parallel implements Plug {
-  #tasks: TaskCall[]
+/** Create a new `TaskCall` from the given `TaskSource` */
+export function task(source: TaskSource): TaskCall
+/** Create a new `TaskCall` from the given `TaskSource` */
+export function task(description: string, source: TaskSource): TaskCall
 
-  constructor(tasks: TaskCall[]) {
+export function task(first: string | TaskSource, optional?: TaskSource): TaskCall {
+  // Parse our arguments, the description is optional and precedes anything else
+  const { description, source } = typeof first === 'string' ?
+      { description: first, source: optional } :
+      { description: undefined, source: first }
+  assert(source, 'Missing task source')
+
+  // Create our simple task, and return a call
+  return makeCall(new SimpleTask(description, source))
+}
+
+/* ========================================================================== *
+ * PARALLELIZE OTHER TASKS                                                    *
+ * ========================================================================== */
+
+type TaskCalls = [ TaskCall, ... TaskCall[] ] | [ Task, ... Task[] ]
+
+// Parallelize task runs
+class ParallelTask extends AbstractTask {
+  #tasks: Task[]
+
+  constructor(description: string | undefined, tasks: Task[]) {
+    super(description)
     this.#tasks = tasks
   }
 
-  async process(input: VirtualFileList, run: Run): Promise<VirtualFileList> {
+  async runTask(run: Run): Promise<VirtualFileList> {
     // Start each of our taks, processing the same file list, our input
-    const promises = this.#tasks.map((task) => task.task.process(input, run))
+    const promises = this.#tasks.map((task) => task.run(run))
     // Make sure all tasks run correctly and get all output file lists
     const outputs = await Promise.all(promises)
 
     // Create a new file list cloning our input
-    const result = input.clone()
+    const result = new VirtualFileList()
     // Each file of each output gets added to our output list (in order)
     outputs.forEach((output) => output.list().forEach((file) => result.add(file)))
     // Return our combined result list
@@ -52,52 +144,21 @@ class Parallel implements Plug {
   }
 }
 
-export class Task implements Plug {
-  #description: string | undefined
-  #source: () => Plug
+/** Create a new `TaskCall` parallelizing the execution of other tasks */
+export function parallel(...tasks: TaskCalls): TaskCall
+/** Create a new `TaskCall` parallelizing the execution of other tasks */
+export function parallel(description: string, ...tasks: TaskCalls): TaskCall
 
-  private constructor(description: string | undefined, source: () => Plug) {
-    this.#description = description || undefined // empty string
-    this.#source = source
-  }
+export function parallel(first: string | Task | TaskCall, ...calls: (Task | TaskCall)[]): TaskCall {
+  // Parse our arguments, the description is optional and precedes anything else
+  const { description, list } = typeof first === 'string' ?
+    { description: first, list: calls } :
+    { description: '', list: [ first, ...calls ] }
+  assert(list.length, 'Missing tasks to parallelize')
 
-  get description(): string | undefined {
-    return this.#description
-  }
+  // Extract tasks from task calls
+  const tasks = list.map((call) => 'task' in call ? call.task : call)
 
-  process(input: VirtualFileList, run: Run): VirtualFileList | Promise<VirtualFileList> {
-    return this.#source().process(input, new TaskRun(run, this))
-  }
-
-  /* ======================================================================== */
-
-  static task(source: () => Plug): TaskCall
-  static task(description: string, source: () => Plug): TaskCall
-
-  static task(descriptionOrSource: string | (() => Plug), optionalSource?: () => Plug): TaskCall {
-    const { description, source } = typeof descriptionOrSource === 'string' ?
-        { description: descriptionOrSource, source: optionalSource } :
-        { description: undefined, source: descriptionOrSource }
-    assert(source, 'Task source missing')
-    return makeCall(new Task(description, source))
-  }
-
-  /* ======================================================================== */
-
-  static parallel(...tasks: [ TaskCall, ...TaskCall[] ]): TaskCall
-  static parallel(description: string, ...tasks: [ TaskCall, ...TaskCall[] ]): TaskCall
-
-  static parallel(first: string | TaskCall, ...calls: TaskCall[]): TaskCall {
-    // Parse our arguments, the description is optional and precedes anything else
-    const { description, tasks } = typeof first === 'string' ? {
-      description: first,
-      tasks: calls,
-    } : {
-      description: '',
-      tasks: [ first, ...calls ],
-    }
-
-    // Create a new task call
-    return makeCall(new Task(description, () => new Parallel(tasks)))
-  }
+  // Create our parallel task, and return a call
+  return makeCall(new ParallelTask(description, tasks))
 }
