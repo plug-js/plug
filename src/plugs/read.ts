@@ -1,14 +1,10 @@
-import { Plug } from '..'
 import { VirtualFileList } from '../files'
-import { install, PlugExtension } from '../install'
-import {
-  GlobOptions,
-  glob,
-} from '../utils/globs'
+import { install, Plug } from '../pipe'
+import { GlobOptions, glob } from '../utils/globs'
 
 declare module '../pipe' {
-  interface Pipe {
-    read: PlugExtension<typeof ReadPlug>
+  interface Pipe<P extends Pipe<P>> {
+    read: PlugExtension<P, typeof ReadPlug>
   }
 }
 

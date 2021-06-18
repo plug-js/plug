@@ -1,10 +1,9 @@
-import { Plug } from '..'
 import { VirtualFileList } from '../files'
-import { install, PlugExtension } from '../install'
+import { install, Plug } from '../pipe'
 
 declare module '../pipe' {
-  interface Pipe {
-    save: PlugExtension<typeof SavePlug>
+  interface Pipe<P extends Pipe<P>> {
+    save: PlugExtension<P, typeof SavePlug>
   }
 }
 
