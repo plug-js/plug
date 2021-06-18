@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { VirtualFileList } from './files'
-import { Run, PlugPipe, TaskPipe } from './pipe'
+import { Run, Runnable, PlugPipe, TaskPipe } from './pipe'
 
 /**
  * A `TaskCall` describes a function returning a `TaskPipe`, as a way to
@@ -11,14 +11,14 @@ export type TaskCall = (() => TaskPipe) & {
 }
 
 /**
- * The `Task` interface describes one of the starting points of a project.
+ * The `Task` interface describes a `Runnable` task for a project.
  *
  * Once a `Task` is run, in the context of a `Run`, its results are cached
  * and the same task is never run again.
  */
-export interface Task {
+export interface Task extends Runnable {
+  /** The (optional) description of this task */
   readonly description?: string
-  run(run: Run): Promise<VirtualFileList>
 }
 
 /* ========================================================================== *
@@ -33,7 +33,7 @@ abstract class AbstractTask {
   readonly description?: string
 
   protected constructor(description?: string) {
-    this.description = description
+    this.description = description || undefined
   }
 
   run(run: Run): Promise<VirtualFileList> {
@@ -54,7 +54,11 @@ abstract class AbstractTask {
 
 // Create a `TaskCall` out of a `Task`
 function makeCall(task: Task): TaskCall {
-  const call = (): TaskPipe => new TaskPipe()
+  const call = (): TaskPipe => {
+    // The initial file list of an extended task pipe is the
+    // (possibly cached) result of the task we are wrapping
+    return new TaskPipe(task)
+  }
   call.task = task
   return call
 }
