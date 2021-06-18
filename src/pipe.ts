@@ -70,8 +70,8 @@ abstract class AbstractPipe<P extends Pipe<P>> implements Pipe<P> {
  * Pipes of this kind are _snippets_ and reusable in the build file.
  */
 export class PlugPipe extends AbstractPipe<PlugPipe> {
-  #parent?: PlugPipe
-  #plug?: Plug
+  readonly #parent?: PlugPipe
+  readonly #plug?: Plug
 
   constructor(parent?: PlugPipe, plug?: Plug) {
     super()
@@ -99,8 +99,8 @@ export class PlugPipe extends AbstractPipe<PlugPipe> {
  * multiple times.
  */
 export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
-  #origin: Runnable
-  #plug?: Plug
+  readonly #origin: Runnable
+  readonly #plug?: Plug
 
   constructor(origin: Runnable, plug?: Plug) {
     super()
