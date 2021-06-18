@@ -4,7 +4,7 @@ import { GlobOptions, glob } from '../utils/globs'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
-    read: PlugExtension<P, typeof ReadPlug>
+    read: typeof read
   }
 }
 

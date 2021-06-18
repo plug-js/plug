@@ -41,15 +41,6 @@ export interface Pipe<P extends Pipe<P>> {
   plug(plug: Processor): P
 }
 
-/**
- * A convenience type used to annotate plug instances installed ad extension
- * to the pipeline with install.
- */
-export type PlugExtension<
-    P extends Pipe<P>,
-    C extends PlugConstructor<Plug>,
-> = (...args: ConstructorOverloads<C>) => P
-
 /* ========================================================================== */
 
 // Empty interface declaration (separate from class): this allows plugs
@@ -127,6 +118,15 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
 /* ========================================================================== */
 
 /**
+ * A convenience type used to annotate plug instances installed ad extension
+ * to the pipeline with install.
+ */
+type PlugExtension<
+ P extends Pipe<P>,
+ C extends PlugConstructor<Plug>,
+> = (...args: ConstructorOverloads<C>) => P
+
+/**
  * Install the specified plug processor as a standard element in our pipelines.
  *
  * This function will return a constructor wrapper function that can be used
@@ -144,14 +144,14 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
  *
  * declare module '@plugjs/plug/pipe' {
  *   interface Pipe<P extends Pipe<P>> {
- *     myplug: PlugExtension<P, typeof MyPlug>
+ *     myplug: typeof myplug
  *   }
  * }
  * ```
  */
 export function install<
     C extends PlugConstructor<Plug>,
-    P extends any[] = ConstructorParameters<C>
+    P extends any[] = ConstructorParameters<C>,
 >(name: string, constructor: C): PlugExtension<PlugPipe, C> {
   function create(...args: P): PlugPipe {
     return new PlugPipe(undefined, new constructor(...args))
