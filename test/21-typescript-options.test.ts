@@ -35,10 +35,10 @@ describe('TypeScript Compiler Options', () => {
         .build()
 
     let { options, diagnostics } = getCompilerOptions(files)
-    expect(options).to.eql({
+    expect(options).to.eql(Object.assign({}, getDefaultCompilerOptions(), {
       configFilePath: '/foo/tsconfig.json',
       module: ModuleKind.CommonJS,
-    })
+    }))
     expect(diagnostics.length).to.eql(0)
 
     ;({ options, diagnostics } = getCompilerOptions(files, 'wrong.json'))
@@ -50,23 +50,72 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read an extended configuration file', () => {
+    const base = {
+      compilerOptions: {
+        // will be overridden
+        module: 'amd',
+        // those will be resolved
+        outDir: './outDir',
+        rootDir: './rootDir',
+        rootDirs: [ './rootDirs/1', './rootDirs/2' ],
+        outFile: './outDile.js',
+      },
+    }
+
+    const ext = {
+      extends: '../base/tsconfig.json',
+      compilerOptions: {
+        module: 'commonjs', // overrides
+      },
+    }
     const files = VirtualFileList
         .builder('/foo')
-        .add('base/tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
+        .add('base/tsconfig.json', { contents: JSON.stringify(base) })
+        .add('ext/tsconfig.json', { contents: JSON.stringify(ext) })
+        .build()
+
+    let { options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json')
+    expect(diagnostics.length).to.eql(0)
+    expect(options).to.eql(Object.assign(getDefaultCompilerOptions(), {
+      module: ModuleKind.CommonJS,
+      configFilePath: '/foo/ext/tsconfig.json',
+      outDir: '/foo/base/outDir',
+      rootDir: '/foo/base/rootDir',
+      rootDirs: [ '/foo/base/rootDirs/1', '/foo/base/rootDirs/2' ],
+      outFile: '/foo/base/outDile.js',
+    }))
+
+    // with manual overrides...
+
+    ;({ options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json', {
+      // will be overridden
+      module: ModuleKind.ESNext,
+      // those will be resolved
+      outDir: './outDir',
+      rootDir: './rootDir',
+      rootDirs: [ './rootDirs/1', './rootDirs/2' ],
+      outFile: './outDile.js',
+    }))
+    expect(diagnostics.length).to.eql(0)
+    expect(options).to.eql(Object.assign(getDefaultCompilerOptions(), {
+      module: ModuleKind.ESNext,
+      configFilePath: '/foo/ext/tsconfig.json',
+      outDir: '/foo/outDir',
+      rootDir: '/foo/rootDir',
+      rootDirs: [ '/foo/rootDirs/1', '/foo/rootDirs/2' ],
+      outFile: '/foo/outDile.js',
+    }))
+  })
+
+  it('should fail on issues reading an extended configuration file', () => {
+    const files = VirtualFileList
+        .builder('/foo')
         .add('base/wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
-        .add('ext/tsconfig.json', { contents: '{"extends":"../base/tsconfig.json"}' })
         .add('miss/tsconfig.json', { contents: '{"extends":"../base/missing.json"}' })
         .add('wrong/tsconfig.json', { contents: '{"extends":"../base/wrong.json"}' })
         .build()
 
-    let { options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json')
-    expect(options).to.eql({
-      configFilePath: '/foo/ext/tsconfig.json',
-      module: ModuleKind.CommonJS,
-    })
-    expect(diagnostics.length).to.eql(0)
-
-    ;({ options, diagnostics } = getCompilerOptions(files, 'miss/tsconfig.json'))
+    let { options, diagnostics } = getCompilerOptions(files, 'miss/tsconfig.json')
     expect(options).to.eql({})
     expect(diagnostics.length).to.equal(1)
     expect(diagnostics[0].code).to.equal(5083)
