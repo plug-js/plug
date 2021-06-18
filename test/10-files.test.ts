@@ -285,13 +285,13 @@ describe('Virtual File List', () => {
       expect(await file1.exists()).to.be.true
       expect(await file1.contents()).to.equal('')
       expect(await file1.sourceMap()).to.be.undefined
-      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create('// foobar')
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('// foobar')
       expect(await file2.sourceMap()).to.be.undefined
-      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with an inline source map', async () => {
@@ -309,25 +309,25 @@ describe('Virtual File List', () => {
       expect(await file1.exists()).to.be.true
       expect(await file1.contents()).to.equal('\n// foo')
       expect(await file1.sourceMap()).to.eql({})
-      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('\n// foo')
       expect(await file2.sourceMap()).to.eql({})
-      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
       expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
-      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with an external source map', async () => {
@@ -346,25 +346,25 @@ describe('Virtual File List', () => {
       expect(await file1.exists()).to.be.true
       expect(await file1.contents()).to.equal('\n// foo')
       expect(await file1.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('\n// foo')
       expect(await file2.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
       expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
-      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with a missing external source map', async () => {
@@ -382,25 +382,25 @@ describe('Virtual File List', () => {
       expect(await file1.exists()).to.be.true
       expect(await file1.contents()).to.equal('\n// foo')
       expect(await file1.sourceMap()).to.be.undefined
-      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file1.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('\n// foo')
       expect(await file2.sourceMap()).to.be.undefined
-      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(await file3.exists()).to.be.true
       expect(await file3.contents()).to.equal(contents)
       expect(await file3.sourceMap()).to.be.undefined
-      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file3.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
       expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
-      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 2)
+      expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should read a VirtualFile from disk', async () => {
@@ -457,13 +457,13 @@ describe('Virtual File List', () => {
       expect(file1.existsSync()).to.be.true
       expect(file1.contentsSync()).to.equal('')
       expect(file1.sourceMapSync()).to.be.undefined
-      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create('// foobar')
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('// foobar')
       expect(file2.sourceMapSync()).to.be.undefined
-      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with an inline source map', async () => {
@@ -481,25 +481,25 @@ describe('Virtual File List', () => {
       expect(file1.existsSync()).to.be.true
       expect(file1.contentsSync()).to.equal('\n// foo')
       expect(file1.sourceMapSync()).to.eql({})
-      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('\n// foo')
       expect(file2.sourceMapSync()).to.eql({})
-      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
       expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
-      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with an external source map', async () => {
@@ -518,25 +518,25 @@ describe('Virtual File List', () => {
       expect(file1.existsSync()).to.be.true
       expect(file1.contentsSync()).to.equal('\n// foo')
       expect(file1.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('\n// foo')
       expect(file2.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
       expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
-      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should create a VirtualFile with a missing external source map', async () => {
@@ -554,25 +554,25 @@ describe('Virtual File List', () => {
       expect(file1.existsSync()).to.be.true
       expect(file1.contentsSync()).to.equal('\n// foo')
       expect(file1.sourceMapSync()).to.be.undefined
-      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('\n// foo')
       expect(file2.sourceMapSync()).to.be.undefined
-      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
       expect(file3.existsSync()).to.be.true
       expect(file3.contentsSync()).to.equal(contents)
       expect(file3.sourceMapSync()).to.be.undefined
-      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file3.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
-      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 2)
+      expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
     it('should read a VirtualFile from disk', () => {
