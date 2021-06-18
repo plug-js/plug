@@ -21,7 +21,6 @@ describe('Plug Extensions', () => {
     expect(await processor.process('foo' as any, null as any)).to.equal('foo...[0]')
 
     const pipe1 = new PlugPipe()
-
     expect((<any> pipe1)['test123']).to.be.a('function')
 
     const p1 = pipe1.plug((input) => input + '...1' as any)
@@ -31,8 +30,7 @@ describe('Plug Extensions', () => {
 
     expect(await p4.process('0' as any)).to.equal('0...1...[2]...[3]...4')
 
-    const pipe2 = new TaskPipe()
-
+    const pipe2 = new TaskPipe({ run: () => null as any })
     expect((<any> pipe2)['test123']).to.be.a('function')
   })
 })
