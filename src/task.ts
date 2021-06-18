@@ -71,7 +71,7 @@ type TaskSource = PlugPipe | TaskPipe | (() => PlugPipe | TaskPipe)
 
 // Our simple task, wrapping pipelines or void functions
 class SimpleTask extends AbstractTask {
-  #source: PlugPipe | TaskPipe
+  readonly #source: PlugPipe | TaskPipe
 
   constructor(description: string | undefined, source: TaskSource) {
     super(description)
@@ -117,7 +117,7 @@ type TaskCalls = [ TaskCall, ... TaskCall[] ] | [ Task, ... Task[] ]
 
 // Parallelize task runs
 class ParallelTask extends AbstractTask {
-  #tasks: Task[]
+  readonly #tasks: readonly Task[]
 
   constructor(description: string | undefined, tasks: Task[]) {
     super(description)
