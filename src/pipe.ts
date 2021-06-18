@@ -17,6 +17,10 @@ export interface Run {
   readonly taskNames: readonly string[]
 }
 
+export interface Runnable {
+  run(run: Run): VirtualFileList | Promise<VirtualFileList>
+}
+
 /**
  * The `Plug` interface describes a `Pipe` component, processing an input file
  * list and producing a (possibly) different one in the context of a `Run`.
@@ -103,18 +107,18 @@ export class PlugPipe extends AbstractPipe<PlugPipe> {
  * and their output is cached in order to repeat performing the same operation
  * multiple times.
  */
-export class TaskPipe extends AbstractPipe<TaskPipe> {
-  #parent?: TaskPipe
+export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
+  #origin: Runnable
   #plug?: Plug
 
-  constructor(parent?: TaskPipe, plug?: Plug) {
+  constructor(origin: Runnable, plug?: Plug) {
     super()
-    this.#parent = parent
+    this.#origin = origin
     this.#plug = plug
   }
 
   async run(run: Run): Promise<VirtualFileList> {
-    let list = this.#parent ? await this.#parent.run(run) : new VirtualFileList()
+    let list = await this.#origin.run(run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list
   }
