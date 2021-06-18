@@ -67,34 +67,25 @@ function makeCall(task: Task): TaskCall {
  * SIMPLE TASKS                                                               *
  * ========================================================================== */
 
-type TaskSource =
-  // Straight pipes or their promises
-  PlugPipe | TaskPipe |
-  Promise<PlugPipe | TaskPipe> |
-  // Functions returning pipes or their promises
-  (() => PlugPipe | TaskPipe) |
-  (() => Promise<PlugPipe | TaskPipe>)
+type TaskSource = PlugPipe | TaskPipe | (() => PlugPipe | TaskPipe)
 
 // Our simple task, wrapping pipelines or void functions
 class SimpleTask extends AbstractTask {
-  #source: TaskSource
+  #source: PlugPipe | TaskPipe
 
   constructor(description: string | undefined, source: TaskSource) {
     super(description)
-    this.#source = source
+    this.#source = typeof source == 'function' ? source() : source
   }
 
   async runTask(run: Run): Promise<VirtualFileList> {
-    // Unwrap any function call from our source
-    const source = typeof this.#source == 'function' ? this.#source() : this.#source
-    // Unwrap any promise and get our task result
-    const result = await source
     // What to do, what to do?
+    const source = this.#source
     const files =
         // If the result is a plug pipe, then we process it with a new file list
-        result instanceof PlugPipe ? result.process(new VirtualFileList(), run) :
+        source instanceof PlugPipe ? source.process(new VirtualFileList(), run) :
         // If the result is a task pipe, then we run it directly
-        result instanceof TaskPipe ? result.run(run) :
+        source instanceof TaskPipe ? source.run(run) :
         // Someone returned us a result??? Bad!
         assert.fail('Invalid task source')
     // All done, we can return...
