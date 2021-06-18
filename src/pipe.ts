@@ -121,10 +121,8 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
  * A convenience type used to annotate plug instances installed ad extension
  * to the pipeline with install.
  */
-type PlugExtension<
- P extends Pipe<P>,
- C extends PlugConstructor<Plug>,
-> = (...args: ConstructorOverloads<C>) => P
+export type PlugExtension<P extends Pipe<P>, C extends PlugConstructor<Plug>> =
+    (...args: ConstructorOverloads<C>) => P
 
 /**
  * Install the specified plug processor as a standard element in our pipelines.
@@ -144,7 +142,7 @@ type PlugExtension<
  *
  * declare module '@plugjs/plug/pipe' {
  *   interface Pipe<P extends Pipe<P>> {
- *     myplug: typeof myplug
+ *     myplug: PlugExtension<P, typeof MyPlug>
  *   }
  * }
  * ```

@@ -3,7 +3,7 @@ import { Plug, install } from '../pipe'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
-    from: typeof from
+    from: PlugExtension<P, typeof FromPlug>
   }
 }
 
