@@ -16,6 +16,7 @@ import {
   getDirectoryPath,
   isChild,
 } from '../utils/paths'
+import { FileWrapper } from './wrapper'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -93,11 +94,11 @@ export class Files implements Files {
     const list = new Files(directory)
 
     for (const file of this.#cache.values()) {
-      const clone = file.clone(list, file.absolutePath)
+      const clone = new FileWrapper(list, file)
       list.#cache.set(clone.canonicalPath, clone)
 
       // Preserve file list
-      if (this.#files.has(file.absolutePath)) {
+      if (this.#files.has(file.absolutePath) && isChild(list.directory, file.absolutePath)) {
         list.#files.set(clone.absolutePath, clone)
       }
     }
@@ -117,7 +118,8 @@ export class Files implements Files {
 
     if (typeof pathOrFile === 'string') {
       if (options && ('files' in options)) {
-        file = options.clone(this, pathOrFile)
+        const absolutePath = getAbsolutePath(this.directory, pathOrFile)
+        file = new FileWrapper(this, options, absolutePath)
       } else if (options) {
         const { originalPath: original, contents, sourceMap } = options
         const absolutePath = getAbsolutePath(this.directory, pathOrFile)
@@ -128,7 +130,10 @@ export class Files implements Files {
         file = new FileImpl(this, absolutePath)
       }
     } else {
-      file = pathOrFile.clone(this)
+      if (pathOrFile.files === this) return pathOrFile
+
+      const absolutePath = getAbsolutePath(this.directory, pathOrFile.relativePath)
+      file = new FileWrapper(this, pathOrFile, absolutePath)
     }
 
     // Never add outside of our target directory!
