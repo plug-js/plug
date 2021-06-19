@@ -1,6 +1,6 @@
 import { expect } from 'chai'
-import { pipe } from '../src'
 import { Files } from '../src/files'
+import { PlugPipe } from '../src/pipe'
 import { CompilePlug } from '../src/plugs/compile'
 
 describe('Plug TypeScript Compiler', function() {
@@ -9,7 +9,7 @@ describe('Plug TypeScript Compiler', function() {
   this.slow(2000)
 
   it('should be installed', () => {
-    expect(pipe().compile).to.be.a('function')
+    expect(new PlugPipe().compile).to.be.a('function')
   })
 
   it('should compile', () => {
