@@ -1,6 +1,6 @@
 import { EOL } from 'os'
 import { VirtualFileList } from '../files'
-import { caseSensitivePaths } from '../utils/paths'
+import { AbsolutePath, caseSensitivePaths } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
 
@@ -29,8 +29,8 @@ function hashString(data: string): string {
   return createHash('sha256').update(data, 'utf8').digest('hex')
 }
 
-function cacheKey(data: string, languageVersion: ScriptTarget): CacheKey {
-  return `${hashString(data)}/${languageVersion}` as CacheKey
+function cacheKey(file: AbsolutePath, languageVersion: ScriptTarget, data: string): CacheKey {
+  return `${file}\x00${hashString(data)}\x00${languageVersion}` as CacheKey
 }
 
 /* ========================================================================== *
@@ -75,7 +75,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
           ScriptKind.Unknown
 
       // Don't recreate unless we have to
-      const key = cacheKey(data, languageVersion)
+      const key = cacheKey(file.absolutePath, languageVersion, data)
       const cached = cache.get(key)
       if (cached && (! shouldCreateNewSourceFile)) return cached
 

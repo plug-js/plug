@@ -126,6 +126,20 @@ describe('TypeScript Host', () => {
     expect(host.getSourceFile('bar.txt', ScriptTarget.ES2015)).to.not.equal(txt)
   })
 
+  it('should create different source files for files with different names', () => {
+    const files = new VirtualFileList('/foo')
+    files.add('bar1.ts', { contents: 'void 0' })
+    files.add('bar2.ts', { contents: 'void 0' })
+
+    const host = new TypeScriptHost(files)
+
+    const file1 = host.getSourceFile('bar1.ts', ScriptTarget.ES2020)
+    const file2 = host.getSourceFile('bar2.ts', ScriptTarget.ES2020)
+
+    expect(file1?.fileName).to.equal('/foo/bar1.ts')
+    expect(file2?.fileName).to.equal('/foo/bar2.ts')
+  })
+
   it('correctly handle the "onError(...)" callbacks', () => {
     const fake = {
       // test exceptions and onError(...) on getSourceFile
