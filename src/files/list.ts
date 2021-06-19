@@ -69,17 +69,23 @@ export class VirtualFileListImpl implements VirtualFileList {
     return list
   }
 
-  add(pathOrFile: string | VirtualFile, options: VirtualFileOptions = {}): VirtualFile {
+  add(pathOrFile: string | VirtualFile, options?: VirtualFile | VirtualFileOptions): VirtualFile {
     let file = undefined as VirtualFile | undefined
 
     if (typeof pathOrFile === 'string') {
-      const { originalPath, contents, sourceMap } = options
-      const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
-      file = new VirtualFileImpl(this, absolutePath, { contents, sourceMap,
-        originalPath: originalPath ? getAbsolutePath(this.directoryPath, originalPath) : undefined,
-      })
+      if (options && ('fileList' in options)) {
+        file = options.clone(this, pathOrFile)
+      } else if (options) {
+        const { originalPath: original, contents, sourceMap } = options
+        const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
+        const originalPath = original ? getAbsolutePath(this.directoryPath, original) : undefined
+        file = new VirtualFileImpl(this, absolutePath, { contents, sourceMap, originalPath })
+      } else {
+        const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
+        file = new VirtualFileImpl(this, absolutePath)
+      }
     } else {
-      file = pathOrFile.fileList === this ? pathOrFile : pathOrFile.clone(this)
+      file = pathOrFile.clone(this)
     }
 
     this.#cache.set(file.canonicalPath, file)

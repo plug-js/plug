@@ -79,9 +79,15 @@ export class VirtualFileImpl implements VirtualFile {
     return this.fileList.get(absolutePath)
   }
 
-  clone(files: VirtualFileList): VirtualFile {
-    const { absolutePath, originalPath } = this
-    const file = new VirtualFileImpl(files, absolutePath, { originalPath })
+  // TODO: I don't like this method as the resulting file is not cached...
+  clone(files: VirtualFileList, path?: string): VirtualFile {
+    // The absolute path of the target file is resolved agains the target list
+    const absolutePath = path ? getAbsolutePath(files.directoryPath, path) : this.absolutePath
+    // If there are no changes we simply return this file...
+    if ((this.fileList === files) && (absolutePath === this.absolutePath)) return this
+
+    // Clone and return this file
+    const file = new VirtualFileImpl(files, absolutePath, { originalPath: this.originalPath })
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
     file.#data = this.#data
@@ -93,7 +99,7 @@ export class VirtualFileImpl implements VirtualFile {
    * ======================================================================== */
 
   #readSourceMapData(contents: string, lastModified: number): VirtualFileData {
-    const sourceMapData = extractSourceMap(this.absolutePath, contents, true)
+    const sourceMapData = extractSourceMap(this.originalPath, contents, true)
     if (sourceMapData) {
       this.#data = { lastModified, ...sourceMapData }
       this.#sourceMap = sourceMapData.sourceMap
@@ -107,8 +113,8 @@ export class VirtualFileImpl implements VirtualFile {
   #readSync(): VirtualFileData {
     if (this.#data) return this.#data
 
-    const code = readFileSync(this.absolutePath, 'utf8')
-    const lastModified = statSync(this.absolutePath).mtimeMs
+    const code = readFileSync(this.originalPath, 'utf8')
+    const lastModified = statSync(this.originalPath).mtimeMs
     return this.#readSourceMapData(code, lastModified)
   }
 
@@ -117,8 +123,8 @@ export class VirtualFileImpl implements VirtualFile {
     if (this.#data) return this.#promise = Promise.resolve(this.#data)
 
     return this.#promise = (async (): Promise<VirtualFileData> => {
-      const code = await fs.readFile(this.absolutePath, 'utf8')
-      const lastModified = (await fs.stat(this.absolutePath)).mtimeMs
+      const code = await fs.readFile(this.originalPath, 'utf8')
+      const lastModified = (await fs.stat(this.originalPath)).mtimeMs
       return this.#readSourceMapData(code, lastModified)
     })()
   }
