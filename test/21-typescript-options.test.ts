@@ -5,7 +5,7 @@ import { VirtualFileList } from '../src/files'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {
-    const files = VirtualFileList.builder('/foo').build()
+    const files = new VirtualFileList('/foo')
 
     let { options, diagnostics } = getCompilerOptions(files)
     expect(options).to.eql(getDefaultCompilerOptions())
@@ -28,11 +28,9 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read a basic configuration file', () => {
-    const files = VirtualFileList
-        .builder('/foo')
-        .add('tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
-        .add('wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
-        .build()
+    const files = new VirtualFileList('/foo')
+    files.add('tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
+    files.add('wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
 
     let { options, diagnostics } = getCompilerOptions(files)
     expect(options).to.eql(Object.assign({}, getDefaultCompilerOptions(), {
@@ -68,11 +66,9 @@ describe('TypeScript Compiler Options', () => {
         module: 'commonjs', // overrides
       },
     }
-    const files = VirtualFileList
-        .builder('/foo')
-        .add('base/tsconfig.json', { contents: JSON.stringify(base) })
-        .add('ext/tsconfig.json', { contents: JSON.stringify(ext) })
-        .build()
+    const files = new VirtualFileList('/foo')
+    files.add('base/tsconfig.json', { contents: JSON.stringify(base) })
+    files.add('ext/tsconfig.json', { contents: JSON.stringify(ext) })
 
     let { options, diagnostics } = getCompilerOptions(files, 'ext/tsconfig.json')
     expect(diagnostics.length).to.eql(0)
@@ -108,12 +104,10 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should fail on issues reading an extended configuration file', () => {
-    const files = VirtualFileList
-        .builder('/foo')
-        .add('base/wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
-        .add('miss/tsconfig.json', { contents: '{"extends":"../base/missing.json"}' })
-        .add('wrong/tsconfig.json', { contents: '{"extends":"../base/wrong.json"}' })
-        .build()
+    const files = new VirtualFileList('/foo')
+    files.add('base/wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
+    files.add('miss/tsconfig.json', { contents: '{"extends":"../base/missing.json"}' })
+    files.add('wrong/tsconfig.json', { contents: '{"extends":"../base/wrong.json"}' })
 
     let { options, diagnostics } = getCompilerOptions(files, 'miss/tsconfig.json')
     expect(options).to.eql({})
@@ -132,12 +126,10 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should detect circular dependencies when reading extended configurations', () => {
-    const files = VirtualFileList
-        .builder('/foo')
-        .add('tsconfig.json', { contents: '{"extends":"./one/tsconfig.json"}' })
-        .add('one/tsconfig.json', { contents: '{"extends":"../two/tsconfig.json"}' })
-        .add('two/tsconfig.json', { contents: '{"extends":"../tsconfig.json"}' })
-        .build()
+    const files = new VirtualFileList('/foo')
+    files.add('tsconfig.json', { contents: '{"extends":"./one/tsconfig.json"}' })
+    files.add('one/tsconfig.json', { contents: '{"extends":"../two/tsconfig.json"}' })
+    files.add('two/tsconfig.json', { contents: '{"extends":"../tsconfig.json"}' })
 
     const { options, diagnostics } = getCompilerOptions(files, 'tsconfig.json')
     expect(options).to.eql({})

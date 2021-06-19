@@ -9,7 +9,6 @@ import { VirtualFileList } from '../src/files'
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {
     const host = new TypeScriptHost({
-      builder: () => {},
       directoryPath: 'the current directory',
       get: (filename: string):any => ({
         canonicalPath: `canonical ${filename}`,
@@ -38,14 +37,13 @@ describe('TypeScript Host', () => {
   })
 
   it('should create some source files', () => {
-    const files = VirtualFileList.builder('/foo')
-        .add('bar.ts', { contents: '// ts' })
-        .add('bar.tsx', { contents: '// tsx' })
-        .add('bar.js', { contents: '// js' })
-        .add('bar.jsx', { contents: '// jsx' })
-        .add('bar.json', { contents: '// json' })
-        .add('bar.txt', { contents: '// txt' })
-        .build()
+    const files = new VirtualFileList('/foo')
+    files.add('bar.ts', { contents: '// ts' })
+    files.add('bar.tsx', { contents: '// tsx' })
+    files.add('bar.js', { contents: '// js' })
+    files.add('bar.jsx', { contents: '// jsx' })
+    files.add('bar.json', { contents: '// json' })
+    files.add('bar.txt', { contents: '// txt' })
 
     const host = new TypeScriptHost(files)
 
