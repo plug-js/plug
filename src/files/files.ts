@@ -113,35 +113,45 @@ export class Files implements Files {
   /** Add a `File` to this `Files` instance */
   add(path: string, options?: FileOptions): File
 
-  add(pathOrFile: string | File, options?: File | FileOptions): File {
-    let file = undefined as File | undefined
+  add(first: string | File, extra?: File | FileOptions): File {
+    // Destructure our arguments
+    const { path, file, options } =
+        typeof first === 'string' ?
+            extra !== undefined ?
+                'files' in extra ?
+                    { path: first, file: extra, options: undefined } :
+                    { path: first, file: undefined, options: extra } :
+                { path: first, file: undefined, options: undefined } :
+            { path: undefined, file: first, options: undefined }
 
-    if (typeof pathOrFile === 'string') {
-      if (options && ('files' in options)) {
-        const absolutePath = getAbsolutePath(this.directory, pathOrFile)
-        file = new FileWrapper(this, options, absolutePath)
-      } else if (options) {
-        const { originalPath: original, contents, sourceMap } = options
-        const absolutePath = getAbsolutePath(this.directory, pathOrFile)
-        const originalPath = original ? getAbsolutePath(this.directory, original) : undefined
-        file = new FileImpl(this, absolutePath, { contents, sourceMap, originalPath })
-      } else {
-        const absolutePath = getAbsolutePath(this.directory, pathOrFile)
-        file = new FileImpl(this, absolutePath)
-      }
+    // Compute the target absolute path, this is either from the path specified
+    // as an argument, or from the _relative_ path of the original file...
+    const absolutePath =
+        path ? getAbsolutePath(this.directory, path) :
+        file ? getAbsolutePath(this.directory, file.relativePath) :
+        undefined
+    assert(absolutePath, 'Unable to determine absolute path')
+    assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)
+
+    // Never add the same file if we already have it
+    if (file && (file.files === this) && (file.absolutePath === absolutePath)) return file
+
+    // Create a new file
+    let newFile: File
+    if (options && options.originalPath) {
+      const originalPath = getAbsolutePath(this.directory, options.originalPath)
+      newFile = new FileImpl(this, absolutePath, { ...options, originalPath })
+    } else if (options) {
+      newFile = new FileImpl(this, absolutePath, { ...options, originalPath: undefined })
+    } else if (file) {
+      newFile = new FileWrapper(this, file, absolutePath)
     } else {
-      if (pathOrFile.files === this) return pathOrFile
-
-      const absolutePath = getAbsolutePath(this.directory, pathOrFile.relativePath)
-      file = new FileWrapper(this, pathOrFile, absolutePath)
+      newFile = new FileImpl(this, absolutePath)
     }
 
-    // Never add outside of our target directory!
-    assert(isChild(this.directory, file.absolutePath),
-        `Refusing to add file "${file.absolutePath}" to "${this.directory}"`)
-
-    this.#cache.set(file.canonicalPath, file)
-    this.#files.set(file.absolutePath, file)
-    return file
+    // Cache, add and return the new file
+    this.#cache.set(newFile.canonicalPath, newFile)
+    this.#files.set(newFile.absolutePath, newFile)
+    return newFile
   }
 }
