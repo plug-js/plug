@@ -1,4 +1,3 @@
-import { fail } from 'assert'
 import { VirtualFileList } from './files'
 import { ConstructorOverloads } from './types/overloads'
 
@@ -43,23 +42,26 @@ export interface Pipe<P extends Pipe<P>> {
 
 /* ========================================================================== */
 
+// Marker for our internal "plug" method
+function wrap(plug: Plug | Processor): Plug {
+  return (typeof plug === 'function') ? { process: plug } : plug
+}
+
 // Empty interface declaration (separate from class): this allows plugs
 // to inject function declarations while installing, and our class not
 // having to implement them to prevent TypeScript from complaining
 interface AbstractPipe<P extends Pipe<P>> extends Pipe<P> {}
 
-// Abstract implementation of our `Pipe` interface
+// Abstract implementation of our `Pipe` interface.
+// We'll `install()` all our plug methods on this class' prototype and since
+// this class is abstract and doesn't declare anything, the concrete `PlugPipe`
+// and `TaskPipe` classes  will _always_ override anything here with whatever
+// they declare.
+// This allows us to be safe even if some random git installs a plug called
+// "plug", "run", "process", ...
 abstract class AbstractPipe<P extends Pipe<P>> implements Pipe<P> {
-  plug(plug: Plug): P
-  plug(plug: Processor): P
-  plug(plug: Plug | Processor): Pipe<any> {
-    if (typeof plug === 'function') plug = { process: plug }
-    if (this instanceof PlugPipe) return new PlugPipe(this, plug)
-    // istanbul ignore else - we don't expose this abstract class for tests
-    if (this instanceof TaskPipe) return new TaskPipe(this, plug)
-    // istanbul ignore next - we don't expose this abstract class for tests
-    fail('Unknown plug type')
-  }
+  abstract plug(plug: Plug): P
+  abstract plug(plug: Processor): P
 }
 
 /* ========================================================================== */
@@ -69,7 +71,7 @@ abstract class AbstractPipe<P extends Pipe<P>> implements Pipe<P> {
  *
  * Pipes of this kind are _snippets_ and reusable in the build file.
  */
-export class PlugPipe extends AbstractPipe<PlugPipe> {
+export class PlugPipe extends AbstractPipe<PlugPipe> implements Plug {
   readonly #parent?: PlugPipe
   readonly #plug?: Plug
 
@@ -83,6 +85,10 @@ export class PlugPipe extends AbstractPipe<PlugPipe> {
     if (this.#parent) list = await this.#parent.process(list, run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list
+  }
+
+  plug(plug: Plug | Processor): PlugPipe {
+    return new PlugPipe(this, wrap(plug))
   }
 }
 
@@ -112,6 +118,10 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
     let list = await this.#origin.run(run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list
+  }
+
+  plug(plug: Plug | Processor): TaskPipe {
+    return new TaskPipe(this, wrap(plug))
   }
 }
 
