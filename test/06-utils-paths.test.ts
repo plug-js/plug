@@ -11,7 +11,7 @@ import {
   caseSensitivePaths,
 } from '../src/utils/paths'
 
-describe.only('Paths', () => {
+describe('Paths', () => {
   const x_dir = '/Foo/Bar' as DirectoryPath
   const x_file = '/Foo/Bar/Baz.Txt' as AbsolutePath
   const u_file = '/FOO/BAR/BAZ.TXT' as AbsolutePath
