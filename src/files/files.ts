@@ -8,7 +8,6 @@ import {
 } from './index'
 
 import {
-  AbsolutePath,
   CanonicalPath,
   DirectoryPath,
   getAbsolutePath,
@@ -30,7 +29,7 @@ export class Files implements Files {
   // Internal cache of all previously seen files
   #cache = new Map<CanonicalPath, File>()
   // Internal list of all files added to this list
-  #files = new Map<AbsolutePath, File>()
+  #files = new Map<CanonicalPath, File>()
 
   /** The base directory of this `Files` instance */
   readonly directory: DirectoryPath
@@ -85,7 +84,8 @@ export class Files implements Files {
   /** Checks whether this `Files` instance was added the given path */
   has(path: string): boolean {
     const absolutePath = getAbsolutePath(this.directory, path)
-    return this.#files.has(absolutePath)
+    const canonicalPath = getCanonicalPath(absolutePath)
+    return this.#files.has(canonicalPath)
   }
 
   /** Clone this `Files` instance preserving all files listed by it */
@@ -98,8 +98,8 @@ export class Files implements Files {
       list.#cache.set(wrapped.canonicalPath, wrapped)
 
       // Preserve file list
-      if (this.#files.has(file.absolutePath) && isChild(list.directory, file.absolutePath)) {
-        list.#files.set(wrapped.absolutePath, wrapped)
+      if (this.#files.has(file.canonicalPath) && isChild(list.directory, file.absolutePath)) {
+        list.#files.set(wrapped.canonicalPath, wrapped)
       }
     }
 
@@ -151,7 +151,7 @@ export class Files implements Files {
 
     // Cache, add and return the new file
     this.#cache.set(newFile.canonicalPath, newFile)
-    this.#files.set(newFile.absolutePath, newFile)
+    this.#files.set(newFile.canonicalPath, newFile)
     return newFile
   }
 }
