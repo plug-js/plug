@@ -3,11 +3,12 @@ import { Plug, install } from '../pipe'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
-    from: PlugExtension<P, typeof FromPlug>
+    from: PlugExtension<P, typeof FromToPlug>
+    to: PlugExtension<P, typeof FromToPlug>
   }
 }
 
-class FromPlug implements Plug {
+class FromToPlug implements Plug {
   #directory: string
 
   constructor(directory: string) {
@@ -19,4 +20,5 @@ class FromPlug implements Plug {
   }
 }
 
-export const from = install('from', FromPlug)
+export const from = install('from', FromToPlug)
+export const to = install('from', FromToPlug)
