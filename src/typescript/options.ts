@@ -16,6 +16,7 @@ import {
   AbsolutePath,
   getAbsolutePath,
   getDirectory,
+  getDirectoryPath,
   getRelativePath,
 } from '../utils/paths'
 
@@ -114,10 +115,10 @@ export function getCompilerOptions(
   if (diagnostics.length) return { options: {}, diagnostics }
 
   // If we have some overrides with path, we must rewrite them
-  if (overrides.outDir) overrides.outDir = getAbsolutePath(files.directoryPath, overrides.outDir)
+  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directoryPath, overrides.outDir)
   if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directoryPath, overrides.outFile)
-  if (overrides.rootDir) overrides.rootDir = getAbsolutePath(files.directoryPath, overrides.rootDir)
-  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getAbsolutePath(files.directoryPath, d))
+  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directoryPath, overrides.rootDir)
+  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directoryPath, d))
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)
