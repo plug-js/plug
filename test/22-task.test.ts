@@ -1,21 +1,20 @@
-import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { Files } from '../src/files'
-import { PlugPipe, Processor } from '../src/pipe'
+import { PlugPipe, Processor, Runnable, TaskPipe } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
 import { parallel, task } from '../src/task'
 
 describe('Plug Tasks', () => {
-  function make(process: Processor): PlugPipe {
-    return new PlugPipe(undefined, { process })
+  function start(run: Runnable['run']): TaskPipe {
+    return new TaskPipe({ run })
   }
 
   it('should construct a task and run it once', async () => {
     let counter = 0
 
-    const pipe = make((input) => {
+    const pipe = start(() => {
       counter ++
-      return input
+      return undefined as any
     })
 
     const task1 = task('test task', pipe)
@@ -42,7 +41,7 @@ describe('Plug Tasks', () => {
 
   it('should chain multiple tasks', async () => {
     let counter1 = 0
-    const task1 = task('test task', make(() => {
+    const task1 = task('test task', start(() => {
       counter1 ++
       return 'task1' as any
     }))
@@ -76,21 +75,19 @@ describe('Plug Tasks', () => {
     expect(counter2).to.equal(2)
   })
 
-  it('should fail a task when constructed with the wrong type', async () => {
-    await expect(task({} as any).task.run({} as any))
-        .to.be.rejectedWith(AssertionError, 'Invalid task source')
-  })
-
   it('should create a parallel task', async () => {
     const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+    function pipe(process: Processor): PlugPipe {
+      return new PlugPipe(undefined, { process })
+    }
 
     const dir = getProjectDirectory()
     let counter = 0
 
     const files = new Files()
-    const task0 = task(make(() => files))
+    const task0 = task(start(() => files))
 
-    const task1 = task(() => task0().plug(make(async (input) => {
+    const task1 = task(() => task0().plug(pipe(async (input) => {
       await sleep(20) // finish last!
 
       expect(input).to.equal(files)
@@ -100,7 +97,7 @@ describe('Plug Tasks', () => {
       return list
     })))
 
-    const task2 = task(() => task0().plug(make(async (input) => {
+    const task2 = task(() => task0().plug(pipe(async (input) => {
       await sleep(10) // finish in between!
 
       expect(input).to.equal(files)
@@ -110,7 +107,7 @@ describe('Plug Tasks', () => {
       return list
     })))
 
-    const task3 = task(() => task0().plug(make((input) => {
+    const task3 = task(() => task0().plug(pipe((input) => {
       // immediate!
 
       expect(input).to.equal(files)

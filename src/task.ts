@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { Files } from './files'
-import { Run, Runnable, PlugPipe, TaskPipe } from './pipe'
+import { Run, Runnable, TaskPipe } from './pipe'
 
 /**
  * A `TaskCall` describes a function returning a `TaskPipe`, as a way to
@@ -67,29 +67,19 @@ function makeCall(task: Task): TaskCall {
  * SIMPLE TASKS                                                               *
  * ========================================================================== */
 
-type TaskSource = PlugPipe | TaskPipe | (() => PlugPipe | TaskPipe)
+type TaskSource = TaskPipe | (() => TaskPipe)
 
 // Our simple task, wrapping pipelines or void functions
 class SimpleTask extends AbstractTask {
-  readonly #source: PlugPipe | TaskPipe
+  readonly #source: () => TaskPipe
 
   constructor(description: string | undefined, source: TaskSource) {
     super(description)
-    this.#source = typeof source == 'function' ? source() : source
+    this.#source = typeof source == 'function' ? source : () => source
   }
 
   async runTask(run: Run): Promise<Files> {
-    // What to do, what to do?
-    const source = this.#source
-    const files =
-        // If the result is a plug pipe, then we process it with a new file list
-        source instanceof PlugPipe ? source.process(new Files(), run) :
-        // If the result is a task pipe, then we run it directly
-        source instanceof TaskPipe ? source.run(run) :
-        // Someone returned us a result??? Bad!
-        assert.fail('Invalid task source')
-    // All done, we can return...
-    return files
+    return this.#source().run(run)
   }
 }
 
