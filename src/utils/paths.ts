@@ -1,5 +1,5 @@
 import { existsSync } from 'fs'
-import { resolve, relative, dirname } from 'path'
+import { resolve, relative, dirname, sep } from 'path'
 
 /** An absolute path always starts from "/" */
 export type AbsolutePath = string & {
@@ -40,6 +40,12 @@ export function getAbsolutePath(directory: DirectoryPath, path: string): Absolut
 /** Return the relative path from a directory to an absolute path */
 export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath {
   return relative(directory, path) as RelativePath
+}
+
+/** Returns whether the specified path is a _child_ of the given directory */
+export function isChild(directory: DirectoryPath, path: AbsolutePath): boolean {
+  const relative = getRelativePath(directory, path)
+  return !! (relative && (! relative.startsWith('..' + sep)))
 }
 
 /** Return the canonical path from an absolute path, considering filesystem case sensitivity */

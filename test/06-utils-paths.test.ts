@@ -9,6 +9,7 @@ import {
   getDirectoryPath,
   getDirectory,
   caseSensitivePaths,
+  isChild,
 } from '../src/utils/paths'
 
 describe('Paths', () => {
@@ -36,6 +37,12 @@ describe('Paths', () => {
 
   it('should get a relative path for a file', () => {
     expect(getRelativePath(dir, file)).to.equal(relative)
+  })
+
+  it('should determine if an absolute path is child of a directory', () => {
+    expect(isChild(dir, file)).to.be.true
+    expect(isChild(dir, dir as AbsolutePath)).to.be.false
+    expect(isChild(dir, '/foo/baz' as AbsolutePath)).to.be.false
   })
 
   it('should canonicalize a file name', () => {
