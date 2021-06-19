@@ -29,7 +29,7 @@ export type FileOptions = {
  */
 export interface File {
   /** The `Files` associated with this `File` */
-  readonly fileList: Files
+  readonly files: Files
   /** The _absolute_ path of this `File` */
   readonly absolutePath: AbsolutePath
   /** The path of this `File` relative to its `Files`'s `baseDir` */

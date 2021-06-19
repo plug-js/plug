@@ -29,7 +29,7 @@ describe('Virtual File List', () => {
     const file1 = files[0]
     expect(file1.absolutePath).to.equal('/foo/one.txt')
     expect(file1.relativePath).to.equal('one.txt')
-    expect(file1.fileList).to.equal(list)
+    expect(file1.files).to.equal(list)
 
     expect(list.get('one.txt')).to.equal(file1) // same instance
     expect(list.get('./one.txt')).to.equal(file1) // same instance
@@ -38,7 +38,7 @@ describe('Virtual File List', () => {
     const file2 = list.get('./two.bin')
     expect(file2.absolutePath).to.equal('/foo/two.bin')
     expect(file2.relativePath).to.equal('two.bin')
-    expect(file2.fileList).to.equal(list)
+    expect(file2.files).to.equal(list)
 
     expect(list.get('two.bin')).to.equal(file2) // same instance
     expect(list.get('./two.bin')).to.equal(file2) // same instance
@@ -47,7 +47,7 @@ describe('Virtual File List', () => {
     const file3 = list.get('/three.out')
     expect(file3.absolutePath).to.equal('/three.out')
     expect(file3.relativePath).to.equal('../three.out')
-    expect(file3.fileList).to.equal(list)
+    expect(file3.files).to.equal(list)
 
     expect(list.get('../three.out')).to.equal(file3) // same instance
     expect(list.get('/three.out')).to.equal(file3) // same instance
@@ -89,7 +89,7 @@ describe('Virtual File List', () => {
     const files = new Files('/foo')
     const file = files.add('bar.txt', { originalPath: 'bar.src' })
 
-    expect(file.fileList).to.equal(files)
+    expect(file.files).to.equal(files)
     expect(file.relativePath).to.equal('bar.txt')
     expect(file.absolutePath).to.equal('/foo/bar.txt')
     expect(file.originalPath).to.equal('/foo/bar.src')
@@ -103,7 +103,7 @@ describe('Virtual File List', () => {
 
     expect(file2).not.to.equal(file)
 
-    expect(file2.fileList).to.equal(files2)
+    expect(file2.files).to.equal(files2)
     expect(file2.relativePath).to.equal('bar.txt')
     expect(file2.absolutePath).to.equal('/foo/baz/bar.txt')
     expect(file2.originalPath).to.equal('/foo/bar.src')
@@ -153,7 +153,7 @@ describe('Virtual File List', () => {
     expect(files2.list()).to.eql([ file2 ])
     expect(files2.list()[0]).to.equal(file2)
 
-    expect(file2.fileList).to.equal(files2)
+    expect(file2.files).to.equal(files2)
     expect(file2.absolutePath).to.equal('/foo/bar.txt')
     expect(file2.relativePath).to.equal('foo/bar.txt')
     expect(file2.contentsSync()).to.equal('hello, world!')

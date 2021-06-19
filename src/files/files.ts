@@ -116,7 +116,7 @@ export class Files implements Files {
     let file = undefined as File | undefined
 
     if (typeof pathOrFile === 'string') {
-      if (options && ('fileList' in options)) {
+      if (options && ('files' in options)) {
         file = options.clone(this, pathOrFile)
       } else if (options) {
         const { originalPath: original, contents, sourceMap } = options

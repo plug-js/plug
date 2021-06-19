@@ -33,7 +33,7 @@ interface FileImplOptions {
 
 /* Implementation of the File interface */
 export class FileImpl implements File {
-  readonly fileList!: Files
+  readonly files!: Files
   readonly absolutePath!: AbsolutePath
   readonly originalPath!: AbsolutePath
 
@@ -49,7 +49,7 @@ export class FileImpl implements File {
     const { contents, originalPath = absolutePath, sourceMap = true } = options
 
     Object.defineProperties(this, {
-      'fileList': { enumerable: false, value: fileList },
+      'files': { enumerable: false, value: fileList },
       'absolutePath': { enumerable: true, value: absolutePath },
       'originalPath': { enumerable: true, value: originalPath },
     })
@@ -66,7 +66,7 @@ export class FileImpl implements File {
   }
 
   get relativePath(): RelativePath {
-    return getRelativePath(this.fileList.directoryPath, this.absolutePath)
+    return getRelativePath(this.files.directoryPath, this.absolutePath)
   }
 
   get canonicalPath(): CanonicalPath {
@@ -76,7 +76,7 @@ export class FileImpl implements File {
   get(path: string): File {
     const directory = getDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
-    return this.fileList.get(absolutePath)
+    return this.files.get(absolutePath)
   }
 
   // TODO: I don't like this method as the resulting file is not cached...
@@ -84,7 +84,7 @@ export class FileImpl implements File {
     // The absolute path of the target file is resolved agains the target list
     const absolutePath = getAbsolutePath(files.directoryPath, path || this.relativePath)
     // If there are no changes we simply return this file...
-    if ((this.fileList === files) && (absolutePath === this.absolutePath)) return this
+    if ((this.files === files) && (absolutePath === this.absolutePath)) return this
 
     // Clone and return this file
     const file = new FileImpl(files, absolutePath, { originalPath: this.originalPath })
@@ -158,7 +158,7 @@ export class FileImpl implements File {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.fileList.get(sourceMapFile)
+    const file = this.files.get(sourceMapFile)
     if (! file.existsSync()) return
 
     return this.#sourceMap = JSON.parse(file.contentsSync())
@@ -192,7 +192,7 @@ export class FileImpl implements File {
     // istanbul ignore if - when we have no file, this.#sourceMap is false
     if (! sourceMapFile) return
 
-    const file = this.fileList.get(sourceMapFile)
+    const file = this.files.get(sourceMapFile)
     if (! await file.exists()) return
 
     return this.#sourceMap = JSON.parse(await file.contents())
