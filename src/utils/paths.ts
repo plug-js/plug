@@ -29,8 +29,16 @@ export type DirectoryPath = AbsolutePath & {
 const __lfilename = __filename.toLowerCase()
 const __ufilename = __filename.toUpperCase()
 
+const __caseSensitivePaths = !(existsSync(__lfilename) && existsSync(__ufilename))
+
 /** Indicates whether the underlying filesystem is case sensitive or not */
-export const caseSensitivePaths = !(existsSync(__lfilename) && existsSync(__ufilename))
+export const caseSensitivePaths: () => boolean = (() => {
+  // istanbul ignore next - always running coverage with tests
+  return typeof globalThis.describe === 'function' ? () => {
+    return typeof (<any> globalThis).caseSensitivePaths === 'boolean' ?
+      (<any> globalThis).caseSensitivePaths as boolean : __caseSensitivePaths
+  } : () => __caseSensitivePaths
+})()
 
 /** Return the absolute path resolving the given path from a directory */
 export function getAbsolutePath(directory: DirectoryPath, path: string): AbsolutePath {
@@ -39,7 +47,8 @@ export function getAbsolutePath(directory: DirectoryPath, path: string): Absolut
 
 /** Return the relative path from a directory to an absolute path */
 export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath {
-  return relative(directory, path) as RelativePath
+  if (caseSensitivePaths()) return relative(directory, path) as RelativePath
+  return relative(directory.toLowerCase(), path.toLowerCase()) as RelativePath
 }
 
 /** Returns whether the specified path is a _child_ of the given directory */
@@ -50,8 +59,7 @@ export function isChild(directory: DirectoryPath, path: AbsolutePath): boolean {
 
 /** Return the canonical path from an absolute path, considering filesystem case sensitivity */
 export function getCanonicalPath(name: AbsolutePath): CanonicalPath {
-  // istanbul ignore next - dependant on underlying filesystem
-  return (caseSensitivePaths ? name : name.toLowerCase()) as CanonicalPath
+  return (caseSensitivePaths() ? name : name.toLowerCase()) as CanonicalPath
 }
 
 /** Get a directory path resolving the specified path */
