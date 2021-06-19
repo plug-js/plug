@@ -114,6 +114,26 @@ describe('Virtual File List', () => {
     expect(files2.add(file2)).to.equal(file2)
   })
 
+  it('should sort file lists', () => {
+    const files = new VirtualFileList('/foo')
+    files.add('3.txt')
+    files.add('2.txt')
+    files.add('1.txt')
+
+    expect(files.list().sort()).to.eql([
+      { absolutePath: '/foo/1.txt', originalPath: '/foo/1.txt' },
+      { absolutePath: '/foo/2.txt', originalPath: '/foo/2.txt' },
+      { absolutePath: '/foo/3.txt', originalPath: '/foo/3.txt' },
+    ])
+
+    // force a different sort alogorithm
+    expect(files.list().sort((a, b) => b.absolutePath.localeCompare(a.absolutePath))).to.eql([
+      { absolutePath: '/foo/3.txt', originalPath: '/foo/3.txt' },
+      { absolutePath: '/foo/2.txt', originalPath: '/foo/2.txt' },
+      { absolutePath: '/foo/1.txt', originalPath: '/foo/1.txt' },
+    ])
+  })
+
   it('should preserve caches and lists when cloning a VirtualFileList', () => {
     const files1 = new VirtualFileList('/foo')
     const file1 = files1.add('bar.txt', {
