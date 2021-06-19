@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { FilesImpl } from './list'
+import { FilesImpl } from './files'
 
 import {
   AbsolutePath,
