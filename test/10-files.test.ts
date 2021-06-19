@@ -2,11 +2,11 @@ import { expect } from 'chai'
 import { File, Files } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
-import { caseSensitivePaths } from '../src/utils/paths'
 import { getProjectDirectory } from '../src/project'
+import { AssertionError } from 'assert'
 
-describe('Virtual File List', () => {
-  it('should create a new Files', () => {
+describe.only('Virtual File List', () => {
+  it('should create a new Files instance', () => {
     expect(new Files())
         .to.be.instanceOf(Files)
         .to.have.property('directory', getProjectDirectory())
@@ -18,104 +18,236 @@ describe('Virtual File List', () => {
         .to.have.property('directory', '/foo')
   })
 
-  it('should build a Files with files', () => {
-    const list = new Files('/foo')
-    list.add('one.txt')
+  it('should get files from a Files instance with case sensitive paths', () => {
+    try {
+      (<any> globalThis).caseSensitivePaths = true
 
-    expect(list.directory).to.equal('/foo')
+      const files = new Files('/Foo')
+      const file = files.get('Bar.Txt')
 
-    const files = list.list()
-    expect(files.length).to.equal(1)
+      expect(file.files).to.equal(files)
+      expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
+      expect(file.originalPath).to.equal('/Foo/Bar.Txt')
+      expect(file.relativePath).to.equal('Bar.Txt')
+      expect(file.canonicalPath).to.equal('/Foo/Bar.Txt')
 
-    const file1 = files[0]
-    expect(file1.absolutePath).to.equal('/foo/one.txt')
-    expect(file1.relativePath).to.equal('one.txt')
-    expect(file1.files).to.equal(list)
+      // Re-get the same file
+      expect(files.get('Bar.Txt')).to.equal(file)
+      expect(files.get('./Bar.Txt')).to.equal(file)
+      expect(files.get('Baz/../Bar.Txt')).to.equal(file)
+      expect(files.get('../Foo/Bar.Txt')).to.equal(file)
+      expect(files.get('/Foo/Bar.Txt')).to.equal(file)
 
-    expect(list.get('one.txt')).to.equal(file1) // same instance
-    expect(list.get('./one.txt')).to.equal(file1) // same instance
-    expect(list.get('/foo/one.txt')).to.equal(file1) // same instance
+      // Case sensitive, it should not get the same file
+      expect(files.get('bar.txt')).not.to.equal(file)
+      expect(files.get('./bar.txt')).not.to.equal(file)
+      expect(files.get('baz/../bar.txt')).not.to.equal(file)
+      expect(files.get('../foo/bar.txt')).not.to.equal(file)
+      expect(files.get('/foo/bar.txt')).not.to.equal(file)
 
-    const file2 = list.get('./two.bin')
-    expect(file2.absolutePath).to.equal('/foo/two.bin')
-    expect(file2.relativePath).to.equal('two.bin')
-    expect(file2.files).to.equal(list)
+      // Re-get the same file, from our File instance
+      expect(file.get('Bar.Txt')).to.equal(file)
+      expect(file.get('./Bar.Txt')).to.equal(file)
+      expect(file.get('Baz/../Bar.Txt')).to.equal(file)
+      expect(file.get('../Foo/Bar.Txt')).to.equal(file)
+      expect(file.get('/Foo/Bar.Txt')).to.equal(file)
 
-    expect(list.get('two.bin')).to.equal(file2) // same instance
-    expect(list.get('./two.bin')).to.equal(file2) // same instance
-    expect(list.get('/foo/two.bin')).to.equal(file2) // same instance
-
-    const file3 = list.get('/three.out')
-    expect(file3.absolutePath).to.equal('/three.out')
-    expect(file3.relativePath).to.equal('../three.out')
-    expect(file3.files).to.equal(list)
-
-    expect(list.get('../three.out')).to.equal(file3) // same instance
-    expect(list.get('/three.out')).to.equal(file3) // same instance
-
-    // list "has" method
-    expect(list.has('one.txt')).to.be.true
-    expect(list.has('two.txt')).to.be.false
-
-    // relative access
-    expect(file1.get('one.txt')).to.equal(file1)
-    expect(file1.get('./one.txt')).to.equal(file1)
-    expect(file1.get('/foo/one.txt')).to.equal(file1)
-
-    expect(file1.get('two.bin')).to.equal(file2)
-    expect(file1.get('./two.bin')).to.equal(file2)
-    expect(file1.get('/foo/two.bin')).to.equal(file2)
-
-    expect(file1.get('../three.out')).to.equal(file3)
-    expect(file1.get('/three.out')).to.equal(file3)
-
-    expect(file2.get('one.txt')).to.equal(file1)
-    expect(file2.get('./one.txt')).to.equal(file1)
-    expect(file2.get('/foo/one.txt')).to.equal(file1)
-
-    expect(file2.get('two.bin')).to.equal(file2)
-    expect(file2.get('./two.bin')).to.equal(file2)
-    expect(file2.get('/foo/two.bin')).to.equal(file2)
-
-    expect(file2.get('../three.out')).to.equal(file3)
-    expect(file2.get('/three.out')).to.equal(file3)
-
-    // list of files must _not_ change
-    expect(list.list().length).to.equal(1)
-    expect(list.list()[0]).to.equal(file1)
-    expect(list.list()).not.to.equal(files) // same instance
+      // Case sensitive, it should not get the same file
+      expect(file.get('bar.txt')).to.not.equal(file)
+      expect(file.get('./bar.txt')).to.not.equal(file)
+      expect(file.get('baz/../bar.txt')).to.not.equal(file)
+      expect(file.get('../foo/bar.txt')).to.not.equal(file)
+      expect(file.get('/foo/bar.txt')).to.not.equal(file)
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
   })
 
-  it('should add files to an existing Files', () => {
+  it('should get files from a Files instance with case insensitive paths', () => {
+    try {
+      (<any> globalThis).caseSensitivePaths = false
+
+      const files = new Files('/Foo')
+      const file = files.get('Bar.Txt')
+
+      expect(file.files).to.equal(files)
+      expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
+      expect(file.originalPath).to.equal('/Foo/Bar.Txt')
+      expect(file.relativePath).to.equal('bar.txt') // case insensitive
+      expect(file.canonicalPath).to.equal('/foo/bar.txt') // case insensitive
+
+      // Re-get the same file
+      expect(files.get('Bar.Txt')).to.equal(file)
+      expect(files.get('./Bar.Txt')).to.equal(file)
+      expect(files.get('Baz/../Bar.Txt')).to.equal(file)
+      expect(files.get('../Foo/Bar.Txt')).to.equal(file)
+      expect(files.get('/Foo/Bar.Txt')).to.equal(file)
+
+      // Case sensitive, it should not get the same file
+      expect(files.get('bar.txt')).to.equal(file)
+      expect(files.get('./bar.txt')).to.equal(file)
+      expect(files.get('baz/../bar.txt')).to.equal(file)
+      expect(files.get('../foo/bar.txt')).to.equal(file)
+      expect(files.get('/foo/bar.txt')).to.equal(file)
+
+      // Re-get the same file, from our File instance
+      expect(file.get('Bar.Txt')).to.equal(file)
+      expect(file.get('./Bar.Txt')).to.equal(file)
+      expect(file.get('Baz/../Bar.Txt')).to.equal(file)
+      expect(file.get('../Foo/Bar.Txt')).to.equal(file)
+      expect(file.get('/Foo/Bar.Txt')).to.equal(file)
+
+      // Case sensitive, it should not get the same file
+      expect(file.get('bar.txt')).to.equal(file)
+      expect(file.get('./bar.txt')).to.equal(file)
+      expect(file.get('baz/../bar.txt')).to.equal(file)
+      expect(file.get('../foo/bar.txt')).to.equal(file)
+      expect(file.get('/foo/bar.txt')).to.equal(file)
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
+  })
+
+  it('should add a simple path with case sensitive paths', () => {
+    try {
+      (<any> globalThis).caseSensitivePaths = true
+      const list = new Files('/Foo')
+      list.add('One.Txt')
+
+      const files = list.list()
+      expect(files.length).to.equal(1)
+
+      const file1 = files[0]
+      expect(file1.relativePath).to.equal('One.Txt')
+      expect(file1.absolutePath).to.equal('/Foo/One.Txt')
+      expect(file1.originalPath).to.equal('/Foo/One.Txt')
+      expect(file1.canonicalPath).to.equal('/Foo/One.Txt')
+      expect(file1.files).to.equal(list)
+
+      expect(list.get('One.Txt')).to.equal(file1) // same instance
+      expect(list.get('./One.Txt')).to.equal(file1) // same instance
+      expect(list.get('/Foo/One.Txt')).to.equal(file1) // same instance
+
+      expect(list.get('one.txt')).to.not.equal(file1) // case sensitive
+      expect(list.get('./one.txt')).to.not.equal(file1) // case sensitive
+      expect(list.get('/foo/one.txt')).to.not.equal(file1) // case sensitive
+
+      expect(list.has('One.Txt')).to.be.true
+      expect(list.has('./One.Txt')).to.be.true
+      expect(list.has('/Foo/One.Txt')).to.be.true
+
+      expect(list.has('one.txt')).to.be.false // case sensitive
+      expect(list.has('./one.txt')).to.be.false // case sensitive
+      expect(list.has('/foo/one.txt')).to.be.false // case sensitive
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
+  })
+
+  it('should not add with an empty or invalid path', () => {
+    expect(() => new Files('/foo').add('')).to.throw(AssertionError, 'No path for file to be added')
+    expect(() => new Files('/foo').add('/bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+    expect(() => new Files('/foo').add('../bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+  })
+
+  it('should add a simple path with case insensitive paths', () => {
+    try {
+      (<any> globalThis).caseSensitivePaths = false
+      const list = new Files('/Foo')
+      list.add('One.Txt')
+
+      const files = list.list()
+      expect(files.length).to.equal(1)
+
+      const file1 = files[0]
+      expect(file1.relativePath).to.equal('one.txt') // case insensitive
+      expect(file1.absolutePath).to.equal('/Foo/One.Txt')
+      expect(file1.originalPath).to.equal('/Foo/One.Txt')
+      expect(file1.canonicalPath).to.equal('/foo/one.txt') // case insensitive
+      expect(file1.files).to.equal(list)
+
+      expect(list.get('One.Txt')).to.equal(file1) // same instance
+      expect(list.get('./One.Txt')).to.equal(file1) // same instance
+      expect(list.get('/Foo/One.Txt')).to.equal(file1) // same instance
+
+      expect(list.get('one.txt')).to.equal(file1) // case insensitive
+      expect(list.get('./one.txt')).to.equal(file1) // case insensitive
+      expect(list.get('/foo/one.txt')).to.equal(file1) // case insensitive
+
+      expect(list.has('One.Txt')).to.be.true
+      expect(list.has('./One.Txt')).to.be.true
+      expect(list.has('/Foo/One.Txt')).to.be.true
+
+      expect(list.has('one.txt')).to.be.true // case insensitive
+      expect(list.has('./one.txt')).to.be.true // case insensitive
+      expect(list.has('/foo/one.txt')).to.be.true // case insensitive
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
+  })
+
+  it('should add a path with some options', () => {
     const files = new Files('/foo')
-    const file = files.add('bar.txt', { originalPath: 'bar.src' })
+    const file1 = files.add('bar.txt', {
+      contents: 'hello, world!',
+      sourceMap: { test: true } as any,
+    })
 
-    expect(file.files).to.equal(files)
-    expect(file.relativePath).to.equal('bar.txt')
-    expect(file.absolutePath).to.equal('/foo/bar.txt')
-    expect(file.originalPath).to.equal('/foo/bar.src')
+    expect(files.list()).to.eql([ file1 ])
+    expect(files.list()[0]).to.equal(file1)
 
-    expect(files.get('bar.txt')).to.equal(file)
+    expect(file1.absolutePath).to.equal('/foo/bar.txt')
+    expect(file1.originalPath).to.equal('/foo/bar.txt')
+    expect(file1.contentsSync()).to.equal('hello, world!')
+    expect(file1.sourceMapSync()).to.eql({ test: true })
 
-    expect(files.add(file)).to.equal(file)
+    // overwrite file...
+    const file2 = files.add('bar.txt', {
+      contents: 'hello, world!',
+      sourceMap: { test: false } as any,
+      originalPath: '../from/original.txt',
+    })
 
-    const files2 = new Files('/foo/baz')
-    const file2 = files2.add(file)
+    expect(files.list()).to.eql([ file2 ])
+    expect(files.list()[0]).to.equal(file2)
 
-    expect(file2).not.to.equal(file)
-
-    expect(file2.files).to.equal(files2)
-    expect(file2.relativePath).to.equal('bar.txt')
-    expect(file2.absolutePath).to.equal('/foo/baz/bar.txt')
-    expect(file2.originalPath).to.equal('/foo/bar.src')
-
-    expect(files2.get('./bar.txt')).to.equal(file2)
-    expect(files2.get('/foo/baz/bar.txt')).to.equal(file2)
-
-    expect(files2.add(file2)).to.equal(file2)
+    expect(file2.absolutePath).to.equal('/foo/bar.txt')
+    expect(file2.originalPath).to.equal('/from/original.txt')
+    expect(file2.contentsSync()).to.equal('hello, world!')
+    expect(file2.sourceMapSync()).to.eql({ test: false })
   })
 
-  it('should sort file lists', () => {
+  it('should add a file', () => {
+    const files = new Files('/foo')
+
+    const file1 = files.get('bar.txt') // just get the file
+    expect(files.list()).to.eql([])
+
+    // add same file with the same path
+    expect(files.add(file1)).to.equals(file1) // same file, just added
+    expect(files.list()).to.eql([ file1 ]) // and should show in the list
+    expect(files.list()[0]).to.equal(file1) // same instance check
+
+    // add same file with an empty path
+    expect(files.add('', file1)).to.equals(file1) // same file, just added
+    expect(files.list()).to.eql([ file1 ]) // and should show in the list
+    expect(files.list()[0]).to.equal(file1) // same instance check
+
+    // add same file with the same (forced) path
+    expect(files.add('bar.txt', file1)).to.equals(file1)
+    expect(files.add('/foo/bar.txt', file1)).to.equals(file1)
+    expect(files.add('../foo/bar.txt', file1)).to.equals(file1)
+    expect(files.list()).to.eql([ file1 ])
+    expect(files.list()[0]).to.equal(file1)
+
+    // add same file but with a different path
+    const file2 = files.add('baz.txt', file1)
+    expect(files.list()).to.eql([ file1, file2 ])
+    expect(files.list()[0]).to.equal(file1)
+    expect(files.list()[1]).to.equal(file2)
+  })
+
+  it('should sort files', () => {
     const files = new Files('/foo')
     files.add('3.txt')
     files.add('2.txt')
@@ -135,62 +267,43 @@ describe('Virtual File List', () => {
     ])
   })
 
-  it('should preserve caches and lists when cloning a Files', () => {
-    const files1 = new Files('/foo')
-    const file1 = files1.add('bar.txt', {
-      contents: 'hello, world!',
-      sourceMap: { test: true } as any,
-    })
-    files1.get('baz.txt') // cached but not in list
+  it('should preserve clone a file list', () => {
+    const filesA = new Files('/foo')
+    const fileA1 = filesA.add('bar.txt', { contents: 'hello, world 1!' })
+    const fileA2 = filesA.add('bar/baz.txt', { contents: 'hello, world 2!' })
 
-    expect(files1.list()).to.eql([ file1 ])
-    expect(files1.list()[0]).to.equal(file1)
+    expect(filesA.list()).to.eql([ fileA1, fileA2 ])
+    expect(filesA.list()[0]).to.equal(fileA1)
+    expect(filesA.list()[1]).to.equal(fileA2)
 
-    const files2 = files1.clone('/')
-    const file2 = files2.get('foo/bar.txt')
+    expect(filesA.get('bar.txt').contentsSync()).to.equals('hello, world 1!')
+    expect(filesA.get('bar/baz.txt').contentsSync()).to.equals('hello, world 2!')
 
-    expect(file2).not.to.equal(file1)
+    const filesB = filesA.clone()
+    const fileB1 = filesB.get('bar.txt')
+    const fileB2 = filesB.get('bar/baz.txt')
 
-    expect(files2.list()).to.eql([ file2 ])
-    expect(files2.list()[0]).to.equal(file2)
+    expect(fileB1.contentsSync()).to.equals('hello, world 1!')
+    expect(fileB2.contentsSync()).to.equals('hello, world 2!')
 
-    expect(file2.files).to.equal(files2)
-    expect(file2.absolutePath).to.equal('/foo/bar.txt')
-    expect(file2.relativePath).to.equal('foo/bar.txt')
-    expect(file2.contentsSync()).to.equal('hello, world!')
-    expect(file2.sourceMapSync()).to.eql({ test: true })
+    expect(filesB.list().sort()).to.eql([ fileB1, fileB2 ])
+    expect(filesB.list().sort()[0]).to.equal(fileB1)
+    expect(filesB.list().sort()[1]).to.equal(fileB2)
+
+    const filesC = filesA.clone('bar')
+    const fileC1 = filesC.get('../bar.txt')
+    const fileC2 = filesC.get('baz.txt')
+
+    // file C1 is _outside_ of our list, so won't be listed, but still cached!
+    expect(fileC1.contentsSync()).to.equals('hello, world 1!')
+    expect(fileC2.contentsSync()).to.equals('hello, world 2!')
+
+    // only file C2 (which is in the correct directory) shows up in the list
+    expect(filesC.list()).to.eql([ fileC2 ])
+    expect(filesC.list()[0]).to.equal(fileC2)
   })
 
-  it('should honor the case sensitivity of the filesystem', () => {
-    const files = new Files(__dirname)
-
-    const fileAdded = files.add(__filename)
-    const fileLower = files.get(__filename.toLowerCase())
-    const fileUpper = files.get(__filename.toUpperCase())
-    const file = files.get(__filename)
-
-    if (caseSensitivePaths) {
-      expect(file).to.equal(fileAdded)
-
-      if (file.absolutePath == fileLower.absolutePath) { // this file is all lowercase
-        expect(file).to.equal(fileLower)
-        expect(file).not.to.equal(fileUpper)
-      } else if (file.absolutePath == fileUpper.absolutePath) { // this file is all upper case
-        expect(file).not.to.equal(fileLower)
-        expect(file).to.equal(fileUpper)
-      } else { // this file has mixed case
-        expect(file).not.to.equal(fileLower)
-        expect(file).not.to.equal(fileUpper)
-      }
-      expect(fileLower).not.to.equal(fileUpper)
-    } else {
-      expect(file).to.equal(fileLower)
-      expect(file).to.equal(fileUpper)
-      expect(file).to.equal(fileAdded)
-    }
-  })
-
-  describe('Asynchronous Virtual File Access', () => {
+  describe.skip('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
       const file1 = new Files(__dirname).get('this does not exist')
       expect(await file1.exists()).to.be.false
@@ -354,7 +467,7 @@ describe('Virtual File List', () => {
     })
   })
 
-  describe('Synchronous Virtual File Access', () => {
+  describe.skip('Synchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', () => {
       const file1 = new Files(__dirname).get('this does not exist')
       expect(file1.existsSync()).to.be.false

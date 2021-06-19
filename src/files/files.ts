@@ -130,11 +130,15 @@ export class Files implements Files {
         path ? getAbsolutePath(this.directory, path) :
         file ? getAbsolutePath(this.directory, file.relativePath) :
         undefined
-    assert(absolutePath, 'Unable to determine absolute path')
+    assert(absolutePath, 'No path for file to be added')
     assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)
 
-    // Never add the same file if we already have it
-    if (file && (file.files === this) && (file.absolutePath === absolutePath)) return file
+    // Don't recreate if the file is already ours and has the correct path
+    if (file && (file.files === this) && (file.absolutePath === absolutePath)) {
+      this.#cache.set(file.canonicalPath, file)
+      this.#files.set(file.canonicalPath, file)
+      return file
+    }
 
     // Create a new file
     let newFile: File
