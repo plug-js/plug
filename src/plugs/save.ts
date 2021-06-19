@@ -7,7 +7,7 @@ declare module '../pipe' {
   }
 }
 
-class SavePlug implements Plug {
+export class SavePlug implements Plug {
   constructor(directory?: string) {
     void directory
   }

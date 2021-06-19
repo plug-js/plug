@@ -11,7 +11,7 @@ declare module '../pipe' {
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
 
-class ReadPlug implements Plug {
+export class ReadPlug implements Plug {
   #options: GlobOptions
   #globs: string[]
 

@@ -8,7 +8,7 @@ declare module '../pipe' {
   }
 }
 
-class FromToPlug implements Plug {
+export class FromToPlug implements Plug {
   #directory: string
 
   constructor(directory: string) {
@@ -21,4 +21,4 @@ class FromToPlug implements Plug {
 }
 
 export const from = install('from', FromToPlug)
-export const to = install('from', FromToPlug)
+export const to = install('to', FromToPlug)
