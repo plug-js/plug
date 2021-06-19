@@ -1,5 +1,4 @@
 import assert from 'assert'
-import { sep } from 'path'
 import { VirtualFileImpl } from './file'
 import { getProjectDirectory } from '../project'
 
@@ -16,6 +15,7 @@ import {
   getAbsolutePath,
   getCanonicalPath,
   getDirectoryPath,
+  isChild,
 } from '../utils/paths'
 
 /* ========================================================================== *
@@ -109,7 +109,7 @@ export class VirtualFileListImpl implements VirtualFileList {
     }
 
     // Never add outside of our target directory!
-    assert(!file.relativePath.startsWith('..' + sep),
+    assert(isChild(this.directoryPath, file.absolutePath),
         `Refusing to add file "${file.absolutePath}" to "${this.directoryPath}"`)
 
     this.#cache.set(file.canonicalPath, file)
