@@ -1,3 +1,5 @@
+import assert from 'assert'
+import { sep } from 'path'
 import { VirtualFileImpl } from './file'
 import { getProjectDirectory } from '../project'
 
@@ -44,12 +46,24 @@ export class VirtualFileListImpl implements VirtualFileList {
   }
 
   list(): VirtualFile[] {
-    // Return an array whose default "sort" works on absolute paths
+    // Create the new array
     const list = [ ...this.#files.values() ]
+
+    // Inject the sort property (typed)
     list.sort = function(compare?) {
       if (! compare) compare = (a, b) => a.absolutePath.localeCompare(b.absolutePath)
       return Array.prototype.sort.call(this, compare)
     }
+
+    // Make sure it's not enumerable
+    Object.defineProperty(list, 'sort', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: list.sort,
+    })
+
+    // Return our list
     return list
   }
 
@@ -63,7 +77,7 @@ export class VirtualFileListImpl implements VirtualFileList {
     const list = new VirtualFileListImpl(directory)
 
     for (const file of this.#cache.values()) {
-      const clone = file.clone(list)
+      const clone = file.clone(list, file.absolutePath)
       list.#cache.set(clone.canonicalPath, clone)
 
       // Preserve file list
@@ -93,6 +107,10 @@ export class VirtualFileListImpl implements VirtualFileList {
     } else {
       file = pathOrFile.clone(this)
     }
+
+    // Never add outside of our target directory!
+    assert(!file.relativePath.startsWith('..' + sep),
+        `Refusing to add file "${file.absolutePath}" to "${this.directoryPath}"`)
 
     this.#cache.set(file.canonicalPath, file)
     this.#files.set(file.absolutePath, file)

@@ -82,7 +82,7 @@ export class VirtualFileImpl implements VirtualFile {
   // TODO: I don't like this method as the resulting file is not cached...
   clone(files: VirtualFileList, path?: string): VirtualFile {
     // The absolute path of the target file is resolved agains the target list
-    const absolutePath = path ? getAbsolutePath(files.directoryPath, path) : this.absolutePath
+    const absolutePath = getAbsolutePath(files.directoryPath, path || this.relativePath)
     // If there are no changes we simply return this file...
     if ((this.fileList === files) && (absolutePath === this.absolutePath)) return this
 

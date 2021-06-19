@@ -98,33 +98,20 @@ describe('Virtual File List', () => {
 
     expect(files.add(file)).to.equal(file)
 
-    const files2 = new VirtualFileList('/foo/bar')
+    const files2 = new VirtualFileList('/foo/baz')
     const file2 = files2.add(file)
 
-    expect(file.fileList).to.equal(files)
-    expect(file2.relativePath).to.equal('../bar.txt')
-    expect(file.absolutePath).to.equal('/foo/bar.txt')
-    expect(file.originalPath).to.equal('/foo/bar.src')
+    expect(file2).not.to.equal(file)
 
     expect(file2.fileList).to.equal(files2)
-    expect(files2.get('../bar.txt')).to.equal(file2)
-    expect(files2.get('/foo/bar.txt')).to.equal(file2)
+    expect(file2.relativePath).to.equal('bar.txt')
+    expect(file2.absolutePath).to.equal('/foo/baz/bar.txt')
+    expect(file2.originalPath).to.equal('/foo/bar.src')
+
+    expect(files2.get('./bar.txt')).to.equal(file2)
+    expect(files2.get('/foo/baz/bar.txt')).to.equal(file2)
 
     expect(files2.add(file2)).to.equal(file2)
-
-    expect(file).not.to.equal(file2)
-
-    const file3 = files.add('hello.txt', {
-      contents: 'hello, world!',
-      sourceMap: { test: true } as any,
-    })
-    const file4 = file3.clone(files2)
-
-    expect(file4.fileList).to.equal(files2)
-    expect(file4.absolutePath).to.equal('/foo/hello.txt')
-    expect(file4.relativePath).to.equal('../hello.txt')
-    expect(file4.contentsSync()).to.equal('hello, world!')
-    expect(file4.sourceMapSync()).to.eql({ test: true })
   })
 
   it('should preserve caches and lists when cloning a VirtualFileList', () => {
