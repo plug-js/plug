@@ -81,7 +81,7 @@ describe('Plug Tasks', () => {
         .to.be.rejectedWith(AssertionError, 'Invalid task source')
   })
 
-  it('should create a parallel task', async () => {
+  it.skip('should create a parallel task', async () => {
     const slow = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
 
