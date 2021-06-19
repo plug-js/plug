@@ -4,7 +4,7 @@ import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
 
-describe.only('Virtual File List', () => {
+describe('Virtual File List', () => {
   it('should create a new VirtualFileList', () => {
     expect(new VirtualFileList())
         .to.be.instanceOf(VirtualFileList)
