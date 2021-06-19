@@ -4,7 +4,6 @@ import { getProjectDirectory } from '../project'
 import {
   VirtualFile,
   VirtualFileList,
-  VirtualFileListBuilder,
   VirtualFileOptions,
 } from './index'
 
@@ -20,30 +19,6 @@ import {
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
  * ========================================================================== */
-
-class VirtualFileListBuilderImpl implements VirtualFileListBuilder {
-  #list?: VirtualFileListImpl
-
-  constructor(list: VirtualFileListImpl) {
-    this.#list = list
-  }
-
-  add(pathOrFile: string | VirtualFile, options?: VirtualFileOptions): this {
-    if (! this.#list) throw new Error('Virtual file list already built')
-    this.#list.add(pathOrFile, options)
-    return this
-  }
-
-  build(): VirtualFileList {
-    if (! this.#list) throw new Error('Virtual file list already built')
-    try {
-      return this.#list
-    } finally {
-      this.#list = undefined
-    }
-  }
-}
-
 
 export class VirtualFileListImpl implements VirtualFileList {
   #cache = new Map<CanonicalPath, VirtualFile>()
@@ -75,18 +50,6 @@ export class VirtualFileListImpl implements VirtualFileList {
   has(path: string): boolean {
     const absolutePath = getAbsolutePath(this.directoryPath, path)
     return this.#files.has(absolutePath)
-  }
-
-  builder(path?: string): VirtualFileListBuilder {
-    const directory = getDirectoryPath(this.directoryPath, path)
-    const list = new VirtualFileListImpl(directory)
-
-    for (const file of this.#cache.values()) {
-      const clone = file.clone(list)
-      list.#cache.set(clone.canonicalPath, clone)
-    }
-
-    return new VirtualFileListBuilderImpl(list)
   }
 
   clone(path?: string): VirtualFileList {
@@ -122,9 +85,5 @@ export class VirtualFileListImpl implements VirtualFileList {
     this.#cache.set(file.canonicalPath, file)
     this.#files.set(file.absolutePath, file)
     return file
-  }
-
-  static builder(path?: string): VirtualFileListBuilder {
-    return new VirtualFileListBuilderImpl(new VirtualFileListImpl(path))
   }
 }

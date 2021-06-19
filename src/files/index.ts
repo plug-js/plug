@@ -88,15 +88,6 @@ export interface VirtualFileList {
   /** Checks whether this `VirtualFileList` lists the given path */
   has(path: string): boolean
 
-  /**
-   * Create a new `VirtualFileListBuilder` whose directory path is
-   * relative to this one.
-   *
-   * Cached files by this instance (including any virtual content) will be
-   * preserved by the resulting `VirtualFileList` but no files will be added.
-   */
-  builder(path?: string): VirtualFileListBuilder
-
   /** Clone this `VirtualFileList` preserving all files listed by this */
   clone(path?: string): VirtualFileList
 
@@ -106,24 +97,9 @@ export interface VirtualFileList {
   add(path: string, options?: VirtualFileOptions): VirtualFile
 }
 
-/**
- * The `VirtualFileListBuilder` interface represents a _builder_ for a
- * `VirtualFileList`.
- */
-export interface VirtualFileListBuilder {
-  /** Add a `VirtualFile` to the `VirtualFileList` */
-  add(file: VirtualFile): this
-  /** Add a `VirtualFile` to the `VirtualFileList` */
-  add(path: string, options?: VirtualFileOptions): this
-
-  /** Return the `VirtualFileList` instance being built */
-  build(): VirtualFileList
-}
-
 /* Internal type declaring the constructor of a `VirtualFileList` */
 type VirtualFileListConstructor = {
   new(path?: string): VirtualFileList
-  builder(path?: string): VirtualFileListBuilder
 }
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare

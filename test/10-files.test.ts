@@ -4,7 +4,7 @@ import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
 
-describe('Virtual File List', () => {
+describe.only('Virtual File List', () => {
   it('should create a new VirtualFileList', () => {
     expect(new VirtualFileList())
         .to.be.instanceOf(VirtualFileList)
@@ -15,41 +15,11 @@ describe('Virtual File List', () => {
     expect(new VirtualFileList('/foo'))
         .to.be.instanceOf(VirtualFileList)
         .to.have.property('directoryPath', '/foo')
-
-    expect(VirtualFileList.builder().build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', process.cwd())
-    expect(VirtualFileList.builder('foo').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', process.cwd() + '/foo')
-    expect(VirtualFileList.builder('/foo').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/foo')
-
-    const list = new VirtualFileList('/foo/bar')
-
-    expect(list.builder().build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/foo/bar')
-    expect(list.builder('baz').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/foo/bar/baz')
-    expect(list.builder('..').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/foo')
-    expect(list.builder('../baz').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/foo/baz')
-    expect(list.builder('/baz').build())
-        .to.be.instanceOf(VirtualFileList)
-        .to.have.property('directoryPath', '/baz')
   })
 
   it('should build a VirtualFileList with files', () => {
-    const list = VirtualFileList
-        .builder('/foo')
-        .add('one.txt')
-        .build()
+    const list = new VirtualFileList('/foo')
+    list.add('one.txt')
 
     expect(list.directoryPath).to.equal('/foo')
 
@@ -81,6 +51,10 @@ describe('Virtual File List', () => {
 
     expect(list.get('../three.out')).to.equal(file3) // same instance
     expect(list.get('/three.out')).to.equal(file3) // same instance
+
+    // list "has" method
+    expect(list.has('one.txt')).to.be.true
+    expect(list.has('two.txt')).to.be.false
 
     // relative access
     expect(file1.get('one.txt')).to.equal(file1)
@@ -153,37 +127,6 @@ describe('Virtual File List', () => {
     expect(file4.sourceMapSync()).to.eql({ test: true })
   })
 
-  it('should preserve caches when creating a builder from a VirtualFileList', () => {
-    const files1 = new VirtualFileList('/foo')
-    const file1 = files1.add('bar.txt', {
-      contents: 'hello, world!',
-      sourceMap: { test: true } as any,
-    })
-
-    expect(files1.list()).to.eql([ file1 ])
-    expect(files1.list()[0]).to.equal(file1)
-
-    expect(files1.has('bar.txt')).to.be.true
-    expect(files1.has('/foo/bar.txt')).to.be.true
-
-    const files2 = files1.builder('/').build()
-    const file2 = files2.get('foo/bar.txt')
-
-    expect(file2).not.to.equal(file1)
-
-    expect(files2.list()).to.eql([]) // empty list
-    files2.add(file2)
-    expect(files2.list()).to.eql([ file2 ])
-    expect(files2.list()[0]).to.equal(file2)
-    expect(files2.get('foo/bar.txt')).to.equal(file2)
-
-    expect(file2.fileList).to.equal(files2)
-    expect(file2.absolutePath).to.equal('/foo/bar.txt')
-    expect(file2.relativePath).to.equal('foo/bar.txt')
-    expect(file2.contentsSync()).to.equal('hello, world!')
-    expect(file2.sourceMapSync()).to.eql({ test: true })
-  })
-
   it('should preserve caches and lists when cloning a VirtualFileList', () => {
     const files1 = new VirtualFileList('/foo')
     const file1 = files1.add('bar.txt', {
@@ -210,24 +153,13 @@ describe('Virtual File List', () => {
     expect(file2.sourceMapSync()).to.eql({ test: true })
   })
 
-  it('should not continue building a VirtualFileList', () => {
-    const builder = VirtualFileList.builder()
-    builder.build() // should block the building
-
-    expect(() => builder.build()).to.throw(Error, 'Virtual file list already built')
-    expect(() => builder.add('foo')).to.throw(Error, 'Virtual file list already built')
-  })
-
   it('should honor the case sensitivity of the filesystem', () => {
-    const files = VirtualFileList
-        .builder(__dirname)
-        .add(__filename)
-        .build()
+    const files = new VirtualFileList(__dirname)
 
-    const file = files.get(__filename)
-    const fileAdded = files.list()[0]
+    const fileAdded = files.add(__filename)
     const fileLower = files.get(__filename.toLowerCase())
     const fileUpper = files.get(__filename.toUpperCase())
+    const file = files.get(__filename)
 
     if (caseSensitivePaths) {
       expect(file).to.equal(fileAdded)
@@ -274,11 +206,7 @@ describe('Virtual File List', () => {
 
     it('should create a VirtualFile', async () => {
       function create(contents: string): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -298,11 +226,7 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList().add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -334,12 +258,9 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .add('bar.js.map', { contents: '{"foo":"bar"}' })
-            .build()
-            .get('bar.js')
+        const list = new VirtualFileList('/foo')
+        list.add('bar.js.map', { contents: '{"foo":"bar"}' })
+        return list.add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -371,11 +292,7 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -446,11 +363,7 @@ describe('Virtual File List', () => {
 
     it('should create a VirtualFile', () => {
       function create(contents: string): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -470,11 +383,7 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -506,12 +415,9 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .add('bar.js.map', { contents: '{"foo":"bar"}' })
-            .build()
-            .get('bar.js')
+        const list = new VirtualFileList('/foo')
+        list.add('bar.js.map', { contents: '{"foo":"bar"}' })
+        return list.add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -543,11 +449,7 @@ describe('Virtual File List', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): VirtualFile {
-        return VirtualFileList
-            .builder('/foo')
-            .add('bar.js', { contents, sourceMap })
-            .build()
-            .get('bar.js')
+        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
