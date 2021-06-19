@@ -1,4 +1,4 @@
-import { from, task } from './src'
+import { from, pipe, task } from './src'
 
 const typescript: any = null
 const eslint: any = null
@@ -10,11 +10,20 @@ export const lint = task('Lint sources', () =>
   sources
       .plug(eslint))
 
-export const compile = task('Compile source code', () =>
-  lint()
+export const compile = task('Compile source code', () => {
+  const q = lint()
       .plug(typescript())
-      .save('build'))
+      .plug(mocha())
+      .from('foo')
+      // .plug(lint())
+      // .save('build')
+      // .from('doo'))
+  return q
+})
 
 export const test = task('Test compiled code', () =>
   compile()
       .plug(mocha()))
+
+export const xxx = task('Foo', () =>
+  pipe().plug(mocha))
