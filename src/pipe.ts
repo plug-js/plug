@@ -105,17 +105,17 @@ export class PlugPipe extends AbstractPipe<PlugPipe> implements Plug {
  * multiple times.
  */
 export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
-  readonly #origin: Runnable
+  readonly #parent: Runnable
   readonly #plug?: Plug
 
-  constructor(origin: Runnable, plug?: Plug) {
+  constructor(parent: Runnable, plug?: Plug) {
     super()
-    this.#origin = origin
+    this.#parent = parent
     this.#plug = plug
   }
 
   async run(run: Run): Promise<Files> {
-    let list = await this.#origin.run(run)
+    let list = await this.#parent.run(run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list
   }
