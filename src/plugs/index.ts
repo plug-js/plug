@@ -1,4 +1,4 @@
-export * from './compile'
-export * from './from-to'
-export * from './read'
-export * from './save'
+export { compile } from './compile'
+export { from, to } from './from-to'
+export { read } from './read'
+export { save } from './save'
