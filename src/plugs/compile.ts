@@ -61,7 +61,7 @@ export class CompilePlug implements Plug {
 
     const output = new Files(input.directory)
     const paths = input.list().map((file) => {
-      const extension = extname(file.absolutePath)
+      const extension = extname(file.absolutePath).toLowerCase()
       if (extensions.includes(extension)) return file.absolutePath
       if (options.allowJs && (extension === '.js')) return file.absolutePath
       if (options.passThrough && isChild(rootDir, file.absolutePath)) {
