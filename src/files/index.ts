@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFileListImpl } from './list'
+import { FilesImpl } from './list'
 
 import {
   AbsolutePath,
@@ -9,32 +9,32 @@ import {
 } from '../utils/paths'
 
 /**
- * The `VirtualFile` interface represents a file in a `VirtualFileList`.
+ * The `File` interface represents a file in a `Files`.
  */
-export interface VirtualFile {
-  /** The `VirtualFileList` associated with this `VirtualFile` */
-  readonly fileList: VirtualFileList
-  /** The _absolute_ path of this `VirtualFile` */
+export interface File {
+  /** The `Files` associated with this `File` */
+  readonly fileList: Files
+  /** The _absolute_ path of this `File` */
   readonly absolutePath: AbsolutePath
-  /** The path of this `VirtualFile` relative to its `VirtualFileList`'s `baseDir` */
+  /** The path of this `File` relative to its `Files`'s `baseDir` */
   readonly relativePath: RelativePath
-  /** The _canonical_ path of this `VirtualFile` (dependant on filesystem case sensitivity) */
+  /** The _canonical_ path of this `File` (dependant on filesystem case sensitivity) */
   readonly canonicalPath: CanonicalPath
   /** An optional array of absolute paths indicating how this file can be `require(...)`d */
   readonly originalPath: AbsolutePath
 
-  /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
+  /** Checks if this `File` exists (its `contents()` can be accessed) */
   exists(): Promise<boolean>
-  /** Checks if this `VirtualFile` exists (its `contents()` can be accessed) */
+  /** Checks if this `File` exists (its `contents()` can be accessed) */
   existsSync(): boolean
 
-  /** The last modified timestamp of this `VirtualFile` */
+  /** The last modified timestamp of this `File` */
   lastModified(): Promise<number>
-  /** The last modified timestamp of this `VirtualFile` */
+  /** The last modified timestamp of this `File` */
   lastModifiedSync(): number
 
   /**
-   * Return the contents of this `VirtualFile`
+   * Return the contents of this `File`
    *
    * _OCD Note_: `content` (without the S) implies there's some kind of meaning,
    * and not just a string, or a sequence of bytes.
@@ -42,23 +42,23 @@ export interface VirtualFile {
    * @see https://english.stackexchange.com/questions/56831/file-content-vs-file-contents
    */
   contents(): Promise<string>
-  /** Return the contents of this `VirtualFile` */
+  /** Return the contents of this `File` */
   contentsSync(): string
 
-  /** Return a `RawSourceMap` associated with this `VirtualFile` if any */
+  /** Return a `RawSourceMap` associated with this `File` if any */
   sourceMap(): Promise<RawSourceMap | undefined>
-  /** Return a `RawSourceMap` associated with this `VirtualFile` if any */
+  /** Return a `RawSourceMap` associated with this `File` if any */
   sourceMapSync(): RawSourceMap | undefined
 
-  /** Return a `VirtualFile` whose path is relative to this one */
-  get(path: string): VirtualFile
+  /** Return a `File` whose path is relative to this one */
+  get(path: string): File
 
-  /** Clone this `VirtualFile` in another list, optionally changing its path */
-  clone(files: VirtualFileList, path?: string): VirtualFile
+  /** Clone this `File` in another list, optionally changing its path */
+  clone(files: Files, path?: string): File
 }
 
 /** A type describing how to _add_ a virtual file to a list */
-export type VirtualFileOptions = {
+export type FileOptions = {
   /** The contents (if any) of the file to add */
   contents?: string,
   /**
@@ -72,37 +72,37 @@ export type VirtualFileOptions = {
 }
 
 /**
- * The `VirtualFileList` interface represents an extremely simple view over
- * the _physical_ filesystem where a number of `VirtualFile`s can be accessed.
+ * The `Files` interface represents an extremely simple view over
+ * the _physical_ filesystem where a number of `File`s can be accessed.
  */
-export interface VirtualFileList {
-  /** The base directory of this `VirtualFileList` */
+export interface Files {
+  /** The base directory of this `Files` */
   readonly directoryPath: DirectoryPath,
 
-  /** Return a `VirtualFile` associated with this `VirtualFileList` */
-  get(path: string): VirtualFile
+  /** Return a `File` associated with this `Files` */
+  get(path: string): File
 
-  /** Return all `VirtualFile`s this `VirtualFileList` was build with */
-  list(): VirtualFile[]
+  /** Return all `File`s this `Files` was build with */
+  list(): File[]
 
-  /** Checks whether this `VirtualFileList` lists the given path */
+  /** Checks whether this `Files` lists the given path */
   has(path: string): boolean
 
-  /** Clone this `VirtualFileList` preserving all files listed by this */
-  clone(path?: string): VirtualFileList
+  /** Clone this `Files` preserving all files listed by this */
+  clone(path?: string): Files
 
-  /** Add a `VirtualFile` to this `VirtualFileList` */
-  add(file: VirtualFile): VirtualFile
-  /** Add a `VirtualFile` to this `VirtualFileList` with a new path */
-  add(path: string, file: VirtualFile): VirtualFile
-  /** Add a `VirtualFile` to this `VirtualFileList` */
-  add(path: string, options?: VirtualFileOptions): VirtualFile
+  /** Add a `File` to this `Files` */
+  add(file: File): File
+  /** Add a `File` to this `Files` with a new path */
+  add(path: string, file: File): File
+  /** Add a `File` to this `Files` */
+  add(path: string, options?: FileOptions): File
 }
 
-/* Internal type declaring the constructor of a `VirtualFileList` */
-type VirtualFileListConstructor = {
-  new(path?: string): VirtualFileList
+/* Internal type declaring the constructor of a `Files` */
+type FilesConstructor = {
+  new(path?: string): Files
 }
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const VirtualFileList: VirtualFileListConstructor = VirtualFileListImpl
+export const Files: FilesConstructor = FilesImpl

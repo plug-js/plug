@@ -1,4 +1,4 @@
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { Plug, install } from '../pipe'
 
 declare module '../pipe' {
@@ -14,7 +14,7 @@ class FromPlug implements Plug {
     this.#directory = directory
   }
 
-  process(files: VirtualFileList): VirtualFileList {
+  process(files: Files): Files {
     return files.clone(this.#directory)
   }
 }

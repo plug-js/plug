@@ -1,4 +1,4 @@
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { install, Plug } from '../pipe'
 import { GlobOptions, glob } from '../utils/globs'
 
@@ -29,7 +29,7 @@ class ReadPlug implements Plug {
     this.#globs = globs
   }
 
-  async process(files: VirtualFileList): Promise<VirtualFileList> {
+  async process(files: Files): Promise<Files> {
     const list = files.clone()
 
     await glob(files.directoryPath, this.#globs, this.#options, (path) => {

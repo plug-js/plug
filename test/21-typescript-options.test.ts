@@ -1,11 +1,11 @@
 import { expect } from 'chai'
 import { DiagnosticCategory, getDefaultCompilerOptions, ModuleKind } from 'typescript'
 import { getCompilerOptions } from '../src/typescript/options'
-import { VirtualFileList } from '../src/files'
+import { Files } from '../src/files'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
 
     let { options, diagnostics } = getCompilerOptions(files)
     expect(options).to.eql(getDefaultCompilerOptions())
@@ -28,7 +28,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read a basic configuration file', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('tsconfig.json', { contents: '{"compilerOptions":{"module":"commonjs"}}' })
     files.add('wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
 
@@ -66,7 +66,7 @@ describe('TypeScript Compiler Options', () => {
         module: 'commonjs', // overrides
       },
     }
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('base/tsconfig.json', { contents: JSON.stringify(base) })
     files.add('ext/tsconfig.json', { contents: JSON.stringify(ext) })
 
@@ -104,7 +104,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should fail on issues reading an extended configuration file', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('base/wrong.json', { contents: '{"compilerOptions":{"module":"wrong"}}' })
     files.add('miss/tsconfig.json', { contents: '{"extends":"../base/missing.json"}' })
     files.add('wrong/tsconfig.json', { contents: '{"extends":"../base/wrong.json"}' })
@@ -126,7 +126,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should detect circular dependencies when reading extended configurations', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('tsconfig.json', { contents: '{"extends":"./one/tsconfig.json"}' })
     files.add('one/tsconfig.json', { contents: '{"extends":"../two/tsconfig.json"}' })
     files.add('two/tsconfig.json', { contents: '{"extends":"../tsconfig.json"}' })

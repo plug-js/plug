@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { VirtualFileList } from './files'
+import { Files } from './files'
 import { Run, Runnable, PlugPipe, TaskPipe } from './pipe'
 
 /**
@@ -26,7 +26,7 @@ export interface Task extends Runnable {
  * ========================================================================== */
 
 // Our caches [ run -> task -> list ] using weak maps
-const caches = new WeakMap<Run, WeakMap<Task, Promise<VirtualFileList>>>()
+const caches = new WeakMap<Run, WeakMap<Task, Promise<Files>>>()
 
 // Task implementation, caching and running task only once
 abstract class AbstractTask {
@@ -36,7 +36,7 @@ abstract class AbstractTask {
     this.description = description || undefined
   }
 
-  run(run: Run): Promise<VirtualFileList> {
+  run(run: Run): Promise<Files> {
     // If we don't have a cache for this run, create one
     let cache = caches.get(run)
     if (! cache) caches.set(run, cache = new WeakMap())
@@ -49,7 +49,7 @@ abstract class AbstractTask {
     return cached
   }
 
-  abstract runTask(run: Run): Promise<VirtualFileList>
+  abstract runTask(run: Run): Promise<Files>
 }
 
 // Create a `TaskCall` out of a `Task`
@@ -78,12 +78,12 @@ class SimpleTask extends AbstractTask {
     this.#source = typeof source == 'function' ? source() : source
   }
 
-  async runTask(run: Run): Promise<VirtualFileList> {
+  async runTask(run: Run): Promise<Files> {
     // What to do, what to do?
     const source = this.#source
     const files =
         // If the result is a plug pipe, then we process it with a new file list
-        source instanceof PlugPipe ? source.process(new VirtualFileList(), run) :
+        source instanceof PlugPipe ? source.process(new Files(), run) :
         // If the result is a task pipe, then we run it directly
         source instanceof TaskPipe ? source.run(run) :
         // Someone returned us a result??? Bad!
@@ -124,14 +124,14 @@ class ParallelTask extends AbstractTask {
     this.#tasks = tasks
   }
 
-  async runTask(run: Run): Promise<VirtualFileList> {
+  async runTask(run: Run): Promise<Files> {
     // Start each of our taks, processing the same file list, our input
     const promises = this.#tasks.map((task) => task.run(run))
     // Make sure all tasks run correctly and get all output file lists
     const outputs = await Promise.all(promises)
 
     // Create a new file list cloning our input
-    const result = new VirtualFileList()
+    const result = new Files()
     // Each file of each output gets added to our output list (in order)
     outputs.forEach((output) => output.list().forEach((file) => result.add(file)))
     // Return our combined result list

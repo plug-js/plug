@@ -23,7 +23,7 @@ export type DirectoryPath = AbsolutePath & {
 
 /*
  * This is a bit of a hack: we determine case sensitivity on _this_ file
- * but maybe a VirtualFileList from another directory might use a different
+ * but maybe a Files from another directory might use a different
  * underlying filesystem... This is good enough for now!
  */
 const __lfilename = __filename.toLowerCase()

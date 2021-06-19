@@ -8,8 +8,8 @@ import {
 } from 'typescript'
 
 import {
-  VirtualFile,
-  VirtualFileList,
+  File,
+  Files,
 } from '../files'
 
 import {
@@ -28,8 +28,8 @@ type CompilerOptionsAndDiagnostics = {
 
 // Load options from a file in our filesystem
 function loadOptions(
-    file: VirtualFile,
-    files: VirtualFileList,
+    file: File,
+    files: Files,
     diagnostics: Diagnostic[],
     resolutionStack: AbsolutePath[] = [ file.absolutePath ],
 ): CompilerOptions | undefined {
@@ -88,7 +88,7 @@ function loadOptions(
 
 /** Load compiler options from a "tsconfig.json" file */
 export function getCompilerOptions(
-    files: VirtualFileList,
+    files: Files,
     fileName?: string,
     overrides: CompilerOptions = {},
 ): CompilerOptionsAndDiagnostics {
@@ -96,7 +96,7 @@ export function getCompilerOptions(
   const defaults = getDefaultCompilerOptions()
 
   // If there's no file, we load either "tsconfig.json" or the defaults
-  let file = undefined as VirtualFile | undefined
+  let file = undefined as File | undefined
   if (fileName) {
     file = files.get(fileName)
   } else {

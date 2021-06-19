@@ -1,6 +1,6 @@
 import { AssertionError } from 'assert'
 import { expect } from 'chai'
-import { VirtualFileList } from '../src/files'
+import { Files } from '../src/files'
 import { PlugPipe, Processor } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
 import { parallel, task } from '../src/task'
@@ -87,7 +87,7 @@ describe('Plug Tasks', () => {
     const dir = getProjectDirectory()
     let counter = 0
 
-    const files = new VirtualFileList()
+    const files = new Files()
     const task0 = task(make(() => files))
 
     const task1 = task(() => task0().plug(make(async (input) => {

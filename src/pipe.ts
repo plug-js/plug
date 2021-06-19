@@ -1,4 +1,4 @@
-import { VirtualFileList } from './files'
+import { Files } from './files'
 import { ConstructorOverloads } from './types/overloads'
 
 /* ========================================================================== *
@@ -17,7 +17,7 @@ export interface Run {
 }
 
 export interface Runnable {
-  run(run: Run): VirtualFileList | Promise<VirtualFileList>
+  run(run: Run): Files | Promise<Files>
 }
 
 /**
@@ -25,7 +25,7 @@ export interface Runnable {
  * list and producing a (possibly) different one in the context of a `Run`.
  */
 export interface Plug {
-  process(input: VirtualFileList, run: Run): VirtualFileList | Promise<VirtualFileList>
+  process(input: Files, run: Run): Files | Promise<Files>
 }
 
 /** A `Processor` is a simple functional version of the `Plug` interface. */
@@ -81,7 +81,7 @@ export class PlugPipe extends AbstractPipe<PlugPipe> implements Plug {
     this.#plug = plug
   }
 
-  async process(list: VirtualFileList, run: Run): Promise<VirtualFileList> {
+  async process(list: Files, run: Run): Promise<Files> {
     if (this.#parent) list = await this.#parent.process(list, run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list
@@ -114,7 +114,7 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
     this.#plug = plug
   }
 
-  async run(run: Run): Promise<VirtualFileList> {
+  async run(run: Run): Promise<Files> {
     let list = await this.#origin.run(run)
     if (this.#plug) list = await this.#plug.process(list, run)
     return list

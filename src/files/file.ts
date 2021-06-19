@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { VirtualFile, VirtualFileList } from './index'
+import { File, Files } from './index'
 import { extractSourceMap } from '../utils/source-maps'
 
 import {
@@ -23,28 +23,28 @@ import {
  * ========================================================================== */
 
 /* Internal type associating content and an (optional) source map */
-type VirtualFileData = { contents: string, lastModified: number, sourceMapFile?: string }
+type FileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
-interface VirtualFileImplOptions {
+interface FileImplOptions {
   originalPath?: AbsolutePath,
   sourceMap?: boolean | RawSourceMap,
   contents?: string,
 }
 
-/* Implementation of the VirtualFile interface */
-export class VirtualFileImpl implements VirtualFile {
-  readonly fileList!: VirtualFileList
+/* Implementation of the File interface */
+export class FileImpl implements File {
+  readonly fileList!: Files
   readonly absolutePath!: AbsolutePath
   readonly originalPath!: AbsolutePath
 
-  #data?: VirtualFileData
-  #promise?: Promise<VirtualFileData>
+  #data?: FileData
+  #promise?: Promise<FileData>
   #sourceMap?: RawSourceMap | false
 
   constructor(
-      fileList: VirtualFileList,
+      fileList: Files,
       absolutePath: AbsolutePath,
-      options: VirtualFileImplOptions = {},
+      options: FileImplOptions = {},
   ) {
     const { contents, originalPath = absolutePath, sourceMap = true } = options
 
@@ -73,21 +73,21 @@ export class VirtualFileImpl implements VirtualFile {
     return getCanonicalPath(this.absolutePath)
   }
 
-  get(path: string): VirtualFile {
+  get(path: string): File {
     const directory = getDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
     return this.fileList.get(absolutePath)
   }
 
   // TODO: I don't like this method as the resulting file is not cached...
-  clone(files: VirtualFileList, path?: string): VirtualFile {
+  clone(files: Files, path?: string): File {
     // The absolute path of the target file is resolved agains the target list
     const absolutePath = getAbsolutePath(files.directoryPath, path || this.relativePath)
     // If there are no changes we simply return this file...
     if ((this.fileList === files) && (absolutePath === this.absolutePath)) return this
 
     // Clone and return this file
-    const file = new VirtualFileImpl(files, absolutePath, { originalPath: this.originalPath })
+    const file = new FileImpl(files, absolutePath, { originalPath: this.originalPath })
     file.#sourceMap = this.#sourceMap
     file.#promise = this.#promise
     file.#data = this.#data
@@ -98,7 +98,7 @@ export class VirtualFileImpl implements VirtualFile {
    * INTERNAL READING FUNCTIONS                                               *
    * ======================================================================== */
 
-  #readSourceMapData(contents: string, lastModified: number): VirtualFileData {
+  #readSourceMapData(contents: string, lastModified: number): FileData {
     const sourceMapData = extractSourceMap(this.originalPath, contents, true)
     if (sourceMapData) {
       this.#data = { lastModified, ...sourceMapData }
@@ -110,7 +110,7 @@ export class VirtualFileImpl implements VirtualFile {
     return this.#data
   }
 
-  #readSync(): VirtualFileData {
+  #readSync(): FileData {
     if (this.#data) return this.#data
 
     const code = readFileSync(this.originalPath, 'utf8')
@@ -118,11 +118,11 @@ export class VirtualFileImpl implements VirtualFile {
     return this.#readSourceMapData(code, lastModified)
   }
 
-  #read(): Promise<VirtualFileData> {
+  #read(): Promise<FileData> {
     if (this.#promise) return this.#promise
     if (this.#data) return this.#promise = Promise.resolve(this.#data)
 
-    return this.#promise = (async (): Promise<VirtualFileData> => {
+    return this.#promise = (async (): Promise<FileData> => {
       const code = await fs.readFile(this.originalPath, 'utf8')
       const lastModified = (await fs.stat(this.originalPath)).mtimeMs
       return this.#readSourceMapData(code, lastModified)

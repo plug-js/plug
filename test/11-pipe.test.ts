@@ -1,10 +1,10 @@
 import { expect } from 'chai'
-import { VirtualFileList } from '../src/files'
+import { Files } from '../src/files'
 import { PlugPipe, TaskPipe } from '../src/pipe'
 
 describe('Plug Pipes', () => {
   it('should construct a simple pipeline', async () => {
-    const list = new VirtualFileList('/foo')
+    const list = new Files('/foo')
     const pipe = new PlugPipe()
     const result = await pipe.process(list, null as any)
     expect(result).to.equal(list)
@@ -33,7 +33,7 @@ describe('Plug Pipes', () => {
   it('should throw when an element of the pipe fails', async () => {
     const p1 = new PlugPipe().plug(() => {
       throw new Error('foo')
-    }).process(new VirtualFileList(), {} as any)
+    }).process(new Files(), {} as any)
     await expect(p1).to.be.rejectedWith(Error, 'foo')
 
     const p2 = new TaskPipe({ run: () => null as any })

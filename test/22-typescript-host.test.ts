@@ -4,7 +4,7 @@ import { basename, isAbsolute } from 'path'
 import { ScriptKind, ScriptTarget } from 'typescript'
 import { TypeScriptHost } from '../src/typescript/host'
 import { caseSensitivePaths } from '../src/utils/paths'
-import { VirtualFileList } from '../src/files'
+import { Files } from '../src/files'
 
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {
@@ -37,7 +37,7 @@ describe('TypeScript Host', () => {
   })
 
   it('should create some source files', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('bar.ts', { contents: '// ts' })
     files.add('bar.tsx', { contents: '// tsx' })
     files.add('bar.js', { contents: '// js' })
@@ -127,7 +127,7 @@ describe('TypeScript Host', () => {
   })
 
   it('should create different source files for files with different names', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('bar1.ts', { contents: 'void 0' })
     files.add('bar2.ts', { contents: 'void 0' })
 

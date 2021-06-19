@@ -1,5 +1,5 @@
 import { EOL } from 'os'
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { AbsolutePath, caseSensitivePaths } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
@@ -41,10 +41,10 @@ function cacheKey(file: AbsolutePath, languageVersion: ScriptTarget, data: strin
  * Implementation of a TypeScript compiler host wrapping our virtual file list
  */
 export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
-  #files: VirtualFileList
+  #files: Files
 
   /** Create a new `TypeScriptHost` */
-  constructor(files: VirtualFileList) {
+  constructor(files: Files) {
     this.#files = files
   }
 

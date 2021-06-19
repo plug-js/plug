@@ -1,4 +1,4 @@
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { install, Plug } from '../pipe'
 
 declare module '../pipe' {
@@ -12,7 +12,7 @@ class SavePlug implements Plug {
     void directory
   }
 
-  async process(files: VirtualFileList): Promise<VirtualFileList> {
+  async process(files: Files): Promise<Files> {
     return files
   }
 }

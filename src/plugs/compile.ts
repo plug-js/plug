@@ -1,5 +1,5 @@
 import { TypeScriptHost } from '../typescript/host'
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { extname } from 'path'
 import { getCompilerOptions } from '../typescript/options'
 
@@ -48,7 +48,7 @@ export class CompilePlug implements Plug {
     this.#config = config
   }
 
-  process(input: VirtualFileList): VirtualFileList {
+  process(input: Files): Files {
     // Read our compiler options and fail on error
     const host = new TypeScriptHost(input)
     const { options, diagnostics } = getCompilerOptions(input, this.#config, this.#options)
@@ -59,7 +59,7 @@ export class CompilePlug implements Plug {
     const rootDir = getDirectoryPath(input.directoryPath, options.rootDir)
     const outDir = getDirectoryPath(input.directoryPath, options.outDir)
 
-    const output = new VirtualFileList(input.directoryPath)
+    const output = new Files(input.directoryPath)
     const paths = input.list().map((file) => {
       const extension = extname(file.absolutePath)
       if (extensions.includes(extension)) return file.absolutePath

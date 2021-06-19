@@ -1,11 +1,11 @@
 import assert from 'assert'
-import { VirtualFileImpl } from './file'
+import { FileImpl } from './file'
 import { getProjectDirectory } from '../project'
 
 import {
-  VirtualFile,
-  VirtualFileList,
-  VirtualFileOptions,
+  File,
+  Files,
+  FileOptions,
 } from './index'
 
 import {
@@ -22,9 +22,9 @@ import {
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
  * ========================================================================== */
 
-export class VirtualFileListImpl implements VirtualFileList {
-  #cache = new Map<CanonicalPath, VirtualFile>()
-  #files = new Map<AbsolutePath, VirtualFile>()
+export class FilesImpl implements Files {
+  #cache = new Map<CanonicalPath, File>()
+  #files = new Map<AbsolutePath, File>()
 
   readonly directoryPath: DirectoryPath
 
@@ -33,19 +33,19 @@ export class VirtualFileListImpl implements VirtualFileList {
     this.directoryPath = getDirectoryPath(currentDirectory, path)
   }
 
-  get(path: string): VirtualFile {
+  get(path: string): File {
     const absolutePath = getAbsolutePath(this.directoryPath, path)
     const canonicalPath = getCanonicalPath(absolutePath)
 
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
-    const file = new VirtualFileImpl(this, absolutePath)
+    const file = new FileImpl(this, absolutePath)
     this.#cache.set(file.canonicalPath, file)
     return file
   }
 
-  list(): VirtualFile[] {
+  list(): File[] {
     // Create the new array
     const list = [ ...this.#files.values() ]
 
@@ -72,9 +72,9 @@ export class VirtualFileListImpl implements VirtualFileList {
     return this.#files.has(absolutePath)
   }
 
-  clone(path?: string): VirtualFileList {
+  clone(path?: string): Files {
     const directory = getDirectoryPath(this.directoryPath, path)
-    const list = new VirtualFileListImpl(directory)
+    const list = new FilesImpl(directory)
 
     for (const file of this.#cache.values()) {
       const clone = file.clone(list, file.absolutePath)
@@ -89,8 +89,8 @@ export class VirtualFileListImpl implements VirtualFileList {
     return list
   }
 
-  add(pathOrFile: string | VirtualFile, options?: VirtualFile | VirtualFileOptions): VirtualFile {
-    let file = undefined as VirtualFile | undefined
+  add(pathOrFile: string | File, options?: File | FileOptions): File {
+    let file = undefined as File | undefined
 
     if (typeof pathOrFile === 'string') {
       if (options && ('fileList' in options)) {
@@ -99,10 +99,10 @@ export class VirtualFileListImpl implements VirtualFileList {
         const { originalPath: original, contents, sourceMap } = options
         const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
         const originalPath = original ? getAbsolutePath(this.directoryPath, original) : undefined
-        file = new VirtualFileImpl(this, absolutePath, { contents, sourceMap, originalPath })
+        file = new FileImpl(this, absolutePath, { contents, sourceMap, originalPath })
       } else {
         const absolutePath = getAbsolutePath(this.directoryPath, pathOrFile)
-        file = new VirtualFileImpl(this, absolutePath)
+        file = new FileImpl(this, absolutePath)
       }
     } else {
       file = pathOrFile.clone(this)

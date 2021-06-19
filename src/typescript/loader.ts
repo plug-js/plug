@@ -1,7 +1,7 @@
 import sourceMapSupport from 'source-map-support'
 
 import { AbsolutePath } from '../utils/paths'
-import { VirtualFileList } from '../files'
+import { Files } from '../files'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
 
@@ -22,7 +22,7 @@ sourceMapSupport.install({ environment: 'node' })
  * Load our build file from TypeScript (or JavaScript)
  */
 export function loadBuildFile(directory: string, fileName: string, tsConfig?: string): any {
-  const files = new VirtualFileList(directory)
+  const files = new Files(directory)
   const file = files.add(fileName)
 
   // Not much to do when it comes to ".js" files

@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { VirtualFileList } from '../src/files'
+import { Files } from '../src/files'
 import { CompilePlug } from '../src/plugs/compile'
 
 describe('Plug TypeScript Compiler', function() {
@@ -10,7 +10,7 @@ describe('Plug TypeScript Compiler', function() {
   it('should compile', () => {
     const compiler = new CompilePlug()
 
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('test.ts', { contents: 'void 0' })
 
     const output = compiler.process(files)
@@ -21,7 +21,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile with a default tsconfig.json', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('tsconfig.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
     files.add('test.ts', { contents: 'void 0' })
 
@@ -38,7 +38,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile with a specific config file', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('options.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
     files.add('test.ts', { contents: 'void 0' })
 
@@ -55,7 +55,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile also javascript files and copy resources', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('tsconfig.json', { contents: '{"compilerOptions":{"rootDir":"from","outDir":"to"}}' })
     files.add('from/typescript.ts', { contents: 'import "./javascript"' })
     files.add('from/javascript.js', { contents: 'void 0' })

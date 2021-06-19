@@ -1,24 +1,24 @@
 import { expect } from 'chai'
-import { VirtualFile, VirtualFileList } from '../src/files'
+import { File, Files } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
 
 describe('Virtual File List', () => {
-  it('should create a new VirtualFileList', () => {
-    expect(new VirtualFileList())
-        .to.be.instanceOf(VirtualFileList)
+  it('should create a new Files', () => {
+    expect(new Files())
+        .to.be.instanceOf(Files)
         .to.have.property('directoryPath', process.cwd())
-    expect(new VirtualFileList('foo'))
-        .to.be.instanceOf(VirtualFileList)
+    expect(new Files('foo'))
+        .to.be.instanceOf(Files)
         .to.have.property('directoryPath', process.cwd() + '/foo')
-    expect(new VirtualFileList('/foo'))
-        .to.be.instanceOf(VirtualFileList)
+    expect(new Files('/foo'))
+        .to.be.instanceOf(Files)
         .to.have.property('directoryPath', '/foo')
   })
 
-  it('should build a VirtualFileList with files', () => {
-    const list = new VirtualFileList('/foo')
+  it('should build a Files with files', () => {
+    const list = new Files('/foo')
     list.add('one.txt')
 
     expect(list.directoryPath).to.equal('/foo')
@@ -85,8 +85,8 @@ describe('Virtual File List', () => {
     expect(list.list()).not.to.equal(files) // same instance
   })
 
-  it('should add files to an existing VirtualFileList', () => {
-    const files = new VirtualFileList('/foo')
+  it('should add files to an existing Files', () => {
+    const files = new Files('/foo')
     const file = files.add('bar.txt', { originalPath: 'bar.src' })
 
     expect(file.fileList).to.equal(files)
@@ -98,7 +98,7 @@ describe('Virtual File List', () => {
 
     expect(files.add(file)).to.equal(file)
 
-    const files2 = new VirtualFileList('/foo/baz')
+    const files2 = new Files('/foo/baz')
     const file2 = files2.add(file)
 
     expect(file2).not.to.equal(file)
@@ -115,7 +115,7 @@ describe('Virtual File List', () => {
   })
 
   it('should sort file lists', () => {
-    const files = new VirtualFileList('/foo')
+    const files = new Files('/foo')
     files.add('3.txt')
     files.add('2.txt')
     files.add('1.txt')
@@ -134,8 +134,8 @@ describe('Virtual File List', () => {
     ])
   })
 
-  it('should preserve caches and lists when cloning a VirtualFileList', () => {
-    const files1 = new VirtualFileList('/foo')
+  it('should preserve caches and lists when cloning a Files', () => {
+    const files1 = new Files('/foo')
     const file1 = files1.add('bar.txt', {
       contents: 'hello, world!',
       sourceMap: { test: true } as any,
@@ -161,7 +161,7 @@ describe('Virtual File List', () => {
   })
 
   it('should honor the case sensitivity of the filesystem', () => {
-    const files = new VirtualFileList(__dirname)
+    const files = new Files(__dirname)
 
     const fileAdded = files.add(__filename)
     const fileLower = files.get(__filename.toLowerCase())
@@ -191,7 +191,7 @@ describe('Virtual File List', () => {
 
   describe('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
-      const file1 = new VirtualFileList(__dirname).get('this does not exist')
+      const file1 = new Files(__dirname).get('this does not exist')
       expect(await file1.exists()).to.be.false
       await expect(file1.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
@@ -200,7 +200,7 @@ describe('Virtual File List', () => {
       await expect(file1.lastModified()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
 
-      const file2 = new VirtualFileList(__dirname).get(__dirname)
+      const file2 = new Files(__dirname).get(__dirname)
       await expect(file2.exists()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('EISDIR'))
       await expect(file2.contents()).to.be.rejectedWith(Error)
@@ -211,9 +211,9 @@ describe('Virtual File List', () => {
           .then((error) => expect(error.code).to.equal('EISDIR'))
     })
 
-    it('should create a VirtualFile', async () => {
-      function create(contents: string): VirtualFile {
-        return new VirtualFileList('/foo').add('bar.js', { contents })
+    it('should create a File', async () => {
+      function create(contents: string): File {
+        return new Files('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -229,11 +229,11 @@ describe('Virtual File List', () => {
       expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with an inline source map', async () => {
+    it('should create a File with an inline source map', async () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        return new VirtualFileList().add('bar.js', { contents, sourceMap })
+      function create(sourceMap?: any): File {
+        return new Files().add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -261,11 +261,11 @@ describe('Virtual File List', () => {
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with an external source map', async () => {
+    it('should create a File with an external source map', async () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        const list = new VirtualFileList('/foo')
+      function create(sourceMap?: any): File {
+        const list = new Files('/foo')
         list.add('bar.js.map', { contents: '{"foo":"bar"}' })
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -295,11 +295,11 @@ describe('Virtual File List', () => {
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with a missing external source map', async () => {
+    it('should create a File with a missing external source map', async () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
+      function create(sourceMap?: any): File {
+        return new Files('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -327,8 +327,8 @@ describe('Virtual File List', () => {
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should read a VirtualFile from disk', async () => {
-      const files = new VirtualFileList(__dirname)
+    it('should read a File from disk', async () => {
+      const files = new Files(__dirname)
       const file = files.get(__filename)
       const relative = basename(__filename)
 
@@ -355,22 +355,22 @@ describe('Virtual File List', () => {
 
   describe('Synchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', () => {
-      const file1 = new VirtualFileList(__dirname).get('this does not exist')
+      const file1 = new Files(__dirname).get('this does not exist')
       expect(file1.existsSync()).to.be.false
       expect(() => file1.contentsSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.sourceMapSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.lastModifiedSync()).to.throw(Error).with.property('code', 'ENOENT')
 
-      const file2 = new VirtualFileList(__dirname).get(__dirname)
+      const file2 = new Files(__dirname).get(__dirname)
       expect(() => file2.existsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.lastModifiedSync()).to.throw(Error).with.property('code', 'EISDIR')
     })
 
-    it('should create a VirtualFile', () => {
-      function create(contents: string): VirtualFile {
-        return new VirtualFileList('/foo').add('bar.js', { contents })
+    it('should create a File', () => {
+      function create(contents: string): File {
+        return new Files('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -386,11 +386,11 @@ describe('Virtual File List', () => {
       expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with an inline source map', async () => {
+    it('should create a File with an inline source map', async () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
+      function create(sourceMap?: any): File {
+        return new Files('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -418,11 +418,11 @@ describe('Virtual File List', () => {
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with an external source map', async () => {
+    it('should create a File with an external source map', async () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        const list = new VirtualFileList('/foo')
+      function create(sourceMap?: any): File {
+        const list = new Files('/foo')
         list.add('bar.js.map', { contents: '{"foo":"bar"}' })
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -452,11 +452,11 @@ describe('Virtual File List', () => {
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should create a VirtualFile with a missing external source map', async () => {
+    it('should create a File with a missing external source map', async () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
-      function create(sourceMap?: any): VirtualFile {
-        return new VirtualFileList('/foo').add('bar.js', { contents, sourceMap })
+      function create(sourceMap?: any): File {
+        return new Files('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -484,8 +484,8 @@ describe('Virtual File List', () => {
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
-    it('should read a VirtualFile from disk', () => {
-      const files = new VirtualFileList(__dirname)
+    it('should read a File from disk', () => {
+      const files = new Files(__dirname)
       const file = files.get(__filename)
       const relative = basename(__filename)
 
