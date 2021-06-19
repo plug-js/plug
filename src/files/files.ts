@@ -4,7 +4,6 @@ import { getProjectDirectory } from '../project'
 
 import {
   File,
-  Files,
   FileOptions,
 } from './index'
 
@@ -22,17 +21,31 @@ import {
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
  * ========================================================================== */
 
-export class FilesImpl implements Files {
+/**
+ * The `Files` class represents an extremely simple view over the _physical_
+ * filesystem where a number of `File`s can be listed and accessed.
+ */
+export class Files implements Files {
+  // Internal cache of all previously seen files
   #cache = new Map<CanonicalPath, File>()
+  // Internal list of all files added to this list
   #files = new Map<AbsolutePath, File>()
 
+  /** The base directory of this `Files` instance */
   readonly directoryPath: DirectoryPath
 
+  /**
+   * Create a new `Files` instance at the specified directory.
+   *
+   * If the path was not specified the default `getProjectDirectory()` will
+   * be used.
+   */
   constructor(path?: string) {
     const currentDirectory = getProjectDirectory()
     this.directoryPath = getDirectoryPath(currentDirectory, path)
   }
 
+  /** Return a `File` associated with this `Files` list */
   get(path: string): File {
     const absolutePath = getAbsolutePath(this.directoryPath, path)
     const canonicalPath = getCanonicalPath(absolutePath)
@@ -45,6 +58,7 @@ export class FilesImpl implements Files {
     return file
   }
 
+  /** Return all `File`s previously _added_ to this `Files` instance */
   list(): File[] {
     // Create the new array
     const list = [ ...this.#files.values() ]
@@ -67,14 +81,16 @@ export class FilesImpl implements Files {
     return list
   }
 
+  /** Checks whether this `Files` instance was added the given path */
   has(path: string): boolean {
     const absolutePath = getAbsolutePath(this.directoryPath, path)
     return this.#files.has(absolutePath)
   }
 
+  /** Clone this `Files` instance preserving all files listed by it */
   clone(path?: string): Files {
     const directory = getDirectoryPath(this.directoryPath, path)
-    const list = new FilesImpl(directory)
+    const list = new Files(directory)
 
     for (const file of this.#cache.values()) {
       const clone = file.clone(list, file.absolutePath)
@@ -88,6 +104,13 @@ export class FilesImpl implements Files {
 
     return list
   }
+
+  /** Add a `File` to this `Files` instance */
+  add(file: File): File
+  /** Add a `File` to this `Files` instance with a new path */
+  add(path: string, file: File): File
+  /** Add a `File` to this `Files` instance */
+  add(path: string, options?: FileOptions): File
 
   add(pathOrFile: string | File, options?: File | FileOptions): File {
     let file = undefined as File | undefined

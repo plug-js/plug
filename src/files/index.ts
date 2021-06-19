@@ -1,12 +1,28 @@
 import { RawSourceMap } from 'source-map'
-import { FilesImpl } from './files'
 
 import {
   AbsolutePath,
   CanonicalPath,
-  DirectoryPath,
   RelativePath,
 } from '../utils/paths'
+
+// Import and re-export our `Files` class
+import { Files } from './files'
+export { Files } from './files'
+
+/** A type describing how to _add_ a virtual file to a list */
+export type FileOptions = {
+  /** The contents (if any) of the file to add */
+  contents?: string,
+  /**
+   * A source map for this file or a boolean indicating whether the source
+   * map should be extracted from the file's contents themselves
+   * @default true
+   */
+  sourceMap?: boolean | RawSourceMap,
+  /** The original path of the file (if any) defaulting to its path */
+  originalPath?: string,
+}
 
 /**
  * The `File` interface represents a file in a `Files`.
@@ -56,53 +72,3 @@ export interface File {
   /** Clone this `File` in another list, optionally changing its path */
   clone(files: Files, path?: string): File
 }
-
-/** A type describing how to _add_ a virtual file to a list */
-export type FileOptions = {
-  /** The contents (if any) of the file to add */
-  contents?: string,
-  /**
-   * A source map for this file or a boolean indicating whether the source
-   * map should be extracted from the file's contents themselves
-   * @default true
-   */
-  sourceMap?: boolean | RawSourceMap,
-  /** The original path of the file (if any) defaulting to its path */
-  originalPath?: string,
-}
-
-/**
- * The `Files` interface represents an extremely simple view over
- * the _physical_ filesystem where a number of `File`s can be accessed.
- */
-export interface Files {
-  /** The base directory of this `Files` */
-  readonly directoryPath: DirectoryPath,
-
-  /** Return a `File` associated with this `Files` */
-  get(path: string): File
-
-  /** Return all `File`s this `Files` was build with */
-  list(): File[]
-
-  /** Checks whether this `Files` lists the given path */
-  has(path: string): boolean
-
-  /** Clone this `Files` preserving all files listed by this */
-  clone(path?: string): Files
-
-  /** Add a `File` to this `Files` */
-  add(file: File): File
-  /** Add a `File` to this `Files` with a new path */
-  add(path: string, file: File): File
-  /** Add a `File` to this `Files` */
-  add(path: string, options?: FileOptions): File
-}
-
-/* Internal type declaring the constructor of a `Files` */
-type FilesConstructor = {
-  new(path?: string): Files
-}
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const Files: FilesConstructor = FilesImpl
