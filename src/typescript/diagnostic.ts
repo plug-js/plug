@@ -28,6 +28,16 @@ export class TypeScriptFailure extends Failure {
   }
 }
 
+// Check for failures and throw a TypeScript failure
+export function checkDiagnostics(
+    diagnostics: readonly Diagnostic[],
+    host: FormatDiagnosticsHost,
+    message: string,
+): void {
+  if (diagnostics.length) throw new TypeScriptFailure(diagnostics, host, message)
+}
+
+
 export function hasErrors(diagnostics: readonly Diagnostic[]): boolean {
   for (const diagnostic of diagnostics) {
     if (diagnostic.category == DiagnosticCategory.Error) return true
