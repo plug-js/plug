@@ -43,8 +43,14 @@ export class VirtualFileListImpl implements VirtualFileList {
     return file
   }
 
-  list(): readonly VirtualFile[] {
-    return [ ...this.#files.values() ]
+  list(): VirtualFile[] {
+    // Return an array whose default "sort" works on absolute paths
+    const list = [ ...this.#files.values() ]
+    list.sort = function(compare?) {
+      if (! compare) compare = (a, b) => a.absolutePath.localeCompare(b.absolutePath)
+      return Array.prototype.sort.call(this, compare)
+    }
+    return list
   }
 
   has(path: string): boolean {

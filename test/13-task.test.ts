@@ -127,12 +127,12 @@ describe('Plug Tasks', () => {
     const resultA = await taskA.task.run({} as any)
 
     expect(taskA.task.description).to.be.undefined
-    expect(resultA.list().map((f) => f.absolutePath).sort()).to.eql([
-      '/abc/foo3.txt', // ran last
-      '/abc/bar2.txt', // in between
-      '/abc/baz1.txt', // fastest
-      '/abc/xxx.txt',
-    ].sort())
+    expect(resultA.list().sort()).to.eql([
+      { absolutePath: '/abc/bar2.txt', originalPath: '/abc/bar2.txt' },
+      { absolutePath: '/abc/baz1.txt', originalPath: '/abc/baz1.txt' },
+      { absolutePath: '/abc/foo3.txt', originalPath: '/abc/foo3.txt' },
+      { absolutePath: '/abc/xxx.txt', originalPath: '/abc/xxx.txt' },
+    ])
 
     // Always rooted in project path
     expect(resultA.directoryPath).to.equal(getProjectDirectory())
@@ -145,12 +145,12 @@ describe('Plug Tasks', () => {
     const resultB = await taskB.task.run({} as any)
 
     expect(taskB.task.description).to.equal('reversed')
-    expect(resultB.list().map((f) => f.absolutePath).sort()).to.eql([
-      '/abc/foo3.txt', // ran last
-      '/abc/bar2.txt', // in between
-      '/abc/baz1.txt', // fastest
-      '/abc/xxx.txt',
-    ].sort())
+    expect(resultB.list().sort()).to.eql([
+      { absolutePath: '/abc/bar2.txt', originalPath: '/abc/bar2.txt' },
+      { absolutePath: '/abc/baz1.txt', originalPath: '/abc/baz1.txt' },
+      { absolutePath: '/abc/foo3.txt', originalPath: '/abc/foo3.txt' },
+      { absolutePath: '/abc/xxx.txt', originalPath: '/abc/xxx.txt' },
+    ])
 
     // Always rooted in project path
     expect(resultB.directoryPath).to.equal(getProjectDirectory())

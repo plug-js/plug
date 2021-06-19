@@ -83,7 +83,7 @@ export interface VirtualFileList {
   get(path: string): VirtualFile
 
   /** Return all `VirtualFile`s this `VirtualFileList` was build with */
-  list(): readonly VirtualFile[]
+  list(): VirtualFile[]
 
   /** Checks whether this `VirtualFileList` lists the given path */
   has(path: string): boolean
