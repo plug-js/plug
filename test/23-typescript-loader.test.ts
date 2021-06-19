@@ -25,7 +25,7 @@ describe('TypeScript Loader', () => {
 
   it('should fail when compilation fails', () => {
     expect(() => loadBuildFile(directory, 'bad-typescript.ts'))
-        .to.throw(Failure, 'Error compiling build file')
+        .to.throw(Failure, 'Error compiling')
   })
 
   it('should fail when compiler options are wrong', () => {
