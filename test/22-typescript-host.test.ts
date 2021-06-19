@@ -21,7 +21,7 @@ describe('TypeScript Host', () => {
     expect(isAbsolute(libFileName)).to.be.true
     expect(basename(libFileName)).to.equal('lib.d.ts')
 
-    expect(host.useCaseSensitiveFileNames()).to.equal(caseSensitivePaths)
+    expect(host.useCaseSensitiveFileNames()).to.equal(caseSensitivePaths())
 
     expect(host.createHash('')).to.equal('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
     expect(host.getNewLine()).to.equal(EOL)
@@ -127,17 +127,56 @@ describe('TypeScript Host', () => {
   })
 
   it('should create different source files for files with different names', () => {
-    const files = new Files('/foo')
-    files.add('bar1.ts', { contents: 'void 0' })
-    files.add('bar2.ts', { contents: 'void 0' })
+    try {
+      (<any> globalThis).caseSensitivePaths = true
 
-    const host = new TypeScriptHost(files)
+      const files = new Files('/foo')
+      files.add('bar1.ts', { contents: 'void 0' })
+      files.add('bar2.ts', { contents: 'void 0' })
+      files.add('BAR1.TS', { contents: 'void 0' })
+      files.add('BAR2.TS', { contents: 'void 0' })
 
-    const file1 = host.getSourceFile('bar1.ts', ScriptTarget.ES2020)
-    const file2 = host.getSourceFile('bar2.ts', ScriptTarget.ES2020)
+      const host = new TypeScriptHost(files)
 
-    expect(file1?.fileName).to.equal('/foo/bar1.ts')
-    expect(file2?.fileName).to.equal('/foo/bar2.ts')
+      const file1l = host.getSourceFile('bar1.ts', ScriptTarget.ES2020)
+      const file1u = host.getSourceFile('BAR1.TS', ScriptTarget.ES2020)
+      const file2l = host.getSourceFile('bar2.ts', ScriptTarget.ES2020)
+      const file2u = host.getSourceFile('BAR2.TS', ScriptTarget.ES2020)
+
+      expect(file1l?.fileName).to.equal('/foo/bar1.ts')
+      expect(file1u?.fileName).to.equal('/foo/BAR1.TS')
+      expect(file2l?.fileName).to.equal('/foo/bar2.ts')
+      expect(file2u?.fileName).to.equal('/foo/BAR2.TS')
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
+
+    try {
+      (<any> globalThis).caseSensitivePaths = false
+
+      const files = new Files('/foo')
+      files.add('bar1.ts', { contents: 'void 0' })
+      files.add('bar2.ts', { contents: 'void 0' })
+      files.add('BAR1.ts', { contents: 'void 0' })
+      files.add('BAR2.ts', { contents: 'void 0' })
+
+      const host = new TypeScriptHost(files)
+
+      const file1l = host.getSourceFile('bar1.ts', ScriptTarget.ES2020)
+      const file1u = host.getSourceFile('BAR1.TS', ScriptTarget.ES2020)
+      const file2l = host.getSourceFile('bar2.ts', ScriptTarget.ES2020)
+      const file2u = host.getSourceFile('BAR2.TS', ScriptTarget.ES2020)
+
+      expect(file1l?.fileName).to.equal('/foo/bar1.ts')
+      expect(file1u?.fileName).to.equal('/foo/bar1.ts')
+      expect(file2l?.fileName).to.equal('/foo/bar2.ts')
+      expect(file2u?.fileName).to.equal('/foo/bar2.ts')
+
+      expect(file1l).to.equal(file1u)
+      expect(file2l).to.equal(file2u)
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
   })
 
   it('correctly handle the "onError(...)" callbacks', () => {
