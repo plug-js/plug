@@ -81,32 +81,31 @@ describe('Plug Tasks', () => {
         .to.be.rejectedWith(AssertionError, 'Invalid task source')
   })
 
-  it.skip('should create a parallel task', async () => {
-    const slow = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+  it('should create a parallel task', async () => {
+    const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
-
+    const dir = getProjectDirectory()
     let counter = 0
 
-    const files = new VirtualFileList('/abc')
+    const files = new VirtualFileList()
     const task0 = task(make(() => files))
 
-
     const task1 = task(() => task0().plug(make(async (input) => {
-      await slow(20) // finish last!
+      await sleep(20) // finish last!
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add('xxx.txt', { contents: 'first' })
+      list.add('xxxx.txt', { contents: 'first' })
       list.add(`foo${++ counter}.txt`)
       return list
     })))
 
     const task2 = task(() => task0().plug(make(async (input) => {
-      await slow(10) // finish in between!
+      await sleep(10) // finish in between!
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add('xxx.txt', { contents: 'second' })
+      list.add('xxxx.txt', { contents: 'second' })
       list.add(`bar${++ counter}.txt`)
       return list
     })))
@@ -116,7 +115,7 @@ describe('Plug Tasks', () => {
 
       expect(input).to.equal(files)
       const list = input.clone()
-      list.add('xxx.txt', { contents: 'third' })
+      list.add('xxxx.txt', { contents: 'third' })
       list.add(`baz${++ counter}.txt`)
       return Promise.resolve(list)
     })))
@@ -128,15 +127,15 @@ describe('Plug Tasks', () => {
 
     expect(taskA.task.description).to.be.undefined
     expect(resultA.list().sort()).to.eql([
-      { absolutePath: '/abc/bar2.txt', originalPath: '/abc/bar2.txt' },
-      { absolutePath: '/abc/baz1.txt', originalPath: '/abc/baz1.txt' },
-      { absolutePath: '/abc/foo3.txt', originalPath: '/abc/foo3.txt' },
-      { absolutePath: '/abc/xxx.txt', originalPath: '/abc/xxx.txt' },
+      { absolutePath: `${dir}/bar2.txt`, originalPath: `${dir}/bar2.txt` },
+      { absolutePath: `${dir}/baz1.txt`, originalPath: `${dir}/baz1.txt` },
+      { absolutePath: `${dir}/foo3.txt`, originalPath: `${dir}/foo3.txt` },
+      { absolutePath: `${dir}/xxxx.txt`, originalPath: `${dir}/xxxx.txt` },
     ])
 
     // Always rooted in project path
     expect(resultA.directoryPath).to.equal(getProjectDirectory())
-    expect(resultA.get('/abc/xxx.txt').contentsSync()).to.equal('third') // task3 is last
+    expect(resultA.get('xxxx.txt').contentsSync()).to.equal('third') // task3 is last
 
     // REVERSE THE ORDER!
 
@@ -146,14 +145,14 @@ describe('Plug Tasks', () => {
 
     expect(taskB.task.description).to.equal('reversed')
     expect(resultB.list().sort()).to.eql([
-      { absolutePath: '/abc/bar2.txt', originalPath: '/abc/bar2.txt' },
-      { absolutePath: '/abc/baz1.txt', originalPath: '/abc/baz1.txt' },
-      { absolutePath: '/abc/foo3.txt', originalPath: '/abc/foo3.txt' },
-      { absolutePath: '/abc/xxx.txt', originalPath: '/abc/xxx.txt' },
+      { absolutePath: `${dir}/bar2.txt`, originalPath: `${dir}/bar2.txt` },
+      { absolutePath: `${dir}/baz1.txt`, originalPath: `${dir}/baz1.txt` },
+      { absolutePath: `${dir}/foo3.txt`, originalPath: `${dir}/foo3.txt` },
+      { absolutePath: `${dir}/xxxx.txt`, originalPath: `${dir}/xxxx.txt` },
     ])
 
     // Always rooted in project path
     expect(resultB.directoryPath).to.equal(getProjectDirectory())
-    expect(resultB.get('/abc/xxx.txt').contentsSync()).to.equal('first') // task1 is last
+    expect(resultB.get('xxxx.txt').contentsSync()).to.equal('first') // task1 is last
   })
 })
