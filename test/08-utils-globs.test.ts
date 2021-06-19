@@ -1,18 +1,6 @@
 import { expect } from 'chai'
-import { existsSync } from 'fs'
-import { dirname, resolve } from 'path'
 import { glob } from '../src/utils/globs'
-import { DirectoryPath } from '../src/utils/paths'
-
-function findDirectory(directory: string): string {
-  if (existsSync(resolve(directory, 'package.json'))) return directory
-  const parent = dirname(directory)
-  if (directory === parent) throw new Error('File "package.json" not found')
-  return findDirectory(parent)
-}
-
-// This directory _may_ be relocated under build, so find it...
-const directory = resolve(findDirectory(__dirname), 'test', 'support') as DirectoryPath
+import { directory } from './support'
 
 describe('Virtual File List Globs', () => {
   it('should prepare a virtual file list from some globs', async () => {
