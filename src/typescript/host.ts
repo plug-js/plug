@@ -1,6 +1,6 @@
 import { EOL } from 'os'
 import { Files } from '../files'
-import { AbsolutePath, caseSensitivePaths } from '../utils/paths'
+import { CanonicalPath, caseSensitivePaths } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
 
@@ -29,7 +29,7 @@ function hashString(data: string): string {
   return createHash('sha256').update(data, 'utf8').digest('hex')
 }
 
-function cacheKey(file: AbsolutePath, languageVersion: ScriptTarget, data: string): CacheKey {
+function cacheKey(file: CanonicalPath, languageVersion: ScriptTarget, data: string): CacheKey {
   return `${file}\x00${hashString(data)}\x00${languageVersion}` as CacheKey
 }
 
@@ -75,7 +75,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
           ScriptKind.Unknown
 
       // Don't recreate unless we have to
-      const key = cacheKey(file.absolutePath, languageVersion, data)
+      const key = cacheKey(file.canonicalPath, languageVersion, data)
       const cached = cache.get(key)
       if (cached && (! shouldCreateNewSourceFile)) return cached
 
@@ -109,7 +109,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Check for filesystem case sensitivity */
   useCaseSensitiveFileNames(): boolean {
-    return caseSensitivePaths
+    return caseSensitivePaths()
   }
 
   /** [TS] Check for the existence of a given file */
