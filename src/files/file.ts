@@ -11,7 +11,6 @@ import {
 
 import {
   AbsolutePath,
-  getAbsolutePath,
 } from '../utils/paths'
 
 /* ========================================================================== *
@@ -51,21 +50,6 @@ export class FileImpl extends AbstractFile implements File {
         this.#sourceMap = sourceMap
       }
     }
-  }
-
-  // TODO: I don't like this method as the resulting file is not cached...
-  clone(files: Files, path?: string): File {
-    // The absolute path of the target file is resolved agains the target list
-    const absolutePath = getAbsolutePath(files.directory, path || this.relativePath)
-    // If there are no changes we simply return this file...
-    if ((this.files === files) && (absolutePath === this.absolutePath)) return this
-
-    // Clone and return this file
-    const file = new FileImpl(files, absolutePath, { originalPath: this.originalPath })
-    file.#sourceMap = this.#sourceMap
-    file.#promise = this.#promise
-    file.#data = this.#data
-    return file
   }
 
   /* ======================================================================== *

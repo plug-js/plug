@@ -68,7 +68,4 @@ export interface File {
 
   /** Return a `File` whose path is relative to this one */
   get(path: string): File
-
-  /** Clone this `File` in another list, optionally changing its path */
-  clone(files: Files, path?: string): File
 }

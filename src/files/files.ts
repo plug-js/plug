@@ -94,12 +94,12 @@ export class Files implements Files {
     const list = new Files(directory)
 
     for (const file of this.#cache.values()) {
-      const clone = new FileWrapper(list, file)
-      list.#cache.set(clone.canonicalPath, clone)
+      const wrapped = new FileWrapper(list, file)
+      list.#cache.set(wrapped.canonicalPath, wrapped)
 
       // Preserve file list
       if (this.#files.has(file.absolutePath) && isChild(list.directory, file.absolutePath)) {
-        list.#files.set(clone.absolutePath, clone)
+        list.#files.set(wrapped.absolutePath, wrapped)
       }
     }
 

@@ -51,5 +51,4 @@ export abstract class AbstractFile implements File {
   abstract contentsSync(): string
   abstract sourceMap(): Promise<RawSourceMap | undefined>
   abstract sourceMapSync(): RawSourceMap | undefined
-  abstract clone(files: Files, path?: string): File
 }
