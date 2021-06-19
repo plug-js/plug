@@ -53,8 +53,8 @@ export interface VirtualFile {
   /** Return a `VirtualFile` whose path is relative to this one */
   get(path: string): VirtualFile
 
-  /** Return this same `VirtualFile` in another virtual file lis */
-  clone(files: VirtualFileList): VirtualFile
+  /** Clone this `VirtualFile` in another list, optionally changing its path */
+  clone(files: VirtualFileList, path?: string): VirtualFile
 }
 
 /** A type describing how to _add_ a virtual file to a list */
@@ -93,6 +93,8 @@ export interface VirtualFileList {
 
   /** Add a `VirtualFile` to this `VirtualFileList` */
   add(file: VirtualFile): VirtualFile
+  /** Add a `VirtualFile` to this `VirtualFileList` with a new path */
+  add(path: string, file: VirtualFile): VirtualFile
   /** Add a `VirtualFile` to this `VirtualFileList` */
   add(path: string, options?: VirtualFileOptions): VirtualFile
 }
