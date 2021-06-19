@@ -9,7 +9,7 @@ import { Files } from '../src/files'
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {
     const host = new TypeScriptHost({
-      directoryPath: 'the current directory',
+      directory: 'the current directory',
       get: (filename: string):any => ({
         canonicalPath: `canonical ${filename}`,
         existsSync: (): string => filename != 'no' ? `existsSync ${filename}` : '',

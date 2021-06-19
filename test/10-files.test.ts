@@ -3,18 +3,19 @@ import { File, Files } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
 import { caseSensitivePaths } from '../src/utils/paths'
+import { getProjectDirectory } from '../src/project'
 
 describe('Virtual File List', () => {
   it('should create a new Files', () => {
     expect(new Files())
         .to.be.instanceOf(Files)
-        .to.have.property('directoryPath', process.cwd())
+        .to.have.property('directory', getProjectDirectory())
     expect(new Files('foo'))
         .to.be.instanceOf(Files)
-        .to.have.property('directoryPath', process.cwd() + '/foo')
+        .to.have.property('directory', getProjectDirectory() + '/foo')
     expect(new Files('/foo'))
         .to.be.instanceOf(Files)
-        .to.have.property('directoryPath', '/foo')
+        .to.have.property('directory', '/foo')
   })
 
   it('should build a Files with files', () => {
