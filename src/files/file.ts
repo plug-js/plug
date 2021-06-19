@@ -1,5 +1,6 @@
-import { RawSourceMap } from 'source-map'
+import { AbstractFile } from './abstract'
 import { File, Files } from './index'
+import { RawSourceMap } from 'source-map'
 import { extractSourceMap } from '../utils/source-maps'
 
 import {
@@ -10,12 +11,7 @@ import {
 
 import {
   AbsolutePath,
-  RelativePath,
-  CanonicalPath,
-  getRelativePath,
-  getCanonicalPath,
   getAbsolutePath,
-  getDirectory,
 } from '../utils/paths'
 
 /* ========================================================================== *
@@ -32,27 +28,19 @@ interface FileImplOptions {
 }
 
 /* Implementation of the File interface */
-export class FileImpl implements File {
-  readonly files!: Files
-  readonly absolutePath!: AbsolutePath
-  readonly originalPath!: AbsolutePath
-
+export class FileImpl extends AbstractFile implements File {
   #data?: FileData
   #promise?: Promise<FileData>
   #sourceMap?: RawSourceMap | false
 
   constructor(
-      fileList: Files,
+      files: Files,
       absolutePath: AbsolutePath,
       options: FileImplOptions = {},
   ) {
-    const { contents, originalPath = absolutePath, sourceMap = true } = options
+    super(files, absolutePath, options.originalPath)
 
-    Object.defineProperties(this, {
-      'files': { enumerable: false, value: fileList },
-      'absolutePath': { enumerable: true, value: absolutePath },
-      'originalPath': { enumerable: true, value: originalPath },
-    })
+    const { contents, sourceMap = true } = options
 
     if (contents != undefined) {
       const lastModified = Date.now()
@@ -63,20 +51,6 @@ export class FileImpl implements File {
         this.#sourceMap = sourceMap
       }
     }
-  }
-
-  get relativePath(): RelativePath {
-    return getRelativePath(this.files.directory, this.absolutePath)
-  }
-
-  get canonicalPath(): CanonicalPath {
-    return getCanonicalPath(this.absolutePath)
-  }
-
-  get(path: string): File {
-    const directory = getDirectory(this.absolutePath)
-    const absolutePath = getAbsolutePath(directory, path)
-    return this.files.get(absolutePath)
   }
 
   // TODO: I don't like this method as the resulting file is not cached...
