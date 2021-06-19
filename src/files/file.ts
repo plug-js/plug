@@ -66,7 +66,7 @@ export class FileImpl implements File {
   }
 
   get relativePath(): RelativePath {
-    return getRelativePath(this.files.directoryPath, this.absolutePath)
+    return getRelativePath(this.files.directory, this.absolutePath)
   }
 
   get canonicalPath(): CanonicalPath {
@@ -82,7 +82,7 @@ export class FileImpl implements File {
   // TODO: I don't like this method as the resulting file is not cached...
   clone(files: Files, path?: string): File {
     // The absolute path of the target file is resolved agains the target list
-    const absolutePath = getAbsolutePath(files.directoryPath, path || this.relativePath)
+    const absolutePath = getAbsolutePath(files.directory, path || this.relativePath)
     // If there are no changes we simply return this file...
     if ((this.files === files) && (absolutePath === this.absolutePath)) return this
 

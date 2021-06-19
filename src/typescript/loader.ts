@@ -40,7 +40,7 @@ export function loadBuildFile(directory: string, fileName: string, tsConfig?: st
     target: ScriptTarget.ES2019, // best for Node 14.x?
     importHelpers: false, // maybe we don't have "tslib"
     noEmit: false, // we always want our output to be gnerated
-    outDir: files.directoryPath, // our directory for the loader
+    outDir: files.directory, // our directory for the loader
   }).process(files)
 
   // Build our output file list and require our build file

@@ -125,7 +125,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Return the current working directory */
   getCurrentDirectory(): string {
-    return this.#files.directoryPath
+    return this.#files.directory
   }
 
   /** [TS] Return the canonical name for the specified file */

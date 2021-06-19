@@ -134,7 +134,7 @@ describe('Plug Tasks', () => {
     ])
 
     // Always rooted in project path
-    expect(resultA.directoryPath).to.equal(getProjectDirectory())
+    expect(resultA.directory).to.equal(getProjectDirectory())
     expect(resultA.get('xxxx.txt').contentsSync()).to.equal('third') // task3 is last
 
     // REVERSE THE ORDER!
@@ -152,7 +152,7 @@ describe('Plug Tasks', () => {
     ])
 
     // Always rooted in project path
-    expect(resultB.directoryPath).to.equal(getProjectDirectory())
+    expect(resultB.directory).to.equal(getProjectDirectory())
     expect(resultB.get('xxxx.txt').contentsSync()).to.equal('first') // task1 is last
   })
 })

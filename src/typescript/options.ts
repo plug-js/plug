@@ -64,7 +64,7 @@ function loadOptions(
   // Check for circular extension errors
   const extendedPath = getAbsolutePath(getDirectory(file.absolutePath), extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
-    const directory = files.directoryPath
+    const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)
     const stack = resolutionStack.reverse().map((path) => getRelativePath(directory, path)).join('\n - ')
     return void diagnostics.push({
@@ -115,10 +115,10 @@ export function getCompilerOptions(
   if (diagnostics.length) return { options: {}, diagnostics }
 
   // If we have some overrides with path, we must rewrite them
-  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directoryPath, overrides.outDir)
-  if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directoryPath, overrides.outFile)
-  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directoryPath, overrides.rootDir)
-  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directoryPath, d))
+  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directory, overrides.outDir)
+  if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directory, overrides.outFile)
+  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.rootDir)
+  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directory, d))
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)

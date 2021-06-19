@@ -32,7 +32,7 @@ class ReadPlug implements Plug {
   async process(files: Files): Promise<Files> {
     const list = files.clone()
 
-    await glob(files.directoryPath, this.#globs, this.#options, (path) => {
+    await glob(files.directory, this.#globs, this.#options, (path) => {
       return list.add(path).contents().then(() => void 0)
     })
 

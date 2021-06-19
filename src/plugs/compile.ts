@@ -56,10 +56,10 @@ export class CompilePlug implements Plug {
 
     // For each file in the input list, check if we can compile it, or
     // (if specified) allow it to be passed through to the output
-    const rootDir = getDirectoryPath(input.directoryPath, options.rootDir)
-    const outDir = getDirectoryPath(input.directoryPath, options.outDir)
+    const rootDir = getDirectoryPath(input.directory, options.rootDir)
+    const outDir = getDirectoryPath(input.directory, options.outDir)
 
-    const output = new Files(input.directoryPath)
+    const output = new Files(input.directory)
     const paths = input.list().map((file) => {
       const extension = extname(file.absolutePath)
       if (extensions.includes(extension)) return file.absolutePath

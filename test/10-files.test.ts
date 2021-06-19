@@ -21,7 +21,7 @@ describe('Virtual File List', () => {
     const list = new Files('/foo')
     list.add('one.txt')
 
-    expect(list.directoryPath).to.equal('/foo')
+    expect(list.directory).to.equal('/foo')
 
     const files = list.list()
     expect(files.length).to.equal(1)
