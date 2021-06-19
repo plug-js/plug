@@ -14,7 +14,11 @@ function findDirectory(directory: string): string {
 // This directory _may_ be relocated under build, so find it...
 const directory = resolve(findDirectory(__dirname), 'test', 'support')
 
-describe('TypeScript Loader', () => {
+describe('TypeScript Loader', function() {
+  // compiling takes time...
+  this.timeout(5000)
+  this.slow(2000)
+
   it('should load some basic build files', () => {
     expect(loadBuildFile(directory, 'javascript.js')).to.equal('from javascript')
     expect(loadBuildFile(directory, 'build.ts')).to.eql({
