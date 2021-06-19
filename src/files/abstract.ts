@@ -13,28 +13,26 @@ import {
 } from '../utils/paths'
 
 export abstract class AbstractFile implements File {
-  files!: Files
-  absolutePath!: AbsolutePath
-  originalPath!: AbsolutePath
+  readonly files!: Files
+  readonly absolutePath!: AbsolutePath
+  readonly originalPath!: AbsolutePath
+  readonly relativePath!: RelativePath
+  readonly canonicalPath!: CanonicalPath
 
   constructor(
       files: Files,
       absolutePath: AbsolutePath,
       originalPath: AbsolutePath = absolutePath,
   ) {
+    const relativePath = getRelativePath(files.directory, absolutePath)
+    const canonicalPath = getCanonicalPath(absolutePath)
     Object.defineProperties(this, {
       'files': { enumerable: false, value: files },
       'absolutePath': { enumerable: true, value: absolutePath },
       'originalPath': { enumerable: true, value: originalPath },
+      'relativePath': { enumerable: false, value: relativePath },
+      'canonicalPath': { enumerable: false, value: canonicalPath },
     })
-  }
-
-  get relativePath(): RelativePath {
-    return getRelativePath(this.files.directory, this.absolutePath)
-  }
-
-  get canonicalPath(): CanonicalPath {
-    return getCanonicalPath(this.absolutePath)
   }
 
   get(path: string): File {
