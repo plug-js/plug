@@ -10,7 +10,7 @@ describe('TypeScript Loader', function() {
 
   it('should load some basic build files', () => {
     expect(loadBuildFile(directory, 'javascript.js')).to.equal('from javascript')
-    expect(loadBuildFile(directory, 'build.ts')).to.eql({
+    expect(loadBuildFile(directory, 'typescript.ts')).to.eql({
       foo: 'from included typescript',
       bar: 'from typescript',
     })
