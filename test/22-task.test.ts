@@ -3,7 +3,7 @@ import { Files } from '../src/files'
 import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
 import { Run, Runnable } from '../src/run'
-import { parallel, task } from '../src/task'
+import { parallel, Task, task } from '../src/task'
 
 describe('Plug Tasks', () => {
   function init(run: Runnable['run']): TaskPipe {
@@ -12,8 +12,12 @@ describe('Plug Tasks', () => {
 
   it('should construct a task and run it once', async () => {
     let counter = 0
+    let runid: any = undefined
 
-    const pipe = init(() => {
+    const pipe = init((run) => {
+      expect(run.tasks).to.have.length(1)
+      expect(run.tasks[0]).to.equal(task1.task)
+      runid = run.id
       counter ++
       return undefined as any
     })
@@ -25,19 +29,24 @@ describe('Plug Tasks', () => {
     expect(task1.task.run).to.be.a('function')
     expect(task1.task.description).to.equal('test task')
 
-    const run = new Run()
+    const run1 = new Run()
 
     // Initial run
-    await task1.task.run(run)
+    await task1.task.run(run1)
     expect(counter).to.equal(1)
+    expect(runid).to.equal(run1.id)
+    runid = undefined
 
     // No run, cached output
-    await task1.task.run(run)
+    await task1.task.run(run1)
     expect(counter).to.equal(1)
+    expect(runid).to.be.undefined // does not run again!
 
     // New "run", should run again
-    await task1.task.run(new Run())
+    const run2 = new Run()
+    await task1.task.run(run2)
     expect(counter).to.equal(2)
+    expect(runid).to.equal(run2.id)
   })
 
   it('should chain multiple tasks', async () => {
@@ -84,11 +93,15 @@ describe('Plug Tasks', () => {
 
     const dir = getProjectDirectory()
     let counter = 0
+    let tasks = undefined as readonly Task[] | undefined
 
     const files = new Files()
-    const task0 = task(init(() => files))
+    const task0 = task('zero', init((run) => {
+      tasks = run.tasks
+      return files
+    }))
 
-    const task1 = task(() => task0().plug(pipe(async (input) => {
+    const task1 = task('one', () => task0().plug(pipe(async (input) => {
       await sleep(20) // finish last!
 
       expect(input).to.equal(files)
@@ -98,7 +111,7 @@ describe('Plug Tasks', () => {
       return list
     })))
 
-    const task2 = task(() => task0().plug(pipe(async (input) => {
+    const task2 = task('two', () => task0().plug(pipe(async (input) => {
       await sleep(10) // finish in between!
 
       expect(input).to.equal(files)
@@ -108,7 +121,7 @@ describe('Plug Tasks', () => {
       return list
     })))
 
-    const task3 = task(() => task0().plug(pipe((input) => {
+    const task3 = task('three', () => task0().plug(pipe((input) => {
       // immediate!
 
       expect(input).to.equal(files)
@@ -135,6 +148,12 @@ describe('Plug Tasks', () => {
     expect(resultA.directory).to.equal(getProjectDirectory())
     expect(resultA.get('xxxx.txt').contentsSync()).to.equal('third') // task3 is last
 
+    // Tasks stack
+    expect(tasks).to.have.length(3)
+    expect(tasks?.[0]).to.equal(taskA.task)
+    expect(tasks?.[1]).to.equal(task1.task)
+    expect(tasks?.[2]).to.equal(task0.task)
+
     // REVERSE THE ORDER!
 
     counter = 0
@@ -152,5 +171,11 @@ describe('Plug Tasks', () => {
     // Always rooted in project path
     expect(resultB.directory).to.equal(getProjectDirectory())
     expect(resultB.get('xxxx.txt').contentsSync()).to.equal('first') // task1 is last
+
+    // Tasks stack
+    expect(tasks).to.have.length(3)
+    expect(tasks?.[0]).to.equal(taskB.task)
+    expect(tasks?.[1]).to.equal(task3.task)
+    expect(tasks?.[2]).to.equal(task0.task)
   })
 })
