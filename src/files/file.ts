@@ -95,8 +95,7 @@ export class FileImpl extends AbstractFile implements File {
     try {
       return !! (this.#data || this.#readSync())
     } catch (error) {
-      if (error.code === 'ENOENT') return false
-      throw error
+      return false
     }
   }
 
@@ -130,8 +129,7 @@ export class FileImpl extends AbstractFile implements File {
     try {
       return !! (this.#data || await this.#read())
     } catch (error) {
-      if (error.code === 'ENOENT') return false
-      throw error
+      return false
     }
   }
 

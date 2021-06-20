@@ -17,8 +17,7 @@ describe('Files', () => {
           .then((error) => expect(error.code).to.equal('ENOENT'))
 
       const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
-      await expect(file2.exists()).to.be.rejectedWith(Error)
-          .then((error) => expect(error.code).to.equal('EISDIR'))
+      expect(await file2.exists()).to.be.false
       await expect(file2.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('EISDIR'))
       await expect(file2.sourceMap()).to.be.rejectedWith(Error)
@@ -178,7 +177,7 @@ describe('Files', () => {
       expect(() => file1.lastModifiedSync()).to.throw(Error).with.property('code', 'ENOENT')
 
       const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
-      expect(() => file2.existsSync()).to.throw(Error).with.property('code', 'EISDIR')
+      expect(file2.existsSync()).to.be.false
       expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.lastModifiedSync()).to.throw(Error).with.property('code', 'EISDIR')
