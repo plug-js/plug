@@ -10,6 +10,7 @@ import {
   ScriptTarget,
 } from 'typescript'
 import { CompilePlug } from '../plugs/compile'
+import { Run } from '../run'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })
@@ -41,7 +42,7 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
     importHelpers: false, // maybe we don't have "tslib"
     noEmit: false, // we always want our output to be gnerated
     outDir: files.directory, // our directory for the loader
-  }).process(files)
+  }).process(files, new Run(directory))
 
   // Build our output file list and require our build file
   const map = new Map<AbsolutePath, string>()
