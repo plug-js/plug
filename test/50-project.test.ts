@@ -1,4 +1,5 @@
-import { loadBuildFile } from '../src/typescript/loader'
+import { load } from '../src/project'
+import { getAbsolutePath } from '../src/utils/paths'
 import { directory } from './support'
 
 describe('Project', function() {
@@ -7,6 +8,8 @@ describe('Project', function() {
   this.slow(2000)
 
   it('should load a project', () => {
-    console.log(loadBuildFile(directory, 'build.ts'))
+    const file = getAbsolutePath(directory, 'build.ts')
+    const project = load(file)
+    console.log(project.getTaskDescriptions())
   })
 })
