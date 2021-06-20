@@ -53,7 +53,7 @@ export function mock(
   const tasks: Record<string, Task> = {}
   for (const t of [ name, ...names ]) tasks[t] = { run: () => files }
 
-  const project = new Project(tasks, build, files.directory)
+  const project = new Project(tasks, build)
   const run = new Run(project)
   const log = run.log() as PlugLog & RunLog
 

@@ -18,6 +18,7 @@ import { Project } from '../project'
 /**
  * Load our build file from TypeScript (or JavaScript)
  */
+// TODO clean this up
 export function loadBuildFile(directory: DirectoryPath, fileName: string): any {
   const files = new Files(directory)
   const file = files.add(fileName)

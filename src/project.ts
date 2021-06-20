@@ -4,7 +4,7 @@ import { Failure } from './failure'
 import { Task, TaskCall } from './task'
 import { loadBuildFile } from './typescript/loader'
 import { makeLog } from './utils/log'
-import { AbsolutePath, DirectoryPath, getParentDirectory } from './utils/paths'
+import { AbsolutePath, DirectoryPath, getParentDirectory, isChild } from './utils/paths'
 
 export class Project {
   #taskNames = new Map<Task, string>()
@@ -17,10 +17,12 @@ export class Project {
   constructor(
       build: Record<string, Task | TaskCall>,
       buildFile: AbsolutePath,
-      directory: DirectoryPath,
+      directory: DirectoryPath = getParentDirectory(buildFile),
   ) {
-    // Never start with a non-absolute directory
+    // Never start with a non-absolute file / directory
+    assert(isAbsolute(buildFile), `Not an absolute build file: "${buildFile}"`)
     assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
+    assert(isChild(directory, buildFile), `Build file "${buildFile}" not under "${directory}"`)
 
     // We have to be careful, as build files are loaded...
     if (!(build && (typeof build === 'object'))) {
