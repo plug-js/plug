@@ -27,7 +27,7 @@ export interface Task extends Runnable {
  * ========================================================================== */
 
 // Our caches [ run -> task -> list ] using weak maps
-const caches = new WeakMap<Run, WeakMap<Task, Promise<Files>>>()
+const caches = new WeakMap<Run['id'], WeakMap<Task, Promise<Files>>>()
 
 // Task implementation, caching and running task only once
 abstract class AbstractTask {
@@ -39,12 +39,12 @@ abstract class AbstractTask {
 
   run(run: Run): Promise<Files> {
     // If we don't have a cache for this run, create one
-    let cache = caches.get(run)
-    if (! cache) caches.set(run, cache = new WeakMap())
+    let cache = caches.get(run.id)
+    if (! cache) caches.set(run.id, cache = new WeakMap())
 
     // If we don't have anything cached, run this task
     let cached = cache.get(this)
-    if (! cached) cache.set(this, cached = this.runTask(run))
+    if (! cached) cache.set(this, cached = this.runTask(run.for(this)))
 
     // Return our cached promise
     return cached

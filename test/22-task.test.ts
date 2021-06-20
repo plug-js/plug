@@ -2,18 +2,18 @@ import { expect } from 'chai'
 import { Files } from '../src/files'
 import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
-import { Runnable } from '../src/run'
+import { Run, Runnable } from '../src/run'
 import { parallel, task } from '../src/task'
 
 describe('Plug Tasks', () => {
-  function start(run: Runnable['run']): TaskPipe {
+  function init(run: Runnable['run']): TaskPipe {
     return new TaskPipe({ run })
   }
 
   it('should construct a task and run it once', async () => {
     let counter = 0
 
-    const pipe = start(() => {
+    const pipe = init(() => {
       counter ++
       return undefined as any
     })
@@ -25,7 +25,7 @@ describe('Plug Tasks', () => {
     expect(task1.task.run).to.be.a('function')
     expect(task1.task.description).to.equal('test task')
 
-    const run = {} as any
+    const run = new Run()
 
     // Initial run
     await task1.task.run(run)
@@ -36,13 +36,13 @@ describe('Plug Tasks', () => {
     expect(counter).to.equal(1)
 
     // New "run", should run again
-    await task1.task.run({} as any)
+    await task1.task.run(new Run())
     expect(counter).to.equal(2)
   })
 
   it('should chain multiple tasks', async () => {
     let counter1 = 0
-    const task1 = task('test task', start(() => {
+    const task1 = task('test task', init(() => {
       counter1 ++
       return 'task1' as any
     }))
@@ -54,7 +54,7 @@ describe('Plug Tasks', () => {
       return 'task2' as any
     }))
 
-    const run = {} as any
+    const run = new Run()
 
     // first run task2, it'll invoke task1, then re-invoke task1
     const result2 = await task2.task.run(run)
@@ -70,8 +70,8 @@ describe('Plug Tasks', () => {
     expect(counter2).to.equal(1)
 
     // new runs (both cases), so counters will update
-    await task2.task.run({} as any)
-    await task1.task.run({} as any)
+    await task2.task.run(new Run())
+    await task1.task.run(new Run())
     expect(counter1).to.equal(3)
     expect(counter2).to.equal(2)
   })
@@ -86,7 +86,7 @@ describe('Plug Tasks', () => {
     let counter = 0
 
     const files = new Files()
-    const task0 = task(start(() => files))
+    const task0 = task(init(() => files))
 
     const task1 = task(() => task0().plug(pipe(async (input) => {
       await sleep(20) // finish last!
@@ -121,7 +121,7 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskA = parallel(task1.task, task2.task, task3.task)
-    const resultA = await taskA.task.run({} as any)
+    const resultA = await taskA.task.run(new Run())
 
     expect(taskA.task.description).to.be.undefined
     expect(resultA.list().sort()).to.eql([
@@ -139,7 +139,7 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskB = parallel('reversed', task3, task2, task1)
-    const resultB = await taskB.task.run({} as any)
+    const resultB = await taskB.task.run(new Run())
 
     expect(taskB.task.description).to.equal('reversed')
     expect(resultB.list().sort()).to.eql([

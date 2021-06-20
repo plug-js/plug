@@ -1,15 +1,33 @@
+import { randomBytes } from 'crypto'
+import { inspect } from 'util'
 import type { Files } from './files'
 import type { Task } from './task'
 
 /**
- * The `Run` interface describes a contract beteween `Plug`s and `Processor`s
+ * The `Run` class describes a contract beteween `Plug`s and `Processor`s
  * and the underlying subsystem actually calling them.
  */
-export interface Run {
-  readonly id: Symbol
-  readonly tasks: readonly Task[]
+export class Run {
+  readonly id!: RunId
+  readonly tasks!: readonly Task[]
 
-  for(task: Task): Run
+  constructor() // hide the next constructor
+  constructor(...args: [ Run, Task ] | []) {
+    const [ run, task ] = args
+
+    const id = run ? run.id : new RunId()
+    const tasks = run ? [ ...run.tasks ] : []
+    if (task) tasks.push(task)
+
+    Object.defineProperties(this, {
+      'id': { value: id, enumerable: true },
+      'tasks': { value: tasks },
+    })
+  }
+
+  for(task: Task): Run {
+    return new (<any> Run)(this, task)
+  }
 }
 
 /** The `Runnable` interface defines a way to produce `Files` for a `Run` */
@@ -17,32 +35,15 @@ export interface Runnable {
   run(run: Run): Files | Promise<Files>
 }
 
-/** Create a new `Run` */
-export function start(): Run {
-  return new RunImpl()
-}
+// A run id, as an object for weak maps
+class RunId {
+  #id = randomBytes(8).toString('hex')
 
-// Internal implementation of the `Run` interface
-class RunImpl implements Run {
-  readonly id!: Symbol
-  readonly tasks!: readonly Task[]
-
-  constructor()
-  constructor(run: Run, task: Task)
-  constructor(...args: [ Run, Task ] | []) {
-    const [ run, task ] = args
-
-    const id = run ? run.id : Symbol()
-    const tasks = run ? [ ...run.tasks ] : []
-    if (task) tasks.push(task)
-
-    Object.defineProperties(this, {
-      'id': { value: id },
-      'tasks': { value: tasks },
-    })
+  toString(): string {
+    return this.#id
   }
 
-  for(task: Task): Run {
-    return new RunImpl(this, task)
+  [inspect.custom](): string {
+    return this.#id
   }
 }
