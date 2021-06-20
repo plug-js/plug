@@ -5,8 +5,7 @@ import type { Task } from './task'
 import { DirectoryPath } from './utils/paths'
 import { makeLog } from './utils/log'
 import { randomBytes } from 'crypto'
-import { isAbsolute } from 'path'
-import assert from 'assert'
+import { Project } from './project'
 
 /**
  * The `Run` class describes a contract beteween `Plug`s and `Processor`s
@@ -18,18 +17,16 @@ export class Run {
 
   readonly id!: RunId
   readonly tasks!: readonly Task[]
+  readonly project!: Project
   readonly directory!: DirectoryPath
 
-  constructor(directory: DirectoryPath)
+  constructor(project: Project)
   constructor(run: Run, task: Task)
-  constructor(first: string | Run, task?: Task) {
-    const { dir: directory, run } =
-        typeof first === 'string' ?
-            { dir: first, run: undefined } :
-            { dir: first.directory, run: first }
-
-    // Make utterly sure that the directory is _absolute_
-    assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
+  constructor(first: Project | Run, task?: Task) {
+    const { project, run } =
+        first instanceof Run ?
+            { project: first.project, run: first } :
+            { project: first, run: undefined }
 
     // Run is inherited from any previous instance, as it's the key to caching
     const id = run ? run.id : new RunId()
@@ -41,8 +38,10 @@ export class Run {
     Object.freeze(tasks)
 
     Object.defineProperties(this, {
-      'directory': { value: directory, enumerable: true },
+      'directory': { value: project.directory, enumerable: true },
       'id': { value: id, enumerable: true },
+      // non-enumerable...
+      'project': { value: project },
       'tasks': { value: tasks },
     })
 

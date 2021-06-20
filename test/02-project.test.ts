@@ -1,3 +1,4 @@
+import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { Failure } from '../src/failure'
 import { Project } from '../src/project'
@@ -64,5 +65,7 @@ describe('Project', () => {
 
     expect(() => new Project(null as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
     expect(() => new Project('xx' as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
+    expect(() => new Project(null as any, file, 'foo' as any))
+        .to.throw(AssertionError, 'Not an absolute directory: "foo"')
   })
 })

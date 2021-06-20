@@ -1,7 +1,5 @@
 import { expect } from 'chai'
 import { Plug } from '../src/pipe'
-import { setTaskName } from '../src/project'
-import { Task } from '../src/task'
 
 import {
   LogLevel,
@@ -30,14 +28,6 @@ function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
 describe('Log', () => {
   // Default log options to restore after each test
   const defaults = Object.assign({}, options)
-
-  // Convenience plugs and tasks for tests
-  const { files } = mock('/foo')
-  const plug1: Plug = { process: (i) => i, name: 'myplug' }
-  const task1: Task = { run: () => files }
-  const task2: Task = { run: () => files }
-  setTaskName(task1, 'mytask1')
-  setTaskName(task2, 'mytask2')
 
   afterEach(() => {
     Object.assign(options, defaults)
@@ -134,12 +124,13 @@ describe('Log', () => {
   })
 
   it('should log to the console', () => {
+    const plug1: Plug = { process: (i) => i, name: 'myplug' }
     options.level = LogLevel.DEBUG
     options.times = true
 
     function test(level: LogLevel, colors: boolean): void {
       options.colors = colors
-      let { run } = mock('/foo')
+      let { run, tasks: { task1, task2 } } = mock('/foo', 'task1', 'task2')
       for (const task of [ undefined, task1, task2 ]) {
         if (task) run = run.for(task)
         for (const plug of [ undefined, plug1 ]) {

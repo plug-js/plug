@@ -9,6 +9,7 @@ import {
 } from 'typescript'
 import { CompilePlug } from '../plugs/compile'
 import { Run } from '../run'
+import { Project } from '../project'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
@@ -25,7 +26,7 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string): any {
   if (extname(file.absolutePath) === '.js') return require(file.absolutePath)
 
   // Create our compiler and compile our files
-  const run = new Run(directory)
+  const run = new Run(new Project({}, file.absolutePath, directory))
   const compiler = new CompilePlug({
     // Make sure we have our _own_ options enabled
     allowJs: false, // we won't read JS files

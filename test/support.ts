@@ -3,10 +3,12 @@
 import { resolve } from 'path'
 import { existsSync } from 'fs'
 import { dirname } from 'path'
-import { DirectoryPath } from '../src/utils/paths'
+import { DirectoryPath, getAbsolutePath } from '../src/utils/paths'
 import { options, PlugLog, RunLog } from '../src/utils/log'
 import { Files } from '../src/files'
 import { Run } from '../src/run'
+import { Project } from '../src/project'
+import { Task } from '../src/task'
 
 function findDirectory(directory: string): string {
   if (existsSync(resolve(directory, 'package.json'))) return directory
@@ -31,10 +33,29 @@ export function disableLogs(): void {
   })
 }
 
-// "Mock" a "Files", "Run" and "Log"
-export function mock(directory: string): { files: Files, run: Run, log: PlugLog & RunLog } {
+// Mock a VERY simple project...
+type MockProject = {
+  files: Files,
+  run: Run,
+  log: PlugLog & RunLog,
+  project: Project,
+  tasks: Record<string, Task>,
+}
+
+export function mock(
+    directory: string,
+    name: string = 'task',
+    ...names: string[]
+): MockProject {
   const files = new Files(directory as DirectoryPath)
-  const run = new Run(files.directory)
+  const build = getAbsolutePath(files.directory, 'build.ts')
+
+  const tasks: Record<string, Task> = {}
+  for (const t of [ name, ...names ]) tasks[t] = { run: () => files }
+
+  const project = new Project(tasks, build, files.directory)
+  const run = new Run(project)
   const log = run.log() as PlugLog & RunLog
-  return { files, run, log }
+
+  return { files, run, log, project, tasks }
 }

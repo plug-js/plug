@@ -6,7 +6,6 @@ import { STYLE, RGB } from './colors'
 
 import { Run } from '../run'
 import { Plug } from '../pipe'
-import { getTaskName } from '../project'
 
 /* ========================================================================== */
 
@@ -128,7 +127,7 @@ function emit(
   if (run?.tasks.length) {
     for (let i = 0; i < run.tasks.length; i ++) {
       push(RGB['#005f00'], i ? '|' : '{')
-      push(RGB['#00ff00'], getTaskName(run.tasks[i]))
+      push(RGB['#00ff00'], run.project.getTaskName(run.tasks[i]))
     }
     // w(RGB['#00ff00'], taskName)
     if (plug?.name) {

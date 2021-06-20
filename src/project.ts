@@ -1,18 +1,10 @@
+import assert from 'assert'
+import { isAbsolute } from 'path'
 import { Failure } from './failure'
 import { Task, TaskCall } from './task'
 import { loadBuildFile } from './typescript/loader'
 import { makeLog } from './utils/log'
 import { AbsolutePath, DirectoryPath, getParentDirectory } from './utils/paths'
-
-const taskNames = new WeakMap<Task, string>()
-
-export function setTaskName(task: Task, name: string): void {
-  taskNames.set(task, name)
-}
-
-export function getTaskName(task: Task): string {
-  return taskNames.get(task) || 'unknown'
-}
 
 export class Project {
   #taskNames = new Map<Task, string>()
@@ -27,6 +19,9 @@ export class Project {
       buildFile: AbsolutePath,
       directory: DirectoryPath,
   ) {
+    // Never start with a non-absolute directory
+    assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
+
     // We have to be careful, as build files are loaded...
     if (!(build && (typeof build === 'object'))) {
       throw new Failure(`Build file "${buildFile}" has no exports`)

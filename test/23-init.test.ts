@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { pipe, from, read } from '../src/init'
 import { PlugPipe, TaskPipe } from '../src/pipe'
 import { directory, mock } from './support'
-import { Run } from '../src/run'
 
 describe('Plug Initialization', () => {
   it('should create a PlugPipe', async () => {
@@ -17,7 +16,7 @@ describe('Plug Initialization', () => {
     const pipeline1 = read('**/*.ts')
     expect(pipeline1).to.be.instanceof(TaskPipe)
 
-    const output1 = await pipeline1.run(new Run(directory))
+    const output1 = await pipeline1.run(mock(directory).run)
     const files1 = output1.list().map((file) => file.relativePath)
     expect(files1).to.have.length.greaterThan(1)
     expect(files1).to.include('build.ts')
@@ -25,7 +24,7 @@ describe('Plug Initialization', () => {
     const pipeline2 = read('**/*.*', { ignore: [ '**/*.ts' ] })
     expect(pipeline2).to.be.instanceof(TaskPipe)
 
-    const output2 = await pipeline2.run(new Run(directory))
+    const output2 = await pipeline2.run(mock(directory).run)
     const files2 = output2.list().map((file) => file.relativePath)
     expect(files2).to.have.length.greaterThan(1)
     expect(files2).to.not.include('build.ts')
@@ -35,7 +34,7 @@ describe('Plug Initialization', () => {
     const pipeline1 = from(directory).read('**/*.ts')
     expect(pipeline1).to.be.instanceof(TaskPipe)
 
-    const output1 = await pipeline1.run(new Run(directory))
+    const output1 = await pipeline1.run(mock(directory).run)
     const files1 = output1.list().map((file) => file.relativePath)
     expect(files1).to.have.length.greaterThan(1)
     expect(files1).to.include('build.ts')
@@ -43,7 +42,7 @@ describe('Plug Initialization', () => {
     const pipeline2 = from(directory).read('**/*.*', { ignore: [ '**/*.ts' ] })
     expect(pipeline2).to.be.instanceof(TaskPipe)
 
-    const output2 = await pipeline2.run(new Run(directory))
+    const output2 = await pipeline2.run(mock(directory).run)
     const files2 = output2.list().map((file) => file.relativePath)
     expect(files2).to.have.length.greaterThan(1)
     expect(files2).to.not.include('build.ts')
