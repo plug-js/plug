@@ -1,8 +1,6 @@
 import { expect } from 'chai'
-import { Files } from '../src/files'
 import { Plug } from '../src/pipe'
 import { setTaskName } from '../src/project'
-import { Run } from '../src/run'
 import { Task } from '../src/task'
 
 import {
@@ -12,7 +10,7 @@ import {
   makeLog,
   options,
 } from '../src/utils/log'
-import { DirectoryPath } from '../src/utils/paths'
+import { mock } from './support'
 
 type TestLog = RunLog & { logs: string[] }
 
@@ -34,9 +32,10 @@ describe('Log', () => {
   const defaults = Object.assign({}, options)
 
   // Convenience plugs and tasks for tests
+  const { files } = mock('/foo')
   const plug1: Plug = { process: (i) => i, name: 'myplug' }
-  const task1: Task = { run: () => new Files('/foo' as DirectoryPath) }
-  const task2: Task = { run: () => new Files('/foo' as DirectoryPath) }
+  const task1: Task = { run: () => files }
+  const task2: Task = { run: () => files }
   setTaskName(task1, 'mytask1')
   setTaskName(task2, 'mytask2')
 
@@ -140,7 +139,7 @@ describe('Log', () => {
 
     function test(level: LogLevel, colors: boolean): void {
       options.colors = colors
-      let run = new Run('/foo' as DirectoryPath)
+      let { run } = mock('/foo')
       for (const task of [ undefined, task1, task2 ]) {
         if (task) run = run.for(task)
         for (const plug of [ undefined, plug1 ]) {

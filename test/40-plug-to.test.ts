@@ -1,21 +1,21 @@
 import { expect } from 'chai'
-import { Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { ToPlug } from '../src/plugs/to'
-import { Run } from '../src/run'
-import { DirectoryPath } from '../src/utils/paths'
+import { mock } from './support'
 
 describe('Plug From / To', function() {
+  const { run, log } = mock('/foo')
+
   it('should be installed', () => {
     expect(new PlugPipe().to).to.be.a('function')
   })
 
   it('should relocate a directory to an absolute path', () => {
-    const input = new Files('/foo/in' as DirectoryPath)
+    const input = mock('/foo/in').files
     input.add('bar.txt', { contents: 'hello, world 1!' })
     input.add('bar/baz.txt', { contents: 'hello, world 2!' })
 
-    const output = new ToPlug('/foo/out').process(input, new Run('/foo' as DirectoryPath))
+    const output = new ToPlug('/foo/out').process(input, run, log)
 
     expect(output.list().sort()).to.eql([
       { 'absolutePath': '/foo/out/bar.txt', 'originalPath': '/foo/in/bar.txt' },
@@ -27,11 +27,11 @@ describe('Plug From / To', function() {
   })
 
   it('should relocate a directory to a relative path', () => {
-    const input = new Files('/foo/in' as DirectoryPath)
+    const input = mock('/foo/in').files
     input.add('bar.txt', { contents: 'hello, world 1!' })
     input.add('bar/baz.txt', { contents: 'hello, world 2!' })
 
-    const output = new ToPlug('out').process(input, new Run('/foo' as DirectoryPath))
+    const output = new ToPlug('out').process(input, run, log)
 
     expect(output.list().sort()).to.eql([
       { 'absolutePath': '/foo/out/bar.txt', 'originalPath': '/foo/in/bar.txt' },
@@ -43,8 +43,8 @@ describe('Plug From / To', function() {
   })
 
   it('should pass through if the directory is unchanged', () => {
-    const input = new Files('/foo' as DirectoryPath)
-    const output = new ToPlug('foo').process(input, new Run('/' as DirectoryPath))
+    const input = mock('/foo').files
+    const output = new ToPlug('.').process(input, run, log)
     expect(output).to.equal(input)
   })
 })

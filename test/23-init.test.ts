@@ -1,9 +1,7 @@
 import { expect } from 'chai'
 import { pipe, from, read } from '../src/init'
-import { Files } from '../src/files'
 import { PlugPipe, TaskPipe } from '../src/pipe'
-import { directory } from './support'
-import { DirectoryPath } from '../src/utils/paths'
+import { directory, mock } from './support'
 import { Run } from '../src/run'
 
 describe('Plug Initialization', () => {
@@ -11,7 +9,7 @@ describe('Plug Initialization', () => {
     const pipeline = pipe()
     expect(pipeline).to.be.instanceof(PlugPipe)
 
-    const files = new Files('/foo' as DirectoryPath)
+    const { files } = mock('/foo')
     expect(await pipeline.process(files, null as any)).to.equal(files)
   })
 
