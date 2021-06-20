@@ -19,7 +19,7 @@ export function setProjectDirectory(path: string): void {
   projectDir = directory as DirectoryPath
 }
 
-const taskNames = new Map<Task, string>()
+const taskNames = new WeakMap<Task, string>()
 
 export function setTaskName(task: Task, name: string): void {
   taskNames.set(task, name)
