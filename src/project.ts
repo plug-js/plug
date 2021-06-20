@@ -6,6 +6,8 @@ import { DirectoryPath } from './utils/paths'
 
 let projectDir = undefined as DirectoryPath | undefined
 
+// TODO: projectDir needs to be a property of a Run, and set by "from"
+
 export function getProjectDirectory(): DirectoryPath {
   return projectDir || process.cwd() as DirectoryPath
 }
