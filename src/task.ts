@@ -2,6 +2,7 @@ import assert from 'assert'
 import { Files } from './files'
 import { TaskPipe } from './pipe'
 import { Run, Runnable } from './run'
+import { RunLog } from './utils/log'
 
 /**
  * A `TaskCall` describes a function returning a `TaskPipe`, as a way to
@@ -20,6 +21,7 @@ export type TaskCall = (() => TaskPipe) & {
 export interface Task extends Runnable {
   /** The (optional) description of this task */
   readonly description?: string
+  run(run: Run, log?: RunLog): Files | Promise<Files>
 }
 
 /* ========================================================================== *
@@ -42,12 +44,30 @@ abstract class AbstractTask {
     let cache = caches.get(run.id)
     if (! cache) caches.set(run.id, cache = new WeakMap())
 
-    // If we don't have anything cached, run this task
-    let cached = cache.get(this)
-    if (! cached) cache.set(this, cached = this.runTask(run.for(this)))
+    // If we have something cached, return it
+    const cached = cache.get(this)
+    if (cached) return cached
 
-    // Return our cached promise
-    return cached
+    // Contextualize this run
+    run = run.for(this)
+    const log = run.log()
+
+    // Run this task and log
+    const start = Date.now()
+    const result = this.runTask(run)
+        .then((result) => {
+          const now = Date.now() - start
+          log('Task completed in', now, 'ms')
+          return result
+        }, (error) => {
+          const now = Date.now() - start
+          log.error('Task failed in', now, 'ms', error)
+          throw error
+        })
+
+    // Cache the result and return it
+    cache.set(this, result)
+    return result
   }
 
   abstract runTask(run: Run): Promise<Files>
@@ -115,9 +135,9 @@ class ParallelTask extends AbstractTask {
     this.#tasks = tasks
   }
 
-  async runTask(run: Run): Promise<Files> {
+  async runTask(run: Run, log: RunLog = run.log()): Promise<Files> {
     // Start each of our taks, processing the same file list, our input
-    const promises = this.#tasks.map((task) => task.run(run))
+    const promises = this.#tasks.map((task) => task.run(run, log))
     // Make sure all tasks run correctly and get all output file lists
     const outputs = await Promise.all(promises)
 

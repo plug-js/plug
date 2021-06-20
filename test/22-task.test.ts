@@ -4,11 +4,14 @@ import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
 import { Run, Runnable } from '../src/run'
 import { parallel, Task, task } from '../src/task'
+import { disableLogs } from './support'
 
 describe('Plug Tasks', () => {
   function init(run: Runnable['run']): TaskPipe {
     return new TaskPipe({ run })
   }
+
+  disableLogs()
 
   it('should construct a task and run it once', async () => {
     let counter = 0
@@ -23,7 +26,6 @@ describe('Plug Tasks', () => {
     })
 
     const task1 = task('test task', pipe)
-
     expect(task1).to.be.a('function')
     expect(task1.task).to.be.an('object')
     expect(task1.task.run).to.be.a('function')
@@ -47,6 +49,37 @@ describe('Plug Tasks', () => {
     await task1.task.run(run2)
     expect(counter).to.equal(2)
     expect(runid).to.equal(run2.id)
+  })
+
+  it('should cache also when a task fails', async () => {
+    let counter = 0
+    let runid: any = undefined
+
+    const pipe = init((run) => {
+      expect(run.tasks).to.have.length(1)
+      expect(run.tasks[0]).to.equal(task1.task)
+      runid = run.id
+      counter ++
+      throw new Error('Foo!')
+    })
+
+    const task1 = task('test task', pipe)
+    const run1 = new Run()
+
+    const error1 = await expect(task1.task.run(run1))
+        .to.be.rejectedWith(Error, 'Foo!')
+    expect(counter).to.equal(1)
+    expect(runid).to.equal(run1.id)
+    runid = undefined
+
+    // No run, cached error
+    const error2 = await expect(task1.task.run(run1))
+        .to.be.rejectedWith(Error, 'Foo!')
+    expect(counter).to.equal(1)
+    expect(runid).to.be.undefined // does not run again!
+
+    // Same error
+    expect(error1).to.equal(error2)
   })
 
   it('should chain multiple tasks', async () => {
