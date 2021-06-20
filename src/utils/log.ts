@@ -19,7 +19,7 @@ export enum LogLevel {
   QUIET = 4,
 }
 
-/** Options to customize the logger */
+/** Options to customize logging */
 export interface LogOptions {
   /** The function used to write log entries, defaults to `console.log(...)` */
   write: ((data: string) => void)
@@ -31,8 +31,8 @@ export interface LogOptions {
   colors: boolean
 }
 
-/** The main `Logger` */
-export type Logger = ((message: string, ...args: any[]) => void) & {
+/** The main `Log` */
+export type Log = ((message: string, ...args: any[]) => void) & {
   /** Emit a _debug_ message */
   debug(message: string, ...args: any[]): void
   /** Emit an _alert_ message */
@@ -40,6 +40,8 @@ export type Logger = ((message: string, ...args: any[]) => void) & {
   /** Emit an _error_ message */
   error(message: string, ...args: any[]): void
 } & Readonly<Omit<LogOptions, 'write'>>
+
+/** A `Log` */
 
 /* ========================================================================== */
 
@@ -136,8 +138,8 @@ function emit(level: LogLevel, run: Run, plug: Plug | undefined, message: string
 
 /* ========================================================================== */
 
-/* Create a `Logger` for the given `Run` and (optional) `Plug` */
-export function makeLog(run: Run, plug?: Plug): Logger {
+/* Create a `Log` for the given `Run` and (optional) `Plug` */
+export function makeLog(run: Run, plug?: Plug): Log {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
     'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
@@ -145,5 +147,5 @@ export function makeLog(run: Run, plug?: Plug): Logger {
     'colors': { value: options.colors },
     'level': { value: options.level },
     'times': { value: options.times },
-  }) as Logger
+  }) as Log
 }

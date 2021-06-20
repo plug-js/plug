@@ -8,14 +8,14 @@ import { Run } from '../src/run'
 import { Task } from '../src/task'
 
 import {
-  Logger,
+  Log,
   LogLevel,
   LogOptions,
   makeLog,
   options,
 } from '../src/utils/log'
 
-type TestLog = Logger & { logs: string[] }
+type TestLog = Log & { logs: string[] }
 
 function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
   const lines: string[] = []
@@ -25,12 +25,12 @@ function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
     colors: false,
   })
 
-  const logger = makeLog(new Run()) as TestLog
-  logger.logs = lines
-  return logger
+  const log = makeLog(new Run()) as TestLog
+  log.logs = lines
+  return log
 }
 
-describe('Logger', () => {
+describe('Log', () => {
   // Default log options to restore after each test
   const defaults = Object.assign({}, options)
 
