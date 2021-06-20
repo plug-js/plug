@@ -39,10 +39,10 @@ export class Project {
 
       // Normally we export task calls "export const foo = task(...)"
       const call = build[name]
-      const task = 'task' in call ? call.task : call
+      const task = call ? typeof call === 'function' ? (<TaskCall> call).task : call : undefined
 
       // Now we _should_ have a task... but check it!
-      if (typeof task.run !== 'function') {
+      if (typeof task?.run !== 'function') {
         this.#log.alert(`Export "${name}" does not seem to be a valid task`)
       } else {
         this.#taskNames.set(task, name)
