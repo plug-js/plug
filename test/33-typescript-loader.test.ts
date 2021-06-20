@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { Failure } from '../src/failure'
+import { ReportFailure } from '../src/failure'
 import { loadBuildFile } from '../src/typescript/loader'
 import { directory } from './support'
 
@@ -18,11 +18,6 @@ describe('TypeScript Loader', function() {
 
   it('should fail when compilation fails', () => {
     expect(() => loadBuildFile(directory, 'bad-typescript.ts'))
-        .to.throw(Failure, 'Error compiling')
-  })
-
-  it('should fail when compiler options are wrong', () => {
-    expect(() => loadBuildFile(directory, 'bad-typescript.ts', 'bad-options.json'))
-        .to.throw(Failure, 'Error in TypeScript configuration')
+        .to.throw(ReportFailure, 'Error compiling')
   })
 })

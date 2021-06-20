@@ -17,7 +17,7 @@ import { Run } from '../run'
 /**
  * Load our build file from TypeScript (or JavaScript)
  */
-export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConfig?: string): any {
+export function loadBuildFile(directory: DirectoryPath, fileName: string): any {
   const files = new Files(directory)
   const file = files.add(fileName)
 
@@ -26,7 +26,7 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
 
   // Create our compiler and compile our files
   const run = new Run(directory)
-  const compiler = new CompilePlug(tsConfig, {
+  const compiler = new CompilePlug({
     // Make sure we have our _own_ options enabled
     allowJs: false, // we won't read JS files
     module: ModuleKind.CommonJS, // use commonJS for now
