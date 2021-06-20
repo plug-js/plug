@@ -17,7 +17,7 @@ export class Project {
   constructor(
       build: Record<string, Task | TaskCall>,
       buildFile: AbsolutePath,
-      directory: DirectoryPath = getParentDirectory(buildFile),
+      directory = getParentDirectory(buildFile),
   ) {
     // Never start with a non-absolute file / directory
     assert(isAbsolute(buildFile), `Not an absolute build file: "${buildFile}"`)
@@ -74,12 +74,10 @@ export class Project {
 }
 
 export function load(buildFile: AbsolutePath, directory?: DirectoryPath): Project {
-  // Project directory defaults to directory of build file
-  if (! directory) directory = getParentDirectory(buildFile)
+  // Create an initial project and load the build file
+  const project = new Project({}, buildFile, directory)
+  const build = loadBuildFile(project, buildFile)
 
-  // Load the build file...
-  const build = loadBuildFile(directory, buildFile)
-
-  // Create our project from whatever we're given
+  // Create our real project and return it
   return new Project(build, buildFile, directory)
 }

@@ -1,4 +1,4 @@
-import { AbsolutePath, DirectoryPath } from '../utils/paths'
+import { AbsolutePath } from '../utils/paths'
 import { Files } from '../files'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
@@ -18,16 +18,14 @@ import { Project } from '../project'
 /**
  * Load our build file from TypeScript (or JavaScript)
  */
-// TODO clean this up
-export function loadBuildFile(directory: DirectoryPath, fileName: string): any {
-  const files = new Files(directory)
+export function loadBuildFile(project: Project, fileName: string): any {
+  const files = new Files(project.directory)
   const file = files.add(fileName)
 
   // Not much to do when it comes to ".js" files
   if (extname(file.absolutePath) === '.js') return require(file.absolutePath)
 
-  // Create our compiler and compile our files
-  const run = new Run(new Project({}, file.absolutePath, directory))
+  // Create our compiler
   const compiler = new CompilePlug({
     // Make sure we have our _own_ options enabled
     allowJs: false, // we won't read JS files
@@ -42,6 +40,9 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string): any {
     noEmit: false, // we always want our output to be gnerated
     outDir: files.directory, // our directory for the loader
   })
+
+  // Compile our files
+  const run = new Run(project)
   const output = compiler.process(files, run, run.log(compiler))
 
   // Build our output file list and require our build file

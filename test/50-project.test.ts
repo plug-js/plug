@@ -40,6 +40,6 @@ describe('Project Loading', function() {
   it('should not load a project outside of its directory', () => {
     const file = getAbsolutePath(directory, 'build.ts')
     expect(() => load(file, getDirectoryPath(getParentDirectory(file), 'foo')))
-        .to.throw(AssertionError, `Refusing to add file "${directory}/build.ts" to "${directory}/foo"`)
+        .to.throw(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
   })
 })
