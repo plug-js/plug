@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto'
-import { inspect } from 'util'
 import type { Files } from './files'
 import type { Task } from './task'
 
@@ -11,8 +10,8 @@ export class Run {
   readonly id!: RunId
   readonly tasks!: readonly Task[]
 
-  constructor() // hide the next constructor
-  constructor(...args: [ Run, Task ] | []) {
+  constructor() // hide the (real) next constructor
+  constructor(...args: [] | [ Run, Task ]) {
     const [ run, task ] = args
 
     const id = run ? run.id : new RunId()
@@ -43,7 +42,7 @@ class RunId {
     return this.#id
   }
 
-  [inspect.custom](): string {
+  [Symbol.for('nodejs.util.inspect.custom')](): string {
     return this.#id
   }
 }
