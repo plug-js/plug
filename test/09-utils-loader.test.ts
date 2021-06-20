@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { setupLoader } from '../src/utils/loader'
 import { AbsolutePath } from '../src/utils/paths'
+import { directory } from './support'
 
 describe('Node Loader', () => {
   it('should load some files and clear caches', () => {
@@ -29,6 +30,18 @@ describe('Node Loader', () => {
 
       setupLoader(map)
       expect(require('/abc/foo.js')).to.equal('hello, world!')
+    } finally {
+      setupLoader()
+    }
+  })
+
+  it('should load some files with module resolution', () => {
+    try {
+      const map = new Map<AbsolutePath, string>()
+      map.set(`${directory}/foo.js` as AbsolutePath, 'module.exports = require("fast-glob")')
+
+      setupLoader(map)
+      expect(require(`${directory}/foo.js`)).to.be.a('function')
     } finally {
       setupLoader()
     }

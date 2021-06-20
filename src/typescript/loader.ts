@@ -1,5 +1,3 @@
-import sourceMapSupport from 'source-map-support'
-
 import { AbsolutePath, DirectoryPath } from '../utils/paths'
 import { Files } from '../files'
 import { extname } from 'path'
@@ -11,9 +9,6 @@ import {
 } from 'typescript'
 import { CompilePlug } from '../plugs/compile'
 import { Run } from '../run'
-
-// Install support for source maps, supporting dynamically compiled files
-sourceMapSupport.install({ environment: 'node' })
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
@@ -40,6 +35,7 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
     inlineSourceMap: true, // generate inline source maps
     inlineSources: false, // don't include sources in source maps
     target: ScriptTarget.ES2019, // best for Node 14.x?
+    esModuleInterop: true, // needed for node modules
     importHelpers: false, // maybe we don't have "tslib"
     noEmit: false, // we always want our output to be gnerated
     outDir: files.directory, // our directory for the loader
@@ -55,5 +51,9 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
   })
 
   setupLoader(map)
-  return require(file.absolutePath)
+  try {
+    return require(file.absolutePath)
+  } finally {
+    setupLoader() // reset!
+  }
 }

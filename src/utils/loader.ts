@@ -1,7 +1,11 @@
 import Module from 'module'
-
+import sourceMapSupport from 'source-map-support'
 import { resolve, dirname, isAbsolute, sep } from 'path'
-import { AbsolutePath } from './paths'
+import { AbsolutePath, DirectoryPath, getDirectory, getDirectoryPath } from './paths'
+
+// Install support for source maps, supporting dynamically compiled files
+sourceMapSupport.install({ environment: 'node' })
+
 
 // Add some types to "Module" so that we know what we're doing...
 declare global {
@@ -42,6 +46,15 @@ function createCircularWarningEmitter(file: string, from: string): object {
 // Preserve the old loader
 const _loader = cjs._load
 
+function findPaths(file: AbsolutePath): DirectoryPath[] {
+  function walk(dir: DirectoryPath, paths: DirectoryPath[] = []): DirectoryPath[] {
+    paths.push(getDirectoryPath(dir, 'node_modules'))
+    const parent = getDirectory(dir)
+    return parent === dir ? paths : walk(parent, paths)
+  }
+  return walk(getDirectory(file))
+}
+
 // Replace the Node JS loader with our own loader wrapper
 cjs._load = function _load(request: any, parent?: Module, isMain?: boolean) {
   if ((typeof request === 'string') && (parent?.filename)) {
@@ -71,8 +84,9 @@ cjs._load = function _load(request: any, parent?: Module, isMain?: boolean) {
 
         // We have our content, create a new module and cache it
         const module = cjs._cache[file] = new Module(file, parent)
-        module.exports = {} // createCircularWarningEmitter(file)
+        module.exports = {}
         module.filename = file
+        module.paths = findPaths(file)
         module[marker] = true
 
         // Compile our module using our contents
