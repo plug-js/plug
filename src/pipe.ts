@@ -6,14 +6,14 @@ import { ConstructorOverloads } from './types/overloads'
  * CORE PIPELINE IMPLEMENTATION                                               *
  * ========================================================================== */
 
-// A convenience type describing a `Plug` constructor
-type PlugConstructor<P extends Plug> = new (...args: any) => P
-
 /**
  * The `Plug` interface describes a `Pipe` component, processing an input file
  * list and producing a (possibly) different one in the context of a `Run`.
  */
 export interface Plug {
+  /** An optional name for this `Plug` (mainly for logging) */
+  readonly name?: string
+  /** Process a `Files` instance in the context of a `Run` */
   process(input: Files, run: Run): Files | Promise<Files>
 }
 
@@ -116,6 +116,9 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
 
 /* ========================================================================== */
 
+// A convenience type describing a `Plug` constructor
+type PlugConstructor<P extends Plug> = new (...args: any) => P
+
 /**
  * A convenience type used to annotate plug instances installed ad extension
  * to the pipeline with install.
@@ -154,6 +157,8 @@ export function install<
     return new PlugPipe(undefined, new constructor(...args))
   }
 
+  Object.defineProperty(create, 'name', { value: name })
+  Object.defineProperty(constructor.prototype, 'name', { value: name })
   Object.defineProperty(AbstractPipe.prototype, name, {
     value: function(this: Pipe<any>, ...args: P) {
       return this.plug(new constructor(...args))

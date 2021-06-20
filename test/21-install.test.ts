@@ -16,6 +16,11 @@ describe('Plug Extensions', () => {
     }
 
     const installed = install('test123', TestPlug)
+    expect(installed).to.be.a('function')
+    expect(installed.name).to.equal('test123')
+
+    expect(TestPlug.prototype).to.have.property('name', 'test123')
+    expect(new TestPlug(123)).to.have.property('name', 'test123')
 
     const processor = installed(0)
     expect(await processor.process('foo' as any, null as any)).to.equal('foo...[0]')
