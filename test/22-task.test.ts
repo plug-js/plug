@@ -1,7 +1,8 @@
 import { expect } from 'chai'
 import { Files } from '../src/files'
-import { PlugPipe, Processor, Runnable, TaskPipe } from '../src/pipe'
+import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
 import { getProjectDirectory } from '../src/project'
+import { Runnable } from '../src/run'
 import { parallel, task } from '../src/task'
 
 describe('Plug Tasks', () => {

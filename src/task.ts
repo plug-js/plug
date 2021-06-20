@@ -1,6 +1,7 @@
 import assert from 'assert'
 import { Files } from './files'
-import { Run, Runnable, TaskPipe } from './pipe'
+import { TaskPipe } from './pipe'
+import { Run, Runnable } from './run'
 
 /**
  * A `TaskCall` describes a function returning a `TaskPipe`, as a way to

@@ -1,4 +1,5 @@
 import { Files } from './files'
+import { Run, Runnable } from './run'
 import { ConstructorOverloads } from './types/overloads'
 
 /* ========================================================================== *
@@ -7,18 +8,6 @@ import { ConstructorOverloads } from './types/overloads'
 
 // A convenience type describing a `Plug` constructor
 type PlugConstructor<P extends Plug> = new (...args: any) => P
-
-/**
- * The `Run` interface describes a contract beteween `Plug`s and `Processor`s
- * and the underlying subsystem actually calling them.
- */
-export interface Run {
-  readonly taskNames: readonly string[]
-}
-
-export interface Runnable {
-  run(run: Run): Files | Promise<Files>
-}
 
 /**
  * The `Plug` interface describes a `Pipe` component, processing an input file
