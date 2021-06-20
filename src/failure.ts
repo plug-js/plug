@@ -6,14 +6,21 @@ function split(message: string, stack?: string): string[] {
 }
 
 /** An `Error` representing a build failure */
-export abstract class Failure extends Error {
-  stack!: string
-
+export class Failure extends Error {
   constructor(message?: string) {
     super(message ? `Build Failed: ${message}` : 'Build Failed')
     this.name = 'Failure'
-    const [ firstLine, ...stack ] = split(this.message, this.stack)
+  }
+}
 
+/** A `Failure` with reporting capabilities */
+export abstract class ReportFailure extends Failure {
+  stack!: string
+
+  constructor(message?: string) {
+    super(message)
+
+    const [ firstLine, ...stack ] = split(this.message, this.stack)
     Object.defineProperty(this, 'stack', { get() {
       const report = this.report(false).trimEnd().replace(/^/gm, '  ')
       return [ firstLine, report, ...stack ].join(EOL)

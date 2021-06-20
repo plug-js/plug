@@ -1,4 +1,4 @@
-import { Failure } from '../failure'
+import { ReportFailure } from '../failure'
 
 import {
   Diagnostic,
@@ -8,7 +8,7 @@ import {
   formatDiagnosticsWithColorAndContext,
 } from 'typescript'
 
-export class TypeScriptFailure extends Failure {
+export class TypeScriptFailure extends ReportFailure {
   private _host!: FormatDiagnosticsHost
 
   diagnostics!: readonly Diagnostic[]

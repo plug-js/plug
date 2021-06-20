@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { EOL } from 'os'
 import { Diagnostic, DiagnosticCategory, FormatDiagnosticsHost } from 'typescript'
-import { Failure } from '../src/failure'
+import { ReportFailure } from '../src/failure'
 import { hasErrors, hasWarnings, TypeScriptFailure } from '../src/typescript/diagnostic'
 
 describe('TypeScript Diagnostics', () => {
@@ -39,7 +39,7 @@ describe('TypeScript Diagnostics', () => {
     // with message and diagnostics
     const failure1 = new TypeScriptFailure([ error, warning ], host, 'A TypeScript failure')
 
-    expect(failure1).to.be.instanceOf(Failure)
+    expect(failure1).to.be.instanceOf(ReportFailure)
     expect(failure1.message).to.eql('Build Failed: A TypeScript failure')
 
     expect(failure1.report(false)).to.eql(
@@ -57,7 +57,7 @@ describe('TypeScript Diagnostics', () => {
     // without message and empty diagnostics
     const failure2 = new TypeScriptFailure([], host)
 
-    expect(failure2).to.be.instanceOf(Failure)
+    expect(failure2).to.be.instanceOf(ReportFailure)
     expect(failure2.message).to.eql('Build Failed: TypeScript Error')
 
     expect(failure2.report(false)).to.eql('')

@@ -1,9 +1,21 @@
 import { expect } from 'chai'
-import { Failure } from '../src/failure'
+import { Failure, ReportFailure } from '../src/failure'
 
 describe('Failures', () => {
   it('should correctly create a failure', async () => {
-    const failure = new class extends Failure {
+    const failure1 = new Failure()
+    expect(failure1).to.be.instanceof(Error)
+    expect(failure1.name).to.equal('Failure')
+    expect(failure1.message).to.equal('Build Failed')
+
+    const failure2 = new Failure('A message...')
+    expect(failure2).to.be.instanceof(Error)
+    expect(failure2.name).to.equal('Failure')
+    expect(failure2.message).to.equal('Build Failed: A message...')
+  })
+
+  it('should correctly create a reporting failure', async () => {
+    const failure = new class extends ReportFailure {
       report(colors: boolean): string {
         return `report ${colors ? 'with' : 'without'} colors`
       }
@@ -18,8 +30,8 @@ describe('Failures', () => {
     expect(failure.report(true)).to.equal('report with colors')
   })
 
-  it('should correctly create a failure with a message', async () => {
-    const failure = new class extends Failure {
+  it('should correctly create a reporting failure with a message', async () => {
+    const failure = new class extends ReportFailure {
       constructor() {
         super('A message...')
       }
