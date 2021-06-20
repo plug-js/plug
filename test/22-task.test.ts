@@ -31,7 +31,7 @@ describe('Plug Tasks', () => {
     expect(task1.task.run).to.be.a('function')
     expect(task1.task.description).to.equal('test task')
 
-    const run1 = new Run()
+    const run1 = new Run('/foo' as DirectoryPath)
 
     // Initial run
     await task1.task.run(run1)
@@ -45,7 +45,7 @@ describe('Plug Tasks', () => {
     expect(runid).to.be.undefined // does not run again!
 
     // New "run", should run again
-    const run2 = new Run()
+    const run2 = new Run('/foo' as DirectoryPath)
     await task1.task.run(run2)
     expect(counter).to.equal(2)
     expect(runid).to.equal(run2.id)
@@ -64,7 +64,7 @@ describe('Plug Tasks', () => {
     })
 
     const task1 = task('test task', pipe)
-    const run1 = new Run()
+    const run1 = new Run('/foo' as DirectoryPath)
 
     const error1 = await expect(task1.task.run(run1))
         .to.be.rejectedWith(Error, 'Foo!')
@@ -96,7 +96,7 @@ describe('Plug Tasks', () => {
       return 'task2' as any
     }))
 
-    const run = new Run()
+    const run = new Run('/foo' as DirectoryPath)
 
     // first run task2, it'll invoke task1, then re-invoke task1
     const result2 = await task2.task.run(run)
@@ -112,8 +112,8 @@ describe('Plug Tasks', () => {
     expect(counter2).to.equal(1)
 
     // new runs (both cases), so counters will update
-    await task2.task.run(new Run())
-    await task1.task.run(new Run())
+    await task2.task.run(new Run('/foo' as DirectoryPath))
+    await task1.task.run(new Run('/foo' as DirectoryPath))
     expect(counter1).to.equal(3)
     expect(counter2).to.equal(2)
   })
@@ -166,7 +166,7 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskA = parallel(task1.task, task2.task, task3.task)
-    const resultA = await taskA.task.run(new Run('/foo'))
+    const resultA = await taskA.task.run(new Run('/foo' as DirectoryPath))
 
     expect(taskA.task.description).to.be.undefined
     expect(resultA.list().sort()).to.eql([
@@ -190,7 +190,7 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskB = parallel('reversed', task3, task2, task1)
-    const resultB = await taskB.task.run(new Run('/foo'))
+    const resultB = await taskB.task.run(new Run('/foo' as DirectoryPath))
 
     expect(taskB.task.description).to.equal('reversed')
     expect(resultB.list().sort()).to.eql([

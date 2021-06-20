@@ -3,13 +3,14 @@ import { inspect } from 'util'
 import { Plug } from '../src/pipe'
 import { Run } from '../src/run'
 import { Task } from '../src/task'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('Run', () => {
   it('should create a new run', () => {
     const task: Task = {} as any
-    const run0 = new Run()
-    const run1 = new Run().for(task)
-    const run2 = new Run().for(task)
+    const run0 = new Run('/foo' as DirectoryPath)
+    const run1 = new Run('/foo' as DirectoryPath).for(task)
+    const run2 = new Run('/foo' as DirectoryPath).for(task)
 
     expect(run0.tasks).to.be.an('array').with.length(0)
     expect(run1.tasks).to.be.an('array').with.length(1)
@@ -26,7 +27,7 @@ describe('Run', () => {
   it('should deive a new run for another task', () => {
     const task1: Task = {} as any
     const task2: Task = {} as any
-    const run1 = new Run().for(task1)
+    const run1 = new Run('/foo' as DirectoryPath).for(task1)
     const run2 = run1.for(task2)
 
     expect(run1.tasks).to.be.an('array').with.length(1)
@@ -40,13 +41,13 @@ describe('Run', () => {
   })
 
   it('should have nice run ids', () => {
-    const run = new Run()
+    const run = new Run('/foo' as DirectoryPath)
     expect(run.id.toString()).to.match(/^[a-f0-9]{16}$/)
     expect((<any>run.id)[inspect.custom]()).to.match(/^[a-f0-9]{16}$/)
   })
 
   it('should prepare and cache logs', () => {
-    const run = new Run()
+    const run = new Run('/foo' as DirectoryPath)
 
     const runLog1 = run.log()
     const runLog2 = run.log()

@@ -140,7 +140,7 @@ describe('Log', () => {
 
     function test(level: LogLevel, colors: boolean): void {
       options.colors = colors
-      let run = new Run()
+      let run = new Run('/foo' as DirectoryPath)
       for (const task of [ undefined, task1, task2 ]) {
         if (task) run = run.for(task)
         for (const plug of [ undefined, plug1 ]) {

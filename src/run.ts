@@ -5,7 +5,8 @@ import type { Task } from './task'
 import { DirectoryPath } from './utils/paths'
 import { makeLog } from './utils/log'
 import { randomBytes } from 'crypto'
-import { resolve } from 'path'
+import { isAbsolute } from 'path'
+import assert from 'assert'
 
 /**
  * The `Run` class describes a contract beteween `Plug`s and `Processor`s
@@ -19,25 +20,34 @@ export class Run {
   readonly tasks!: readonly Task[]
   readonly directory!: DirectoryPath
 
-  constructor(directory?: string)
+  constructor(directory: DirectoryPath)
   constructor(run: Run, task: Task)
-  constructor(first: string | undefined | Run, task?: Task) {
-    const { dir, run } =
+  constructor(first: string | Run, task?: Task) {
+    const { dir: directory, run } =
         typeof first === 'string' ?
-            { dir: resolve(first), run: undefined } :
-        first ?
-            { dir: first.directory, run: first } :
-            { dir: process.cwd(), run: undefined }
+            { dir: first, run: undefined } :
+            { dir: first.directory, run: first }
 
+    // Make utterly sure that the directory is _absolute_
+    assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
+
+    // Run is inherited from any previous instance, as it's the key to caching
     const id = run ? run.id : new RunId()
+
+    // The list of tasks is copied over from the wrapping run or is empty,
+    // then we add our task, and freeze the whole thing (no chances!)
     const tasks = run ? [ ...run.tasks ] : []
     if (task) tasks.push(task)
+    Object.freeze(tasks)
 
     Object.defineProperties(this, {
-      'directory': { value: dir, enumerable: true },
+      'directory': { value: directory, enumerable: true },
       'id': { value: id, enumerable: true },
       'tasks': { value: tasks },
     })
+
+    // Better be safe than sorry...
+    Object.freeze(this)
   }
 
   log(): RunLog
@@ -66,6 +76,10 @@ export interface Runnable {
 // A run id, as an object for weak maps
 class RunId {
   #id = randomBytes(8).toString('hex')
+
+  constructor() {
+    Object.freeze(this) // not taking any chances...
+  }
 
   toString(): string {
     return this.#id
