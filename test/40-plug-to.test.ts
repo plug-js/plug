@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
-import { ToPlug } from '../src/plugs/from-to'
+import { ToPlug } from '../src/plugs/to'
 
 describe('Plug From / To', function() {
   it('should be installed', () => {
