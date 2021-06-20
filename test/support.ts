@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { resolve } from 'path'
 import { existsSync } from 'fs'
 import { dirname } from 'path'
@@ -19,8 +21,14 @@ export const directory = resolve(findDirectory(__dirname), 'test', 'support') as
 // Inject hooks to disable logs
 const logWriter = options.write
 export function disableLogs(): void {
-  before(() => options.write = () => {})
-  after(() => options.write = logWriter)
+  before(() => {
+    console.log('    \u001b[38;5;63m\u2605\u001b[0m disabling logs')
+    options.write = () => {}
+  })
+  after(() => {
+    console.log('    \u001b[38;5;63m\u2605\u001b[0m re-enabling logs')
+    options.write = logWriter
+  })
 }
 
 // "Mock" a "Files", "Run" and "Log"
