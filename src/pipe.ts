@@ -11,7 +11,7 @@ import { ConstructorOverloads } from './types/overloads'
  * list and producing a (possibly) different one in the context of a `Run`.
  */
 export interface Plug {
-  /** An optional name for this `Plug` (mainly for logging) */
+  /** An (optional) name for this `Plug` (mainly for logging) */
   readonly name?: string
   /** Process a `Files` instance in the context of a `Run` */
   process(input: Files, run: Run): Files | Promise<Files>
