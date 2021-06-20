@@ -55,7 +55,7 @@ export type RunLog = Log & { readonly run: Run }
  * This is really just a marker type, to fail compilation when passing around
  * the wrong kind of `Log` between the various components.
  */
-export type PlugLog = RunLog & { readonly plug: Plug }
+export type PlugLog = Log & { readonly plug: Plug }
 
 /* ========================================================================== */
 
@@ -165,7 +165,7 @@ export function makeLog(run: Run): RunLog
 /* Create a `Log` for the given `Run` and `Plug` instance */
 export function makeLog(run: Run, plug: Plug): PlugLog
 
-export function makeLog(run?: Run, plug?: Plug): Log | RunLog | PlugLog {
+export function makeLog(run?: Run, plug?: Plug): Log {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
     'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
@@ -175,5 +175,5 @@ export function makeLog(run?: Run, plug?: Plug): Log | RunLog | PlugLog {
     'times': { value: options.times },
     'plug': { value: plug },
     'run': { value: run },
-  }) as Log | RunLog | PlugLog
+  }) as Log
 }
