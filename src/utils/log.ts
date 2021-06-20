@@ -41,7 +41,13 @@ export type Log = ((message: string, ...args: any[]) => void) & {
   error(message: string, ...args: any[]): void
 } & Readonly<Omit<LogOptions, 'write'>>
 
-/** A `Log` */
+/**
+ * A `Log` configured for `Plug` instances.
+ *
+ * This is really just a marker type, to fail compilation when passing around
+ * the wrong kind of `Log` between the various components.
+ */
+export type PlugLog = Log & { readonly plug: Plug }
 
 /* ========================================================================== */
 
@@ -138,8 +144,12 @@ function emit(level: LogLevel, run: Run, plug: Plug | undefined, message: string
 
 /* ========================================================================== */
 
-/* Create a `Log` for the given `Run` and (optional) `Plug` */
-export function makeLog(run: Run, plug?: Plug): Log {
+/* Create a `Log` for the given `Run` */
+export function makeLog(run: Run): Log
+/* Create a `Log` for the given `Run` and `Plug` instance */
+export function makeLog(run: Run, plug: Plug): PlugLog
+
+export function makeLog(run: Run, plug?: Plug): PlugLog {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
     'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
@@ -147,5 +157,6 @@ export function makeLog(run: Run, plug?: Plug): Log {
     'colors': { value: options.colors },
     'level': { value: options.level },
     'times': { value: options.times },
-  }) as Log
+    'plug': { value: plug },
+  }) as PlugLog
 }

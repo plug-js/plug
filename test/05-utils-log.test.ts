@@ -145,7 +145,7 @@ describe('Log', () => {
       for (const task of [ undefined, task1, task2 ]) {
         if (task) run = run.for(task)
         for (const plug of [ undefined, plug1 ]) {
-          const log = makeLog(run, plug)
+          const log = makeLog(run, plug as Plug)
           switch (level) {
             case LogLevel.BASIC: log('A simple message', 1, true, { hello: 'world' }); break
             case LogLevel.DEBUG: log.debug('A debug message', 1, true, { hello: 'world' }); break
