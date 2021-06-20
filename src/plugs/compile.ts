@@ -13,6 +13,7 @@ import { Plug, install } from '../pipe'
 import { checkDiagnostics } from '../typescript/diagnostic'
 import { getAbsolutePath, getDirectoryPath, getRelativePath, isChild } from '../utils/paths'
 import { Run } from '../run'
+import { Log } from '../utils/log'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -49,7 +50,7 @@ export class CompilePlug implements Plug {
     this.#config = config
   }
 
-  process(input: Files, run: Run): Files {
+  process(input: Files, run: Run, log: Log): Files {
     const now = Date.now()
 
     // Read our compiler options and fail on error
@@ -97,7 +98,6 @@ export class CompilePlug implements Plug {
     checkDiagnostics(result.diagnostics, host, 'Error emitting compilation')
 
     // Some logging
-    const log = run.log(this)
     log.debug('Compliled', paths.length, 'in', Date.now() - now, 'ms')
 
     // All done!

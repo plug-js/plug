@@ -30,7 +30,8 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
   if (extname(file.absolutePath) === '.js') return require(file.absolutePath)
 
   // Create our compiler and compile our files
-  const output = new CompilePlug(tsConfig, {
+  const run = new Run(directory)
+  const compiler = new CompilePlug(tsConfig, {
     // Make sure we have our _own_ options enabled
     allowJs: false, // we won't read JS files
     module: ModuleKind.CommonJS, // use commonJS for now
@@ -42,7 +43,8 @@ export function loadBuildFile(directory: DirectoryPath, fileName: string, tsConf
     importHelpers: false, // maybe we don't have "tslib"
     noEmit: false, // we always want our output to be gnerated
     outDir: files.directory, // our directory for the loader
-  }).process(files, new Run(directory))
+  })
+  const output = compiler.process(files, run, run.log(compiler))
 
   // Build our output file list and require our build file
   const map = new Map<AbsolutePath, string>()

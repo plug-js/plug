@@ -1,6 +1,7 @@
 import { Files } from './files'
 import { Run, Runnable } from './run'
 import { ConstructorOverloads } from './types/overloads'
+import { PlugLog } from './utils/log'
 
 /* ========================================================================== *
  * CORE PIPELINE IMPLEMENTATION                                               *
@@ -14,7 +15,7 @@ export interface Plug {
   /** An (optional) name for this `Plug` (mainly for logging) */
   readonly name?: string
   /** Process a `Files` instance in the context of a `Run` */
-  process(input: Files, run: Run): Files | Promise<Files>
+  process(input: Files, run: Run, log: PlugLog): Files | Promise<Files>
 }
 
 /** A `Processor` is a simple functional version of the `Plug` interface. */
@@ -72,7 +73,7 @@ export class PlugPipe extends AbstractPipe<PlugPipe> implements Plug {
 
   async process(list: Files, run: Run): Promise<Files> {
     if (this.#parent) list = await this.#parent.process(list, run)
-    if (this.#plug) list = await this.#plug.process(list, run)
+    if (this.#plug) list = await this.#plug.process(list, run, run.log(this.#plug))
     return list
   }
 
@@ -105,7 +106,7 @@ export class TaskPipe extends AbstractPipe<TaskPipe> implements Runnable {
 
   async run(run: Run): Promise<Files> {
     let list = await this.#parent.run(run)
-    if (this.#plug) list = await this.#plug.process(list, run)
+    if (this.#plug) list = await this.#plug.process(list, run, run.log(this.#plug))
     return list
   }
 

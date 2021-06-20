@@ -1,6 +1,7 @@
 import { Files } from '../files'
 import { Plug, install } from '../pipe'
 import { Run } from '../run'
+import { Log } from '../utils/log'
 import { getDirectoryPath, getRelativePath } from '../utils/paths'
 
 declare module '../pipe' {
@@ -16,13 +17,12 @@ export class ToPlug implements Plug {
     this.#directory = directory
   }
 
-  process(input: Files, run: Run): Files {
+  process(input: Files, run: Run, log: Log): Files {
     const directory = getDirectoryPath(run.directory, this.#directory)
     if (directory === input.directory) return input
 
     const output = new Files(directory)
     const files = input.list()
-    const log = run.log(this)
 
     for (const file of files) output.add(file.relativePath, file)
     log.debug('Relocated', files.length,
