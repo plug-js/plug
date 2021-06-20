@@ -1,5 +1,3 @@
-// import { expect } from 'chai'
-// import { isatty } from 'tty'
 import { expect } from 'chai'
 import { Files } from '../src/files'
 import { Plug } from '../src/pipe'
@@ -8,14 +6,14 @@ import { Run } from '../src/run'
 import { Task } from '../src/task'
 
 import {
-  Log,
   LogLevel,
   LogOptions,
+  RunLog,
   makeLog,
   options,
 } from '../src/utils/log'
 
-type TestLog = Log & { logs: string[] }
+type TestLog = RunLog & { logs: string[] }
 
 function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
   const lines: string[] = []
@@ -25,7 +23,7 @@ function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
     colors: false,
   })
 
-  const log = makeLog(new Run()) as TestLog
+  const log = makeLog() as TestLog
   log.logs = lines
   return log
 }

@@ -42,12 +42,20 @@ export type Log = ((message: string, ...args: any[]) => void) & {
 } & Readonly<Omit<LogOptions, 'write'>>
 
 /**
+ * A `Log` configured for a `Run`.
+ *
+ * This is really just a marker type, to fail compilation when passing around
+ * the wrong kind of `Log` between the various components.
+ */
+export type RunLog = Log & { readonly run: Run }
+
+/**
  * A `Log` configured for `Plug` instances.
  *
  * This is really just a marker type, to fail compilation when passing around
  * the wrong kind of `Log` between the various components.
  */
-export type PlugLog = Log & { readonly plug: Plug }
+export type PlugLog = RunLog & { readonly plug: Plug }
 
 /* ========================================================================== */
 
@@ -75,7 +83,13 @@ export const options: LogOptions = (() => {
 })()
 
 /* Emit a logging message, properly format */
-function emit(level: LogLevel, run: Run, plug: Plug | undefined, message: string, ...args: any[]): void {
+function emit(
+    level: LogLevel,
+    run: Run | undefined,
+    plug: Plug | undefined,
+    message: string,
+    ...args: any[]
+): void {
   // First check if we _really_ have to log this message
   if (level < options.level) return
 
@@ -111,7 +125,7 @@ function emit(level: LogLevel, run: Run, plug: Plug | undefined, message: string
   }
 
   // Tasks and plug
-  if (run.tasks.length) {
+  if (run?.tasks.length) {
     for (let i = 0; i < run.tasks.length; i ++) {
       push(RGB['#005f00'], i ? '|' : '{')
       push(RGB['#00ff00'], getTaskName(run.tasks[i]))
@@ -144,12 +158,14 @@ function emit(level: LogLevel, run: Run, plug: Plug | undefined, message: string
 
 /* ========================================================================== */
 
+/* Create a `Log` */
+export function makeLog(): Log
 /* Create a `Log` for the given `Run` */
-export function makeLog(run: Run): Log
+export function makeLog(run: Run): RunLog
 /* Create a `Log` for the given `Run` and `Plug` instance */
 export function makeLog(run: Run, plug: Plug): PlugLog
 
-export function makeLog(run: Run, plug?: Plug): PlugLog {
+export function makeLog(run?: Run, plug?: Plug): Log | RunLog | PlugLog {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
     'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
@@ -158,5 +174,6 @@ export function makeLog(run: Run, plug?: Plug): PlugLog {
     'level': { value: options.level },
     'times': { value: options.times },
     'plug': { value: plug },
-  }) as PlugLog
+    'run': { value: run },
+  }) as Log | RunLog | PlugLog
 }
