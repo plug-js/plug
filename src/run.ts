@@ -18,8 +18,8 @@ export interface Runnable {
 }
 
 /** Create a new `Run` */
-export function run(task: Task): Run {
-  return new RunImpl(task)
+export function start(): Run {
+  return new RunImpl()
 }
 
 // Internal implementation of the `Run` interface
@@ -27,9 +27,14 @@ class RunImpl implements Run {
   readonly id!: Symbol
   readonly tasks!: readonly Task[]
 
-  constructor(task: Task, run?: Run) {
+  constructor()
+  constructor(run: Run, task: Task)
+  constructor(...args: [ Run, Task ] | []) {
+    const [ run, task ] = args
+
     const id = run ? run.id : Symbol()
-    const tasks = run ? [ ...run.tasks, task ] : [ task ]
+    const tasks = run ? [ ...run.tasks ] : []
+    if (task) tasks.push(task)
 
     Object.defineProperties(this, {
       'id': { value: id },
@@ -38,6 +43,6 @@ class RunImpl implements Run {
   }
 
   for(task: Task): Run {
-    return new RunImpl(task, this)
+    return new RunImpl(this, task)
   }
 }
