@@ -17,7 +17,7 @@ export type CanonicalPath = AbsolutePath & {
 }
 
 /** An absolute path for a directory */
-export type DirectoryPath = AbsolutePath & {
+export type DirectoryPath = string & {
   __brand_directory_path: any
 }
 
@@ -46,13 +46,13 @@ export function getAbsolutePath(directory: DirectoryPath, path: string): Absolut
 }
 
 /** Return the relative path from a directory to an absolute path */
-export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath {
+export function getRelativePath(directory: DirectoryPath, path: AbsolutePath | DirectoryPath): RelativePath {
   if (caseSensitivePaths()) return relative(directory, path) as RelativePath
   return relative(directory.toLowerCase(), path.toLowerCase()) as RelativePath
 }
 
 /** Returns whether the specified path is a _child_ of the given directory */
-export function isChild(directory: DirectoryPath, path: AbsolutePath): boolean {
+export function isChild(directory: DirectoryPath, path: AbsolutePath | DirectoryPath): boolean {
   const relative = getRelativePath(directory, path)
   return !! (relative && (! relative.startsWith('..' + sep)))
 }
@@ -68,6 +68,6 @@ export function getDirectoryPath(directory: DirectoryPath, path?: string): Direc
 }
 
 /** Get the directory path for the specified absolute path */
-export function getDirectory(path: AbsolutePath): DirectoryPath {
+export function getParentDirectory(path: AbsolutePath | DirectoryPath): DirectoryPath {
   return dirname(path) as DirectoryPath
 }

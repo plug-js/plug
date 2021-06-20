@@ -8,7 +8,7 @@ import {
   RelativePath,
   getAbsolutePath,
   getCanonicalPath,
-  getDirectory,
+  getParentDirectory,
   getRelativePath,
 } from '../utils/paths'
 
@@ -36,7 +36,7 @@ export abstract class AbstractFile implements File {
   }
 
   get(path: string): File {
-    const directory = getDirectory(this.absolutePath)
+    const directory = getParentDirectory(this.absolutePath)
     const absolutePath = getAbsolutePath(directory, path)
     return this.files.get(absolutePath)
   }

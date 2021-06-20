@@ -2,7 +2,7 @@ import { Failure } from './failure'
 import { Task, TaskCall } from './task'
 import { loadBuildFile } from './typescript/loader'
 import { makeLog } from './utils/log'
-import { AbsolutePath, DirectoryPath, getDirectory } from './utils/paths'
+import { AbsolutePath, DirectoryPath, getParentDirectory } from './utils/paths'
 
 const taskNames = new WeakMap<Task, string>()
 
@@ -78,7 +78,7 @@ export class Project {
 
 export function load(buildFile: AbsolutePath, directory?: DirectoryPath): Project {
   // Project directory defaults to directory of build file
-  if (! directory) directory = getDirectory(buildFile)
+  if (! directory) directory = getParentDirectory(buildFile)
 
   // Load the build file...
   const build = loadBuildFile(directory, buildFile)

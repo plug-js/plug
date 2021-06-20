@@ -15,7 +15,7 @@ import {
 import {
   AbsolutePath,
   getAbsolutePath,
-  getDirectory,
+  getParentDirectory,
   getDirectoryPath,
   getRelativePath,
 } from '../utils/paths'
@@ -53,7 +53,7 @@ function loadOptions(
   // Convert "compilerOptions" parsing the JSON format and returning it with proper enums and validations
   const { options, errors } = convertCompilerOptionsFromJson(
       compilerOptions, // the compiler options as JSON
-      getDirectory(file.absolutePath), // dir of this config file
+      getParentDirectory(file.absolutePath), // dir of this config file
       file.absolutePath, // full path name of this config file
   )
   if (errors.length) return void diagnostics.push(...errors)
@@ -62,7 +62,7 @@ function loadOptions(
   if (!extendsPath) return options
 
   // Check for circular extension errors
-  const extendedPath = getAbsolutePath(getDirectory(file.absolutePath), extendsPath)
+  const extendedPath = getAbsolutePath(getParentDirectory(file.absolutePath), extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
     const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)

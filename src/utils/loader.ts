@@ -1,7 +1,7 @@
 import Module from 'module'
 import sourceMapSupport from 'source-map-support'
 import { resolve, dirname, isAbsolute, sep } from 'path'
-import { AbsolutePath, DirectoryPath, getDirectory, getDirectoryPath } from './paths'
+import { AbsolutePath, DirectoryPath, getParentDirectory, getDirectoryPath } from './paths'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })
@@ -49,10 +49,10 @@ const _loader = cjs._load
 function findPaths(file: AbsolutePath): DirectoryPath[] {
   function walk(dir: DirectoryPath, paths: DirectoryPath[] = []): DirectoryPath[] {
     paths.push(getDirectoryPath(dir, 'node_modules'))
-    const parent = getDirectory(dir)
+    const parent = getParentDirectory(dir)
     return parent === dir ? paths : walk(parent, paths)
   }
-  return walk(getDirectory(file))
+  return walk(getParentDirectory(file))
 }
 
 // Replace the Node JS loader with our own loader wrapper

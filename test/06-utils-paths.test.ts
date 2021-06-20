@@ -6,7 +6,7 @@ import {
   getCanonicalPath,
   getAbsolutePath,
   getDirectoryPath,
-  getDirectory,
+  getParentDirectory,
   isChild,
   caseSensitivePaths,
 } from '../src/utils/paths'
@@ -32,7 +32,7 @@ describe('Paths', () => {
   })
 
   it('should get a directory for a file', () => {
-    expect(getDirectory(x_file)).to.equal(x_dir)
+    expect(getParentDirectory(x_file)).to.equal(x_dir)
   })
 
   it('should honor case sensitivity in tests', () => {
@@ -84,13 +84,13 @@ describe('Paths', () => {
       expect(isChild(x_dir, x_file)).to.be.true
       expect(isChild(x_dir, l_file)).to.be.false
       expect(isChild(x_dir, u_file)).to.be.false
-      expect(isChild(x_dir, x_dir as AbsolutePath)).to.be.false
+      expect(isChild(x_dir, x_dir)).to.be.false
 
       ;(<any> globalThis).caseSensitivePaths = false
       expect(isChild(x_dir, x_file)).to.be.true
       expect(isChild(x_dir, l_file)).to.be.true
       expect(isChild(x_dir, u_file)).to.be.true
-      expect(isChild(x_dir, x_dir as AbsolutePath)).to.be.false
+      expect(isChild(x_dir, x_dir)).to.be.false
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }
