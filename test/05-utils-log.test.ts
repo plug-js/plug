@@ -12,6 +12,7 @@ import {
   makeLog,
   options,
 } from '../src/utils/log'
+import { DirectoryPath } from '../src/utils/paths'
 
 type TestLog = RunLog & { logs: string[] }
 
@@ -34,8 +35,8 @@ describe('Log', () => {
 
   // Convenience plugs and tasks for tests
   const plug1: Plug = { process: (i) => i, name: 'myplug' }
-  const task1: Task = { run: () => new Files('/foo') }
-  const task2: Task = { run: () => new Files('/foo') }
+  const task1: Task = { run: () => new Files('/foo' as DirectoryPath) }
+  const task2: Task = { run: () => new Files('/foo' as DirectoryPath) }
   setTaskName(task1, 'mytask1')
   setTaskName(task2, 'mytask2')
 

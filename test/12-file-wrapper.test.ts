@@ -2,10 +2,11 @@ import { expect } from 'chai'
 import { RawSourceMap } from 'source-map'
 import { File, Files } from '../src/files'
 import { FileWrapper } from '../src/files/wrapper'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('File Wrapper', () => {
   it('should wrap an existing file', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     const file: File = {
       files: undefined as any,
       absolutePath: '/foo/absolute path' as any,
@@ -41,7 +42,7 @@ describe('File Wrapper', () => {
   })
 
   it('should wrap an existing file with a different absolute path', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     const file: File = {
       files: undefined as any,
       absolutePath: '/foo/absolute path' as any,

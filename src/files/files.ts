@@ -1,6 +1,5 @@
 import assert from 'assert'
 import { FileImpl } from './file'
-import { getProjectDirectory } from '../project'
 
 import {
   File,
@@ -16,6 +15,7 @@ import {
   isChild,
 } from '../utils/paths'
 import { FileWrapper } from './wrapper'
+import { isAbsolute } from 'path'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -40,9 +40,9 @@ export class Files implements Files {
    * If the path was not specified the default `getProjectDirectory()` will
    * be used.
    */
-  constructor(path?: string) {
-    const currentDirectory = getProjectDirectory()
-    this.directory = getDirectoryPath(currentDirectory, path)
+  constructor(directory: DirectoryPath) {
+    assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
+    this.directory = directory
   }
 
   /** Return a `File` associated with this `Files` list */

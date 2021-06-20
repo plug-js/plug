@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { CompilePlug } from '../src/plugs/compile'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('Plug TypeScript Compiler', function() {
   // compiling takes time...
@@ -15,7 +16,7 @@ describe('Plug TypeScript Compiler', function() {
   it('should compile', () => {
     const compiler = new CompilePlug()
 
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     files.add('test.ts', { contents: 'void 0' })
 
     const output = compiler.process(files)
@@ -26,7 +27,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile with a default tsconfig.json', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     files.add('tsconfig.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
     files.add('test.ts', { contents: 'void 0' })
 
@@ -43,7 +44,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile with a specific config file', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     files.add('options.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
     files.add('test.ts', { contents: 'void 0' })
 
@@ -60,7 +61,7 @@ describe('Plug TypeScript Compiler', function() {
   })
 
   it('should compile also javascript files and copy resources', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     files.add('tsconfig.json', { contents: '{"compilerOptions":{"rootDir":"from","outDir":"to"}}' })
     files.add('from/typescript.ts', { contents: 'import "./javascript"' })
     files.add('from/javascript.js', { contents: 'void 0' })

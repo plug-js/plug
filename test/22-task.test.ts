@@ -1,9 +1,9 @@
 import { expect } from 'chai'
 import { Files } from '../src/files'
 import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
-import { getProjectDirectory } from '../src/project'
 import { Run, Runnable } from '../src/run'
 import { parallel, Task, task } from '../src/task'
+import { DirectoryPath } from '../src/utils/paths'
 import { disableLogs } from './support'
 
 describe('Plug Tasks', () => {
@@ -124,11 +124,10 @@ describe('Plug Tasks', () => {
       return new PlugPipe(undefined, { process })
     }
 
-    const dir = getProjectDirectory()
     let counter = 0
     let tasks = undefined as readonly Task[] | undefined
 
-    const files = new Files()
+    const files = new Files('/foo' as DirectoryPath)
     const task0 = task('zero', init((run) => {
       tasks = run.tasks
       return files
@@ -167,18 +166,18 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskA = parallel(task1.task, task2.task, task3.task)
-    const resultA = await taskA.task.run(new Run())
+    const resultA = await taskA.task.run(new Run('/foo'))
 
     expect(taskA.task.description).to.be.undefined
     expect(resultA.list().sort()).to.eql([
-      { absolutePath: `${dir}/bar2.txt`, originalPath: `${dir}/bar2.txt` },
-      { absolutePath: `${dir}/baz1.txt`, originalPath: `${dir}/baz1.txt` },
-      { absolutePath: `${dir}/foo3.txt`, originalPath: `${dir}/foo3.txt` },
-      { absolutePath: `${dir}/xxxx.txt`, originalPath: `${dir}/xxxx.txt` },
+      { absolutePath: '/foo/bar2.txt', originalPath: '/foo/bar2.txt' },
+      { absolutePath: '/foo/baz1.txt', originalPath: '/foo/baz1.txt' },
+      { absolutePath: '/foo/foo3.txt', originalPath: '/foo/foo3.txt' },
+      { absolutePath: '/foo/xxxx.txt', originalPath: '/foo/xxxx.txt' },
     ])
 
     // Always rooted in project path
-    expect(resultA.directory).to.equal(getProjectDirectory())
+    expect(resultA.directory).to.equal('/foo')
     expect(resultA.get('xxxx.txt').contentsSync()).to.equal('third') // task3 is last
 
     // Tasks stack
@@ -191,18 +190,18 @@ describe('Plug Tasks', () => {
 
     counter = 0
     const taskB = parallel('reversed', task3, task2, task1)
-    const resultB = await taskB.task.run(new Run())
+    const resultB = await taskB.task.run(new Run('/foo'))
 
     expect(taskB.task.description).to.equal('reversed')
     expect(resultB.list().sort()).to.eql([
-      { absolutePath: `${dir}/bar2.txt`, originalPath: `${dir}/bar2.txt` },
-      { absolutePath: `${dir}/baz1.txt`, originalPath: `${dir}/baz1.txt` },
-      { absolutePath: `${dir}/foo3.txt`, originalPath: `${dir}/foo3.txt` },
-      { absolutePath: `${dir}/xxxx.txt`, originalPath: `${dir}/xxxx.txt` },
+      { absolutePath: '/foo/bar2.txt', originalPath: '/foo/bar2.txt' },
+      { absolutePath: '/foo/baz1.txt', originalPath: '/foo/baz1.txt' },
+      { absolutePath: '/foo/foo3.txt', originalPath: '/foo/foo3.txt' },
+      { absolutePath: '/foo/xxxx.txt', originalPath: '/foo/xxxx.txt' },
     ])
 
     // Always rooted in project path
-    expect(resultB.directory).to.equal(getProjectDirectory())
+    expect(resultB.directory).to.equal('/foo')
     expect(resultB.get('xxxx.txt').contentsSync()).to.equal('first') // task1 is last
 
     // Tasks stack

@@ -1,8 +1,11 @@
 import type { Files } from './files'
+import type { Log, PlugLog, RunLog } from './utils/log'
 import type { Plug } from './pipe'
 import type { Task } from './task'
-import { Log, makeLog, PlugLog, RunLog } from './utils/log'
+import { DirectoryPath } from './utils/paths'
+import { makeLog } from './utils/log'
 import { randomBytes } from 'crypto'
+import { resolve } from 'path'
 
 /**
  * The `Run` class describes a contract beteween `Plug`s and `Processor`s
@@ -14,16 +17,24 @@ export class Run {
 
   readonly id!: RunId
   readonly tasks!: readonly Task[]
+  readonly directory!: DirectoryPath
 
-  constructor() // hide the (real) next constructor
-  constructor(...args: [] | [ Run, Task ]) {
-    const [ run, task ] = args
+  constructor(directory?: string)
+  constructor(run: Run, task: Task)
+  constructor(first: string | undefined | Run, task?: Task) {
+    const { dir, run } =
+        typeof first === 'string' ?
+            { dir: resolve(first), run: undefined } :
+        first ?
+            { dir: first.directory, run: first } :
+            { dir: process.cwd(), run: undefined }
 
     const id = run ? run.id : new RunId()
     const tasks = run ? [ ...run.tasks ] : []
     if (task) tasks.push(task)
 
     Object.defineProperties(this, {
+      'directory': { value: dir, enumerable: true },
       'id': { value: id, enumerable: true },
       'tasks': { value: tasks },
     })
@@ -43,7 +54,7 @@ export class Run {
   }
 
   for(task: Task): Run {
-    return new (<any> Run)(this, task)
+    return new Run(this, task)
   }
 }
 

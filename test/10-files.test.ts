@@ -1,26 +1,22 @@
 import { expect } from 'chai'
 import { Files } from '../src/files'
-import { getProjectDirectory } from '../src/project'
 import { AssertionError } from 'assert'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('File List', () => {
   it('should create a new Files instance', () => {
-    expect(new Files())
-        .to.be.instanceOf(Files)
-        .to.have.property('directory', getProjectDirectory())
-    expect(new Files('foo'))
-        .to.be.instanceOf(Files)
-        .to.have.property('directory', getProjectDirectory() + '/foo')
-    expect(new Files('/foo'))
+    expect(new Files('/foo' as DirectoryPath))
         .to.be.instanceOf(Files)
         .to.have.property('directory', '/foo')
+    expect(() => new Files('foo' as DirectoryPath))
+        .to.throw(AssertionError, 'Not an absolute directory: "foo"')
   })
 
   it('should get files from a Files instance with case sensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
 
-      const files = new Files('/Foo')
+      const files = new Files('/Foo' as DirectoryPath)
       const file = files.get('Bar.Txt')
 
       expect(file.files).to.equal(files)
@@ -65,7 +61,7 @@ describe('File List', () => {
     try {
       (<any> globalThis).caseSensitivePaths = false
 
-      const files = new Files('/Foo')
+      const files = new Files('/Foo' as DirectoryPath)
       const file = files.get('Bar.Txt')
 
       expect(file.files).to.equal(files)
@@ -109,7 +105,7 @@ describe('File List', () => {
   it('should add a simple path with case sensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
-      const list = new Files('/Foo')
+      const list = new Files('/Foo' as DirectoryPath)
       list.add('One.Txt')
 
       const files = list.list()
@@ -143,15 +139,15 @@ describe('File List', () => {
   })
 
   it('should not add with an empty or invalid path', () => {
-    expect(() => new Files('/foo').add('')).to.throw(AssertionError, 'No path for file to be added')
-    expect(() => new Files('/foo').add('/bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
-    expect(() => new Files('/foo').add('../bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+    expect(() => new Files('/foo' as DirectoryPath).add('')).to.throw(AssertionError, 'No path for file to be added')
+    expect(() => new Files('/foo' as DirectoryPath).add('/bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+    expect(() => new Files('/foo' as DirectoryPath).add('../bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
   })
 
   it('should add a simple path with case insensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = false
-      const list = new Files('/Foo')
+      const list = new Files('/Foo' as DirectoryPath)
       list.add('One.Txt')
 
       const files = list.list()
@@ -185,7 +181,7 @@ describe('File List', () => {
   })
 
   it('should add a path with some options', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     const file1 = files.add('bar.txt', {
       contents: 'hello, world!',
       sourceMap: { test: true } as any,
@@ -216,7 +212,7 @@ describe('File List', () => {
   })
 
   it('should add a file', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
 
     const file1 = files.get('bar.txt') // just get the file
     expect(files.list()).to.eql([])
@@ -246,7 +242,7 @@ describe('File List', () => {
   })
 
   it('should sort files', () => {
-    const files = new Files('/foo')
+    const files = new Files('/foo' as DirectoryPath)
     files.add('3.txt')
     files.add('2.txt')
     files.add('1.txt')
@@ -266,7 +262,7 @@ describe('File List', () => {
   })
 
   it('should clone a file list', () => {
-    const filesA = new Files('/foo')
+    const filesA = new Files('/foo' as DirectoryPath)
     const fileA1 = filesA.add('bar.txt', { contents: 'hello, world 1!' })
     const fileA2 = filesA.add('bar/baz.txt', { contents: 'hello, world 2!' })
 

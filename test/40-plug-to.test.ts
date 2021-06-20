@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { ToPlug } from '../src/plugs/to'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('Plug From / To', function() {
   it('should be installed', () => {
@@ -9,11 +10,11 @@ describe('Plug From / To', function() {
   })
 
   it('should relocate a directory', () => {
-    const input = new Files('/foo/in')
+    const input = new Files('/foo/in' as DirectoryPath)
     input.add('bar.txt', { contents: 'hello, world 1!' })
     input.add('bar/baz.txt', { contents: 'hello, world 2!' })
 
-    const output = new ToPlug('/foo/out').process(input)
+    const output = new ToPlug('/foo/out').process(input, {} as any) // TODO
 
     expect(output.list().sort()).to.eql([
       { 'absolutePath': '/foo/out/bar.txt', 'originalPath': '/foo/in/bar.txt' },

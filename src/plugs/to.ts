@@ -1,6 +1,6 @@
 import { Files } from '../files'
 import { Plug, install } from '../pipe'
-import { getProjectDirectory } from '../project'
+import { Run } from '../run'
 import { getDirectoryPath } from '../utils/paths'
 
 declare module '../pipe' {
@@ -16,8 +16,10 @@ export class ToPlug implements Plug {
     this.#directory = directory
   }
 
-  process(input: Files): Files {
-    const directory = getDirectoryPath(getProjectDirectory(), this.#directory)
+  process(input: Files, run: Run): Files {
+    const directory = getDirectoryPath(run.directory, this.#directory)
+    if (directory === run.directory) return input
+
     const output = new Files(directory)
     for (const file of input.list()) output.add(file.relativePath, file)
     return output

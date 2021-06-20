@@ -2,11 +2,12 @@ import { expect } from 'chai'
 import { File, Files } from '../src/files'
 import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
+import { DirectoryPath } from '../src/utils/paths'
 
 describe('Files', () => {
   describe('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
-      const file1 = new Files(__dirname).get('this does not exist')
+      const file1 = new Files(__dirname as DirectoryPath).get('this does not exist')
       expect(await file1.exists()).to.be.false
       await expect(file1.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
@@ -15,7 +16,7 @@ describe('Files', () => {
       await expect(file1.lastModified()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
 
-      const file2 = new Files(__dirname).get(__dirname)
+      const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
       await expect(file2.exists()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('EISDIR'))
       await expect(file2.contents()).to.be.rejectedWith(Error)
@@ -28,7 +29,7 @@ describe('Files', () => {
 
     it('should create a File', async () => {
       function create(contents: string): File {
-        return new Files('/foo').add('bar.js', { contents })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -48,7 +49,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files().add('bar.js', { contents, sourceMap })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -80,7 +81,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        const list = new Files('/foo')
+        const list = new Files('/foo' as DirectoryPath)
         list.add('bar.js.map', { contents: '{"foo":"bar"}' })
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -114,7 +115,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo').add('bar.js', { contents, sourceMap })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -143,7 +144,7 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', async () => {
-      const files = new Files(__dirname)
+      const files = new Files(__dirname as DirectoryPath)
       const file = files.get(__filename)
       const relative = basename(__filename)
 
@@ -170,13 +171,13 @@ describe('Files', () => {
 
   describe('Synchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', () => {
-      const file1 = new Files(__dirname).get('this does not exist')
+      const file1 = new Files(__dirname as DirectoryPath).get('this does not exist')
       expect(file1.existsSync()).to.be.false
       expect(() => file1.contentsSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.sourceMapSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.lastModifiedSync()).to.throw(Error).with.property('code', 'ENOENT')
 
-      const file2 = new Files(__dirname).get(__dirname)
+      const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
       expect(() => file2.existsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
@@ -185,7 +186,7 @@ describe('Files', () => {
 
     it('should create a File', () => {
       function create(contents: string): File {
-        return new Files('/foo').add('bar.js', { contents })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -205,7 +206,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,e30=\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo').add('bar.js', { contents, sourceMap })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -237,7 +238,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        const list = new Files('/foo')
+        const list = new Files('/foo' as DirectoryPath)
         list.add('bar.js.map', { contents: '{"foo":"bar"}' })
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -271,7 +272,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo').add('bar.js', { contents, sourceMap })
+        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -300,7 +301,7 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', () => {
-      const files = new Files(__dirname)
+      const files = new Files(__dirname as DirectoryPath)
       const file = files.get(__filename)
       const relative = basename(__filename)
 

@@ -1,6 +1,5 @@
 import { Files } from './files'
 import { PlugPipe, TaskPipe } from './pipe'
-import { getProjectDirectory } from './project'
 import { glob, GlobOptions } from './utils/globs'
 import { DirectoryPath, getDirectoryPath } from './utils/paths'
 
@@ -26,14 +25,14 @@ async function readDirectory(directory: DirectoryPath, ...args: ReadArguments): 
 }
 
 export function read(...args: ReadArguments): TaskPipe {
-  const directory = getProjectDirectory()
-  return new TaskPipe({ run: () => readDirectory(directory, ...args) })
+  return new TaskPipe({ run: (run) => readDirectory(run.directory, ...args) })
 }
 
 export function from(path: string): { read: typeof read } {
-  const directory = getDirectoryPath(getProjectDirectory(), path)
   return { read: (...args: ReadArguments) =>
-    new TaskPipe({ run: () => readDirectory(directory, ...args) }) }
+    new TaskPipe({ run: (run) =>
+      readDirectory(getDirectoryPath(run.directory, path), ...args),
+    }) }
 }
 
 export function pipe(): PlugPipe {
