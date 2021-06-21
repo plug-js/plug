@@ -1,4 +1,6 @@
 import { Failure } from './failure'
+import { Files } from './files'
+import { Run } from './run'
 import assert from 'assert'
 import { isAbsolute } from 'path'
 import { loadBuildFile } from './typescript/loader'
@@ -71,6 +73,12 @@ export class Project {
       descriptions[name] = task.description
     }
     return descriptions
+  }
+
+  async runTask(name: string = 'default'): Promise<Files> {
+    const task = this.#tasks.get(name)
+    if (! task) throw new Failure(`No such task "${name}"`)
+    return task.run(new Run(this))
   }
 }
 

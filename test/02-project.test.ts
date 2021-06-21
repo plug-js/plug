@@ -26,13 +26,13 @@ describe('Project', () => {
     expect(project3.buildFile).to.equal('/foo/bar/build.ts')
   })
 
-  it('should register and return a task name', () => {
+  it('should register and return a task name', async () => {
     const dir = '/foo' as DirectoryPath
     const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
 
-    const task0: any = { run: () => {} }
-    const task1: any = { run: () => {}, description: 'First task' }
-    const task2: any = { run: () => {}, description: 'Second task' }
+    const task0: any = { run: () => 0 }
+    const task1: any = { run: () => 1, description: 'First task' }
+    const task2: any = { run: () => 2, description: 'Second task' }
     const call2: any = () => {}
     call2.task = task2
 
@@ -61,6 +61,11 @@ describe('Project', () => {
       task1: 'First task',
       task2: 'Second task',
     })
+
+    expect(await project.runTask('task0')).to.equal(0)
+    expect(await project.runTask('task1')).to.equal(1)
+    expect(await project.runTask('task2')).to.equal(2)
+    await expect(project.runTask()).to.be.rejectedWith(Failure, 'No such task "default"')
   })
 
   it('should cleanup what it can reading a project', () => {
