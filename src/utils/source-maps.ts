@@ -111,8 +111,9 @@ export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourc
  * @param code The code to parse for source mapping URLs
  * @param wipe Whether to wipe the source mapping URL from the file or not
  */
-export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap | undefined {
+export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap {
   const { contents, url } = extractSourceMappingURL(code, wipe)
   const parsedSourceMap = parseSourceMappingURL(path, url)
   if (parsedSourceMap) return { contents, ...parsedSourceMap }
+  return { contents: code }
 }

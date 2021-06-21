@@ -1,6 +1,6 @@
 import { DirectoryPath } from '../src/utils/paths'
+import { FileSourceMap } from '../src/source-maps'
 import { FileWrapper } from '../src/files/wrapper'
-import { RawSourceMap } from 'source-map'
 import { expect } from 'chai'
 import { File, Files } from '../src/files'
 
@@ -20,8 +20,8 @@ describe('File Wrapper', () => {
       lastModifiedSync: (): number => 'lastModifiedSync' as any,
       contents: (): Promise<string> => 'contents' as any,
       contentsSync: (): string => 'contentsSync' as any,
-      sourceMap: (): Promise<RawSourceMap | undefined> => 'sourceMap' as any,
-      sourceMapSync: (): RawSourceMap | undefined => 'sourceMapSync' as any,
+      sourceMap: (): Promise<FileSourceMap | undefined> => 'sourceMap' as any,
+      sourceMapSync: (): FileSourceMap | undefined => 'sourceMapSync' as any,
     }
 
     const wrapper = new FileWrapper(files, file)
@@ -56,8 +56,8 @@ describe('File Wrapper', () => {
       lastModifiedSync: (): number => 'lastModifiedSync' as any,
       contents: (): Promise<string> => 'contents' as any,
       contentsSync: (): string => 'contentsSync' as any,
-      sourceMap: (): Promise<RawSourceMap | undefined> => 'sourceMap' as any,
-      sourceMapSync: (): RawSourceMap | undefined => 'sourceMapSync' as any,
+      sourceMap: (): Promise<FileSourceMap | undefined> => 'sourceMap' as any,
+      sourceMapSync: (): FileSourceMap | undefined => 'sourceMapSync' as any,
     }
 
     const wrapper = new FileWrapper(files, file, '/foo/another absolute path' as any)

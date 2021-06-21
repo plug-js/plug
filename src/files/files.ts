@@ -104,6 +104,10 @@ export class Files implements Files {
     return list
   }
 
+  [Symbol.iterator](): IterableIterator<File> {
+    return this.#files.values()
+  }
+
   /** Add a `File` to this `Files` instance */
   add(file: File): File
   /** Add a `File` to this `Files` instance with a new path */

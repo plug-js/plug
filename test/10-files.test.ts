@@ -184,7 +184,7 @@ describe('File List', () => {
     const files = new Files('/foo' as DirectoryPath)
     const file1 = files.add('bar.txt', {
       contents: 'hello, world!',
-      sourceMap: { test: true } as any,
+      sourceMap: { version: 3 } as any,
     })
 
     expect(files.list()).to.eql([ file1 ])
@@ -193,7 +193,7 @@ describe('File List', () => {
     expect(file1.absolutePath).to.equal('/foo/bar.txt')
     expect(file1.originalPath).to.equal('/foo/bar.txt')
     expect(file1.contentsSync()).to.equal('hello, world!')
-    expect(file1.sourceMapSync()).to.eql({ test: true })
+    expect(file1.sourceMapSync()?.file).to.eql(file1.absolutePath)
 
     // overwrite file...
     const file2 = files.add('bar.txt', {
@@ -208,7 +208,7 @@ describe('File List', () => {
     expect(file2.absolutePath).to.equal('/foo/bar.txt')
     expect(file2.originalPath).to.equal('/from/original.txt')
     expect(file2.contentsSync()).to.equal('hello, world!')
-    expect(file2.sourceMapSync()).to.eql({ test: false })
+    expect(file2.sourceMapSync()?.file).to.eql(file2.absolutePath)
   })
 
   it('should add a file', () => {

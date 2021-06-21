@@ -1,6 +1,6 @@
 import { Files } from './files'
-import { RawSourceMap } from 'source-map'
 import { CanonicalPath, FilePath, RelativeFilePath } from '../utils/paths'
+import { FileSourceMap, SourceMapV3 } from '../source-maps'
 
 // Import and re-export our `Files` class
 export { Files } from './files'
@@ -14,7 +14,7 @@ export type FileOptions = {
    * map should be extracted from the file's contents themselves
    * @default true
    */
-  sourceMap?: boolean | RawSourceMap,
+  sourceMap?: boolean | SourceMapV3,
   /** The original path of the file (if any) defaulting to its path */
   originalPath?: string,
 }
@@ -56,10 +56,10 @@ export interface File {
   /** Return the contents of this `File` */
   contentsSync(): string
 
-  /** Return a `RawSourceMap` associated with this `File` if any */
-  sourceMap(): Promise<RawSourceMap | undefined>
-  /** Return a `RawSourceMap` associated with this `File` if any */
-  sourceMapSync(): RawSourceMap | undefined
+  /** Return a `FileSourceMap` associated with this `File` if any */
+  sourceMap(): Promise<FileSourceMap | undefined>
+  /** Return a `FileSourceMap` associated with this `File` if any */
+  sourceMapSync(): FileSourceMap | undefined
 
   /** Return a `File` whose path is relative to this one */
   get(path: string): File

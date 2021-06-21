@@ -1,29 +1,46 @@
 import { AbstractFile } from './abstract'
 import { FilePath } from '../utils/paths'
-import { RawSourceMap } from 'source-map'
 import { extractSourceMap } from '../utils/source-maps'
+import { makeLog } from '../utils/log'
 
 import { File, Files } from './index'
+import { FileSourceMap, SourceMapV3 } from '../source-maps'
 import { promises as fs, readFileSync, statSync } from 'fs'
 
 /* ========================================================================== *
  * VIRTUAL FILE IMPLEMENTATION                                                *
  * ========================================================================== */
 
+const log = makeLog()
+
 /* Internal type associating content and an (optional) source map */
-type FileData = { contents: string, lastModified: number, sourceMapFile?: string }
+type FileData = {
+  contents: string,
+  lastModified: number,
+  sourceMap: FileSourceMap | FilePath | null,
+}
 
 interface FileImplOptions {
   originalPath?: FilePath,
-  sourceMap?: boolean | RawSourceMap,
+  sourceMap?: boolean | SourceMapV3,
   contents?: string,
+}
+
+function parseContentsForSourceMap(file: File, code: string, lastModified: number): FileData {
+  const { contents, sourceMap, sourceMapFile } = extractSourceMap(file.absolutePath, code, true)
+  if (sourceMapFile) {
+    return { contents, lastModified, sourceMap: sourceMapFile }
+  } else if (sourceMap) {
+    return { contents, lastModified, sourceMap: new FileSourceMap(file.absolutePath, sourceMap) }
+  } else {
+    return { contents, lastModified, sourceMap: null }
+  }
 }
 
 /* Implementation of the File interface */
 export class FileImpl extends AbstractFile implements File {
   #data?: FileData
   #promise?: Promise<FileData>
-  #sourceMap?: RawSourceMap | false
 
   constructor(
       files: Files,
@@ -32,15 +49,17 @@ export class FileImpl extends AbstractFile implements File {
   ) {
     super(files, absolutePath, options.originalPath)
 
-    const { contents, sourceMap = true } = options
+    const { contents, sourceMap: sourceMapSource = true } = options
 
-    if (contents != undefined) {
+    if (contents !== undefined) {
       const lastModified = Date.now()
-      if (sourceMap === true) {
-        this.#readSourceMapData(contents, lastModified)
+      if (sourceMapSource === true) { // parse the source map
+        this.#data = parseContentsForSourceMap(this, contents, lastModified)
+      } else if (sourceMapSource !== false) {
+        const sourceMap = new FileSourceMap(absolutePath, sourceMapSource)
+        this.#data = { lastModified, contents, sourceMap }
       } else {
-        this.#data = { lastModified, contents }
-        this.#sourceMap = sourceMap
+        this.#data = { lastModified, contents, sourceMap: null }
       }
     }
   }
@@ -49,24 +68,12 @@ export class FileImpl extends AbstractFile implements File {
    * INTERNAL READING FUNCTIONS                                               *
    * ======================================================================== */
 
-  #readSourceMapData(contents: string, lastModified: number): FileData {
-    const sourceMapData = extractSourceMap(this.originalPath, contents, true)
-    if (sourceMapData) {
-      this.#data = { lastModified, ...sourceMapData }
-      this.#sourceMap = sourceMapData.sourceMap
-    } else {
-      this.#data = { lastModified, contents }
-      this.#sourceMap = false
-    }
-    return this.#data
-  }
-
   #readSync(): FileData {
     if (this.#data) return this.#data
 
     const code = readFileSync(this.originalPath, 'utf8')
     const lastModified = statSync(this.originalPath).mtimeMs
-    return this.#readSourceMapData(code, lastModified)
+    return this.#data = parseContentsForSourceMap(this, code, lastModified)
   }
 
   #read(): Promise<FileData> {
@@ -76,7 +83,7 @@ export class FileImpl extends AbstractFile implements File {
     return this.#promise = (async (): Promise<FileData> => {
       const code = await fs.readFile(this.originalPath, 'utf8')
       const lastModified = (await fs.stat(this.originalPath)).mtimeMs
-      return this.#readSourceMapData(code, lastModified)
+      return this.#data = parseContentsForSourceMap(this, code, lastModified)
     })()
   }
 
@@ -100,18 +107,22 @@ export class FileImpl extends AbstractFile implements File {
     return this.#readSync().contents
   }
 
-  sourceMapSync(): RawSourceMap | undefined {
-    if (this.#sourceMap === false) return undefined
-    if (this.#sourceMap) return this.#sourceMap
+  sourceMapSync(): FileSourceMap | undefined {
+    const data = this.#readSync()
 
-    const sourceMapFile = this.#readSync().sourceMapFile
-    // istanbul ignore if - when we have no file, this.#sourceMap is false
-    if (! sourceMapFile) return
+    if (typeof data.sourceMap === 'string') {
+      const sourceMapFile = this.files.get(data.sourceMap)
+      try {
+        const sourceMapContents = sourceMapFile.contentsSync()
+        const sourceMap = JSON.parse(sourceMapContents)
+        data.sourceMap = new FileSourceMap(this.absolutePath, sourceMap)
+      } catch (error) {
+        log.debug(`Error source map for "${this.absolutePath}" from "${sourceMapFile}"`)
+        data.sourceMap = null
+      }
+    }
 
-    const file = this.files.get(sourceMapFile)
-    if (! file.existsSync()) return
-
-    return this.#sourceMap = JSON.parse(file.contentsSync())
+    return data.sourceMap || undefined
   }
 
   /* ======================================================================== *
@@ -134,16 +145,21 @@ export class FileImpl extends AbstractFile implements File {
     return this.#data ? this.#data.contents : (await this.#read()).contents
   }
 
-  async sourceMap(): Promise<RawSourceMap | undefined> {
-    if (this.#sourceMap === false) return undefined
-    if (this.#sourceMap) return this.#sourceMap
-    const sourceMapFile = (await this.#read()).sourceMapFile
-    // istanbul ignore if - when we have no file, this.#sourceMap is false
-    if (! sourceMapFile) return
+  async sourceMap(): Promise<FileSourceMap | undefined> {
+    const data = await this.#read()
 
-    const file = this.files.get(sourceMapFile)
-    if (! await file.exists()) return
+    if (typeof data.sourceMap === 'string') {
+      const sourceMapFile = this.files.get(data.sourceMap)
+      try {
+        const sourceMapContents = await sourceMapFile.contents()
+        const sourceMap = JSON.parse(sourceMapContents)
+        data.sourceMap = new FileSourceMap(this.absolutePath, sourceMap)
+      } catch (error) {
+        log.debug(`Error source map for "${this.absolutePath}" from "${sourceMapFile}"`)
+        data.sourceMap = null
+      }
+    }
 
-    return this.#sourceMap = JSON.parse(await file.contents())
+    return data.sourceMap || undefined
   }
 }

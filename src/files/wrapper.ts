@@ -1,8 +1,8 @@
 import { AbstractFile } from './abstract'
 import { File } from './index'
 import { FilePath } from '../utils/paths'
+import { FileSourceMap } from '../source-maps'
 import { Files } from './files'
-import { RawSourceMap } from 'source-map'
 
 export class FileWrapper extends AbstractFile implements File {
   #file: File
@@ -36,11 +36,11 @@ export class FileWrapper extends AbstractFile implements File {
     return this.#file.contentsSync()
   }
 
-  sourceMap(): Promise<RawSourceMap | undefined> {
+  sourceMap(): Promise<FileSourceMap | undefined> {
     return this.#file.sourceMap()
   }
 
-  sourceMapSync(): RawSourceMap | undefined {
+  sourceMapSync(): FileSourceMap | undefined {
     return this.#file.sourceMapSync()
   }
 }

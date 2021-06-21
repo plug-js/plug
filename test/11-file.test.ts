@@ -69,10 +69,10 @@ describe('Files', () => {
       expect(await file3.sourceMap()).to.be.undefined
       expect(await file3.lastModified()).to.be.closeTo(Date.now(), 10)
 
-      const file4 = create({ foo: 'bar' }) // supplied source map
+      const file4 = create({ version: 3 }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
-      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
+      expect((await file4.sourceMap())?.file).to.eql(file4.absolutePath)
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -88,13 +88,13 @@ describe('Files', () => {
       const file1 = create() // extract source map (default)
       expect(await file1.exists()).to.be.true
       expect(await file1.contents()).to.equal('\n// foo')
-      expect(await file1.sourceMap()).to.eql({ foo: 'bar' })
+      expect((await file1.sourceMap())?.file).to.eql(file1.absolutePath)
       expect(await file1.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(await file2.exists()).to.be.true
       expect(await file2.contents()).to.equal('\n// foo')
-      expect(await file2.sourceMap()).to.eql({ foo: 'bar' })
+      expect((await file2.sourceMap())?.file).to.eql(file2.absolutePath)
       expect(await file2.lastModified()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
@@ -106,7 +106,7 @@ describe('Files', () => {
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
-      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
+      expect((await file4.sourceMap())?.file).to.eql(file4.absolutePath)
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -138,7 +138,7 @@ describe('Files', () => {
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(await file4.exists()).to.be.true
       expect(await file4.contents()).to.equal(contents)
-      expect(await file4.sourceMap()).to.eql({ foo: 'bar' })
+      expect((await file4.sourceMap())?.file).to.eql(file4.absolutePath)
       expect(await file4.lastModified()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -163,8 +163,7 @@ describe('Files', () => {
       expect(contents).to.equal(data.substr(0, contents.length))
 
       expect(sourceMap).to.be.an('object')
-      expect(sourceMap?.version).to.equal(3)
-      expect(sourceMap?.file).to.equal(relative)
+      expect(sourceMap?.file).to.equal(__filename)
     })
   })
 
@@ -229,7 +228,7 @@ describe('Files', () => {
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
-      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file4.sourceMapSync()?.file).to.eql(file4.absolutePath)
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -245,13 +244,13 @@ describe('Files', () => {
       const file1 = create() // extract source map (default)
       expect(file1.existsSync()).to.be.true
       expect(file1.contentsSync()).to.equal('\n// foo')
-      expect(file1.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file1.sourceMapSync()?.file).to.eql(file1.absolutePath)
       expect(file1.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file2 = create(true) // extract source map
       expect(file2.existsSync()).to.be.true
       expect(file2.contentsSync()).to.equal('\n// foo')
-      expect(file2.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file2.sourceMapSync()?.file).to.eql(file2.absolutePath)
       expect(file2.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
 
       const file3 = create(false) // do not process source maps
@@ -263,7 +262,7 @@ describe('Files', () => {
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
-      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file4.sourceMapSync()?.file).to.eql(file4.absolutePath)
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -295,7 +294,7 @@ describe('Files', () => {
       const file4 = create({ foo: 'bar' }) // supplied source map
       expect(file4.existsSync()).to.be.true
       expect(file4.contentsSync()).to.equal(contents)
-      expect(file4.sourceMapSync()).to.eql({ foo: 'bar' })
+      expect(file4.sourceMapSync()?.file).to.eql(file4.absolutePath)
       expect(file4.lastModifiedSync()).to.be.closeTo(Date.now(), 10)
     })
 
@@ -319,8 +318,7 @@ describe('Files', () => {
       expect(contents).to.equal(data.substr(0, contents.length))
 
       expect(sourceMap).to.be.an('object')
-      expect(sourceMap?.version).to.equal(3)
-      expect(sourceMap?.file).to.equal(relative)
+      expect(sourceMap?.file).to.equal(__filename)
     })
   })
 })

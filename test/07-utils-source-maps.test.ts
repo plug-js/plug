@@ -85,7 +85,11 @@ describe('Source Maps', () => {
       sourceMapFile: '/foo/bar/baz.js.map',
     })
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', false)).to.be.undefined
-    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', true)).to.be.undefined
+    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', false)).to.eql({
+      contents: '//# sourceMappingURL=\n// foobar',
+    })
+    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', true)).to.eql({
+      contents: '//# sourceMappingURL=\n// foobar',
+    })
   })
 })

@@ -1,6 +1,6 @@
 import { File } from './index'
+import { FileSourceMap } from '../source-maps'
 import { Files } from './files'
-import { RawSourceMap } from 'source-map'
 
 import {
   CanonicalPath,
@@ -45,6 +45,6 @@ export abstract class AbstractFile implements File {
   abstract lastModifiedSync(): number
   abstract contents(): Promise<string>
   abstract contentsSync(): string
-  abstract sourceMap(): Promise<RawSourceMap | undefined>
-  abstract sourceMapSync(): RawSourceMap | undefined
+  abstract sourceMap(): Promise<FileSourceMap | undefined>
+  abstract sourceMapSync(): FileSourceMap | undefined
 }
