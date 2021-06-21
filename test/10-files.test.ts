@@ -1,7 +1,7 @@
-import { expect } from 'chai'
-import { Files } from '../src/files'
 import { AssertionError } from 'assert'
 import { DirectoryPath } from '../src/utils/paths'
+import { Files } from '../src/files'
+import { expect } from 'chai'
 
 describe('File List', () => {
   it('should create a new Files instance', () => {

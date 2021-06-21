@@ -1,5 +1,5 @@
 import { existsSync } from 'fs'
-import { resolve, relative, dirname, sep } from 'path'
+import { dirname, relative, resolve, sep } from 'path'
 
 /** An absolute file path always starts from "/" */
 export type FilePath = string & {

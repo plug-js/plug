@@ -1,6 +1,6 @@
 import { expect } from 'chai'
-import { PlugPipe, TaskPipe } from '../src/pipe'
 import { mock } from './support'
+import { PlugPipe, TaskPipe } from '../src/pipe'
 
 describe('Plug Pipes', () => {
   it('should construct a simple pipeline', async () => {

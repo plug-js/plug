@@ -1,5 +1,5 @@
-import { expect } from 'chai'
 import { ReportFailure } from '../src/failure'
+import { expect } from 'chai'
 import { loadBuildFile } from '../src/typescript/loader'
 import { directory, mock } from './support'
 

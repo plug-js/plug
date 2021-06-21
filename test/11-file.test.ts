@@ -1,8 +1,8 @@
+import { DirectoryPath } from '../src/utils/paths'
+import { basename } from 'path'
 import { expect } from 'chai'
 import { File, Files } from '../src/files'
-import { basename } from 'path'
 import { readFileSync, statSync } from 'fs'
-import { DirectoryPath } from '../src/utils/paths'
 
 describe('Files', () => {
   describe('Asynchronous Virtual File Access', () => {

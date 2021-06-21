@@ -1,8 +1,8 @@
-import { RawSourceMap } from 'source-map'
-import { FilePath } from '../utils/paths'
 import { AbstractFile } from './abstract'
-import { Files } from './files'
 import { File } from './index'
+import { FilePath } from '../utils/paths'
+import { Files } from './files'
+import { RawSourceMap } from 'source-map'
 
 export class FileWrapper extends AbstractFile implements File {
   #file: File

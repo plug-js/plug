@@ -1,7 +1,7 @@
-import { FilePath } from './paths'
 import { EOL } from 'os'
+import { FilePath } from './paths'
 import { RawSourceMap } from 'source-map'
-import { URL, pathToFileURL, fileURLToPath } from 'url'
+import { URL, fileURLToPath, pathToFileURL } from 'url'
 
 // Lifted from WebPack's "source-map-loader "
 const innerRegex = /\s*[#@]\s*sourceMappingURL\s*=\s*([^\s'"]*)\s*/

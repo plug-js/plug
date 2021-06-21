@@ -1,9 +1,9 @@
-import { expect } from 'chai'
-import { inspect } from 'util'
 import { Plug } from '../src/pipe'
 import { Project } from '../src/project'
 import { Run } from '../src/run'
 import { Task } from '../src/task'
+import { expect } from 'chai'
+import { inspect } from 'util'
 
 describe('Run', () => {
   const project = new Project({}, '/foo/build.ts' as any, '/foo' as any)

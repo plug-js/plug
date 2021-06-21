@@ -1,8 +1,8 @@
-import { expect } from 'chai'
-import { RawSourceMap } from 'source-map'
-import { File, Files } from '../src/files'
-import { FileWrapper } from '../src/files/wrapper'
 import { DirectoryPath } from '../src/utils/paths'
+import { FileWrapper } from '../src/files/wrapper'
+import { RawSourceMap } from 'source-map'
+import { expect } from 'chai'
+import { File, Files } from '../src/files'
 
 describe('File Wrapper', () => {
   it('should wrap an existing file', () => {

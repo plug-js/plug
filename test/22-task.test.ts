@@ -1,7 +1,7 @@
+import { Runnable } from '../src/run'
 import { expect } from 'chai'
 import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
-import { Runnable } from '../src/run'
-import { parallel, Task, task } from '../src/task'
+import { Task, parallel, task } from '../src/task'
 import { disableLogs, mock } from './support'
 
 describe('Plug Tasks', () => {

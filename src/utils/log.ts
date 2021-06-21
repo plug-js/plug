@@ -1,11 +1,10 @@
 import { EOL } from 'os'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 import { inspect } from 'util'
 import { isatty } from 'tty'
 
-import { STYLE, RGB } from './colors'
-
-import { Run } from '../run'
-import { Plug } from '../pipe'
+import { RGB, STYLE } from './colors'
 
 /* ========================================================================== */
 

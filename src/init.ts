@@ -1,7 +1,7 @@
 import { Files } from './files'
+import { DirectoryPath, RelativeDirectoryPath, resolvePath } from './utils/paths'
+import { GlobOptions, glob } from './utils/globs'
 import { PlugPipe, TaskPipe } from './pipe'
-import { glob, GlobOptions } from './utils/globs'
-import { DirectoryPath, resolvePath, RelativeDirectoryPath } from './utils/paths'
 
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]

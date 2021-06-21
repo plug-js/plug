@@ -1,5 +1,5 @@
-import { Options, stream } from 'fast-glob'
 import { DirectoryPath } from './paths'
+import { Options, stream } from 'fast-glob'
 
 /**
  * A subset of `fast-glob`'s own `Options`, only exposing those options which

@@ -1,6 +1,6 @@
-import { expect } from 'chai'
-import { PlugPipe } from '../src/pipe'
 import { CompilePlug } from '../src/plugs/compile'
+import { PlugPipe } from '../src/pipe'
+import { expect } from 'chai'
 import { mock } from './support'
 
 describe('Plug TypeScript Compiler', function() {

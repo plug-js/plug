@@ -1,17 +1,10 @@
 import { AbstractFile } from './abstract'
-import { File, Files } from './index'
+import { FilePath } from '../utils/paths'
 import { RawSourceMap } from 'source-map'
 import { extractSourceMap } from '../utils/source-maps'
 
-import {
-  promises as fs,
-  readFileSync,
-  statSync,
-} from 'fs'
-
-import {
-  FilePath,
-} from '../utils/paths'
+import { File, Files } from './index'
+import { promises as fs, readFileSync, statSync } from 'fs'
 
 /* ========================================================================== *
  * VIRTUAL FILE IMPLEMENTATION                                                *

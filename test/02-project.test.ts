@@ -1,9 +1,9 @@
 import { AssertionError } from 'assert'
-import { expect } from 'chai'
 import { Failure } from '../src/failure'
 import { Project } from '../src/project'
-import { FilePath, DirectoryPath, resolvePath, RelativeFilePath } from '../src/utils/paths'
 import { disableLogs } from './support'
+import { expect } from 'chai'
+import { DirectoryPath, FilePath, RelativeFilePath, resolvePath } from '../src/utils/paths'
 
 describe('Project', () => {
   disableLogs()

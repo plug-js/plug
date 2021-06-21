@@ -1,9 +1,9 @@
 import { EOL } from 'os'
 import { Files } from '../files'
-import { CanonicalPath, caseSensitivePaths } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
 
+import { CanonicalPath, caseSensitivePaths } from '../utils/paths'
 import {
   CompilerHost,
   CompilerOptions,

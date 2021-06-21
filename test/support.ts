@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
 
-import { resolve } from 'path'
-import { existsSync } from 'fs'
-import { dirname } from 'path'
-import { DirectoryPath, resolvePath, RelativeFilePath } from '../src/utils/paths'
-import { options, PlugLog, RunLog } from '../src/utils/log'
 import { Files } from '../src/files'
-import { Run } from '../src/run'
 import { Project } from '../src/project'
+import { Run } from '../src/run'
 import { Task } from '../src/task'
+import { dirname } from 'path'
+import { existsSync } from 'fs'
+import { resolve } from 'path'
+import { DirectoryPath, RelativeFilePath, resolvePath } from '../src/utils/paths'
+import { PlugLog, RunLog, options } from '../src/utils/log'
 
 function findDirectory(directory: string): string {
   if (existsSync(resolve(directory, 'package.json'))) return directory

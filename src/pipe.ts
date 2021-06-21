@@ -1,7 +1,7 @@
-import { Files } from './files'
-import { Run, Runnable } from './run'
 import { ConstructorOverloads } from './types/overloads'
+import { Files } from './files'
 import { PlugLog } from './utils/log'
+import { Run, Runnable } from './run'
 
 /* ========================================================================== *
  * CORE PIPELINE IMPLEMENTATION                                               *

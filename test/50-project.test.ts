@@ -1,8 +1,9 @@
 import { AssertionError } from 'assert'
+import { directory } from './support'
 import { expect } from 'chai'
 import { load } from '../src/project'
-import { resolvePath, getParent, RelativeDirectoryPath, RelativeFilePath } from '../src/utils/paths'
-import { directory } from './support'
+
+import { RelativeDirectoryPath, RelativeFilePath, getParent, resolvePath } from '../src/utils/paths'
 
 describe('Project Loading', function() {
   // compiling takes time...

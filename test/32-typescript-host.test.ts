@@ -1,10 +1,11 @@
-import { expect } from 'chai'
 import { EOL } from 'os'
-import { basename, isAbsolute } from 'path'
-import { ScriptKind, ScriptTarget } from 'typescript'
 import { TypeScriptHost } from '../src/typescript/host'
 import { caseSensitivePaths } from '../src/utils/paths'
+import { expect } from 'chai'
 import { mock } from './support'
+
+import { ScriptKind, ScriptTarget } from 'typescript'
+import { basename, isAbsolute } from 'path'
 
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {

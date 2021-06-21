@@ -1,15 +1,12 @@
+import { CompilePlug } from '../plugs/compile'
 import { FilePath } from '../utils/paths'
 import { Files } from '../files'
+import { Project } from '../project'
+import { Run } from '../run'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
 
-import {
-  ModuleKind,
-  ScriptTarget,
-} from 'typescript'
-import { CompilePlug } from '../plugs/compile'
-import { Run } from '../run'
-import { Project } from '../project'
+import { ModuleKind, ScriptTarget } from 'typescript'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *

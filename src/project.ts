@@ -1,10 +1,11 @@
+import { Failure } from './failure'
 import assert from 'assert'
 import { isAbsolute } from 'path'
-import { Failure } from './failure'
-import { Task, TaskCall } from './task'
 import { loadBuildFile } from './typescript/loader'
 import { makeLog } from './utils/log'
-import { FilePath, DirectoryPath, getParent, isChild } from './utils/paths'
+
+import { DirectoryPath, FilePath, getParent, isChild } from './utils/paths'
+import { Task, TaskCall } from './task'
 
 export class Project {
   #taskNames = new Map<Task, string>()

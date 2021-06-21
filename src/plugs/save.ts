@@ -1,5 +1,5 @@
 import { Files } from '../files'
-import { install, Plug } from '../pipe'
+import { Plug, install } from '../pipe'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {

@@ -1,14 +1,7 @@
-import { expect } from 'chai'
 import { Plug } from '../src/pipe'
-
-import {
-  LogLevel,
-  LogOptions,
-  RunLog,
-  makeLog,
-  options,
-} from '../src/utils/log'
+import { expect } from 'chai'
 import { mock } from './support'
+import { LogLevel, LogOptions, RunLog, makeLog, options } from '../src/utils/log'
 
 type TestLog = RunLog & { logs: string[] }
 

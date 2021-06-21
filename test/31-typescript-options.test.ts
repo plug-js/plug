@@ -1,7 +1,8 @@
 import { expect } from 'chai'
-import { DiagnosticCategory, getDefaultCompilerOptions, ModuleKind } from 'typescript'
 import { getCompilerOptions } from '../src/typescript/options'
 import { mock } from './support'
+
+import { DiagnosticCategory, ModuleKind, getDefaultCompilerOptions } from 'typescript'
 
 describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', () => {

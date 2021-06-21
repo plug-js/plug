@@ -1,13 +1,8 @@
+import { Files } from './files'
 import { RawSourceMap } from 'source-map'
-
-import {
-  FilePath,
-  CanonicalPath,
-  RelativeFilePath,
-} from '../utils/paths'
+import { CanonicalPath, FilePath, RelativeFilePath } from '../utils/paths'
 
 // Import and re-export our `Files` class
-import { Files } from './files'
 export { Files } from './files'
 
 /** A type describing how to _add_ a virtual file to a list */

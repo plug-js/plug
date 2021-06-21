@@ -1,7 +1,7 @@
-import { expect } from 'chai'
-import { setupLoader } from '../src/utils/loader'
 import { FilePath } from '../src/utils/paths'
 import { directory } from './support'
+import { expect } from 'chai'
+import { setupLoader } from '../src/utils/loader'
 
 describe('Node Loader', () => {
   it('should load some files and clear caches', () => {

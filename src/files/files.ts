@@ -1,22 +1,19 @@
-import assert from 'assert'
 import { FileImpl } from './file'
-
-import {
-  File,
-  FileOptions,
-} from './index'
+import { FileWrapper } from './wrapper'
+import assert from 'assert'
+import { isAbsolute } from 'path'
 
 import {
   CanonicalPath,
   DirectoryPath,
-  resolvePath,
-  getCanonicalPath,
-  isChild,
   RelativeDirectoryPath,
   RelativeFilePath,
+  getCanonicalPath,
+  isChild,
+  resolvePath,
 } from '../utils/paths'
-import { FileWrapper } from './wrapper'
-import { isAbsolute } from 'path'
+
+import { File, FileOptions } from './index'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *

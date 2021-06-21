@@ -1,8 +1,8 @@
-import { expect } from 'chai'
 import { EOL } from 'os'
-import { Diagnostic, DiagnosticCategory, FormatDiagnosticsHost } from 'typescript'
 import { ReportFailure } from '../src/failure'
-import { hasErrors, hasWarnings, TypeScriptFailure } from '../src/typescript/diagnostic'
+import { expect } from 'chai'
+import { Diagnostic, DiagnosticCategory, FormatDiagnosticsHost } from 'typescript'
+import { TypeScriptFailure, hasErrors, hasWarnings } from '../src/typescript/diagnostic'
 
 describe('TypeScript Diagnostics', () => {
   const error = {

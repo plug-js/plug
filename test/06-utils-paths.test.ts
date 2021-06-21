@@ -1,19 +1,19 @@
 import { expect } from 'chai'
 import {
-  FilePath,
   DirectoryPath,
-  getRelativePath,
-  getCanonicalPath,
-  resolvePath,
-  getParent,
-  isChild,
-  caseSensitivePaths,
-  createFilePath,
-  createDirectoryPath,
+  FilePath,
   RelativeDirectoryPath,
   RelativeFilePath,
-  resolveFilePath,
+  caseSensitivePaths,
+  createDirectoryPath,
+  createFilePath,
+  getCanonicalPath,
+  getParent,
   getRelativeFilePath,
+  getRelativePath,
+  isChild,
+  resolveFilePath,
+  resolvePath,
 } from '../src/utils/paths'
 
 describe('Paths', () => {

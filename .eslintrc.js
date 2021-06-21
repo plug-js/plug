@@ -55,6 +55,11 @@ module.exports = {
     // Allow TypeScript triple-slash comments
     'spaced-comment': [ 'error', 'always', { 'markers': [ '/ <reference' ] } ],
 
+    // Enforce sorted imports
+    'sort-imports': [ 'error', {
+      'memberSyntaxSortOrder': [ 'none', 'all', 'single', 'multiple' ],
+    } ],
+
     // No redeclare / unused vars for TypeScript
     '@typescript-eslint/no-redeclare': [ 'error' ],
     '@typescript-eslint/no-unused-vars': [ 'error' ],

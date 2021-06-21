@@ -1,6 +1,6 @@
-import { expect } from 'chai'
 import { PlugPipe } from '../src/pipe'
 import { ToPlug } from '../src/plugs/to'
+import { expect } from 'chai'
 import { mock } from './support'
 
 describe('Plug From / To', function() {

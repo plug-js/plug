@@ -1,8 +1,8 @@
 import { Files } from '../files'
-import { Plug, install } from '../pipe'
-import { Run } from '../run'
 import { Log } from '../utils/log'
-import { resolvePath, getRelativePath, RelativeDirectoryPath } from '../utils/paths'
+import { Run } from '../run'
+import { Plug, install } from '../pipe'
+import { RelativeDirectoryPath, getRelativePath, resolvePath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {

@@ -1,18 +1,7 @@
 import Module from 'module'
 import sourceMapSupport from 'source-map-support'
-import {
-  resolve,
-  dirname,
-  isAbsolute,
-  sep,
-} from 'path'
-import {
-  FilePath,
-  DirectoryPath,
-  resolvePath,
-  getParent,
-  RelativeDirectoryPath,
-} from './paths'
+import { DirectoryPath, FilePath, RelativeDirectoryPath, getParent, resolvePath } from './paths'
+import { dirname, isAbsolute, resolve, sep } from 'path'
 
 // Install support for source maps, supporting dynamically compiled files
 sourceMapSupport.install({ environment: 'node' })

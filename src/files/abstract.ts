@@ -3,8 +3,8 @@ import { Files } from './files'
 import { RawSourceMap } from 'source-map'
 
 import {
-  FilePath,
   CanonicalPath,
+  FilePath,
   RelativeFilePath,
   getCanonicalPath,
   getRelativePath,

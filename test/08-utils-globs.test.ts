@@ -1,6 +1,6 @@
+import { directory } from './support'
 import { expect } from 'chai'
 import { glob } from '../src/utils/globs'
-import { directory } from './support'
 
 describe('Virtual File List Globs', () => {
   it('should prepare a virtual file list from some globs', async () => {

@@ -1,6 +1,6 @@
-import { extractSourceMap, extractSourceMappingURL, parseSourceMappingURL } from '../src/utils/source-maps'
-import { expect } from 'chai'
 import { FilePath } from '../src/utils/paths'
+import { expect } from 'chai'
+import { extractSourceMap, extractSourceMappingURL, parseSourceMappingURL } from '../src/utils/source-maps'
 
 describe('Source Maps', () => {
   it('should extract a source mapping url', () => {
