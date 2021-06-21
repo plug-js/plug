@@ -118,6 +118,7 @@ export function getCompilerOptions(
   if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directory, overrides.outDir)
   if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directory, overrides.outFile)
   if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.rootDir)
+  if (overrides.declarationDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.declarationDir)
   if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directory, d))
 
   // No issues, let's create our options...
