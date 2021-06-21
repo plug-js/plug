@@ -11,7 +11,7 @@ import {
 
 import { Plug, install } from '../pipe'
 import { checkDiagnostics } from '../typescript/diagnostic'
-import { getAbsolutePath, getDirectoryPath, getRelativePath, isChild } from '../utils/paths'
+import { getAbsolutePath, getDirectoryPath, getRelativePath, isChild, RelativeDirectoryPath } from '../utils/paths'
 import { Run } from '../run'
 import { Log } from '../utils/log'
 
@@ -77,10 +77,12 @@ export class CompilePlug implements Plug {
     options.inlineSources = false
     options.mapRoot = undefined
 
+    // TODO: there's a better way to do this, look at "to" sources!
+
     // For each file in the input list, check if we can compile it, or
     // (if specified) allow it to be passed through to the output
-    const rootDir = getDirectoryPath(input.directory, options.rootDir)
-    const outDir = getDirectoryPath(input.directory, options.outDir)
+    const rootDir = getDirectoryPath(input.directory, options.rootDir as RelativeDirectoryPath)
+    const outDir = getDirectoryPath(input.directory, options.outDir as RelativeDirectoryPath)
 
     const output = new Files(input.directory)
     const paths = input.list().map((file) => {

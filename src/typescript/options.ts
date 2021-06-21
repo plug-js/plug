@@ -18,6 +18,8 @@ import {
   getParentDirectory,
   getDirectoryPath,
   getRelativePath,
+  RelativeDirectoryPath,
+  RelativePath,
 } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = {
@@ -115,11 +117,11 @@ export function getCompilerOptions(
   if (diagnostics.length) return { options: {}, diagnostics }
 
   // If we have some overrides with path, we must rewrite them
-  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directory, overrides.outDir)
-  if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directory, overrides.outFile)
-  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.rootDir)
-  if (overrides.declarationDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.declarationDir)
-  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directory, d))
+  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directory, overrides.outDir as RelativeDirectoryPath)
+  if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directory, overrides.outFile as RelativePath)
+  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.rootDir as RelativeDirectoryPath)
+  if (overrides.declarationDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.declarationDir as RelativeDirectoryPath)
+  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directory, d as RelativeDirectoryPath))
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)

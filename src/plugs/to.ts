@@ -2,7 +2,7 @@ import { Files } from '../files'
 import { Plug, install } from '../pipe'
 import { Run } from '../run'
 import { Log } from '../utils/log'
-import { getDirectoryPath, getRelativePath } from '../utils/paths'
+import { getDirectoryPath, getRelativePath, RelativeDirectoryPath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -11,10 +11,10 @@ declare module '../pipe' {
 }
 
 export class ToPlug implements Plug {
-  #directory: string
+  #directory: RelativeDirectoryPath
 
   constructor(directory: string) {
-    this.#directory = directory
+    this.#directory = directory as RelativeDirectoryPath
   }
 
   process(input: Files, run: Run, log: Log): Files {

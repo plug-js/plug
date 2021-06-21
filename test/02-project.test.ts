@@ -2,7 +2,7 @@ import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { Failure } from '../src/failure'
 import { Project } from '../src/project'
-import { AbsolutePath, DirectoryPath, getAbsolutePath } from '../src/utils/paths'
+import { AbsolutePath, DirectoryPath, getAbsolutePath, RelativePath } from '../src/utils/paths'
 import { disableLogs } from './support'
 
 describe('Project', () => {
@@ -10,8 +10,8 @@ describe('Project', () => {
 
   it('should create a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file1 = getAbsolutePath(dir, 'build.ts')
-    const file2 = getAbsolutePath(dir, 'bar/build.ts')
+    const file1 = getAbsolutePath(dir, 'build.ts' as RelativePath)
+    const file2 = getAbsolutePath(dir, 'bar/build.ts' as RelativePath)
 
     const project1 = new Project({}, file1)
     expect(project1.directory).to.equal('/foo')
@@ -28,7 +28,7 @@ describe('Project', () => {
 
   it('should register and return a task name', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts')
+    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
 
     const task0: any = { run: () => {} }
     const task1: any = { run: () => {}, description: 'First task' }
@@ -65,7 +65,7 @@ describe('Project', () => {
 
   it('should cleanup what it can reading a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts')
+    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
     const task = { run: () => {} }
 
     const project = new Project({
@@ -81,7 +81,7 @@ describe('Project', () => {
 
   it('should not create a project with silly input', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts')
+    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
 
     expect(() => new Project(null as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
     expect(() => new Project('xx' as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')

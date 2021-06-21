@@ -9,6 +9,8 @@ import {
   getParentDirectory,
   isChild,
   caseSensitivePaths,
+  RelativeDirectoryPath,
+  RelativePath,
 } from '../src/utils/paths'
 
 describe('Paths', () => {
@@ -19,16 +21,16 @@ describe('Paths', () => {
 
   it('should get a directory path', () => {
     expect(getDirectoryPath(x_dir)).to.equal('/Foo/Bar')
-    expect(getDirectoryPath(x_dir, '.')).to.equal('/Foo/Bar')
-    expect(getDirectoryPath(x_dir, 'Baz')).to.equal('/Foo/Bar/Baz')
-    expect(getDirectoryPath(x_dir, './Baz')).to.equal('/Foo/Bar/Baz')
-    expect(getDirectoryPath(x_dir, '../Baz')).to.equal('/Foo/Baz')
+    expect(getDirectoryPath(x_dir, '.' as RelativeDirectoryPath)).to.equal('/Foo/Bar')
+    expect(getDirectoryPath(x_dir, 'Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
+    expect(getDirectoryPath(x_dir, './Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
+    expect(getDirectoryPath(x_dir, '../Baz' as RelativeDirectoryPath)).to.equal('/Foo/Baz')
   })
 
   it('should get an absolute path', () => {
-    expect(getAbsolutePath(x_dir, 'Baz.Txt')).to.equal(x_file)
-    expect(getAbsolutePath(x_dir, './Baz.Txt')).to.equal(x_file)
-    expect(getAbsolutePath(x_dir, '../Baz.Txt')).to.equal('/Foo/Baz.Txt')
+    expect(getAbsolutePath(x_dir, 'Baz.Txt' as RelativePath)).to.equal(x_file)
+    expect(getAbsolutePath(x_dir, './Baz.Txt' as RelativePath)).to.equal(x_file)
+    expect(getAbsolutePath(x_dir, '../Baz.Txt' as RelativePath)).to.equal('/Foo/Baz.Txt')
   })
 
   it('should get a directory for a file', () => {

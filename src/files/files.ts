@@ -13,6 +13,8 @@ import {
   getCanonicalPath,
   getDirectoryPath,
   isChild,
+  RelativeDirectoryPath,
+  RelativePath,
 } from '../utils/paths'
 import { FileWrapper } from './wrapper'
 import { isAbsolute } from 'path'
@@ -47,7 +49,7 @@ export class Files implements Files {
 
   /** Return a `File` associated with this `Files` list */
   get(path: string): File {
-    const absolutePath = getAbsolutePath(this.directory, path)
+    const absolutePath = getAbsolutePath(this.directory, path as RelativePath)
     const canonicalPath = getCanonicalPath(absolutePath)
 
     const cached = this.#cache.get(canonicalPath)
@@ -83,14 +85,14 @@ export class Files implements Files {
 
   /** Checks whether this `Files` instance was added the given path */
   has(path: string): boolean {
-    const absolutePath = getAbsolutePath(this.directory, path)
+    const absolutePath = getAbsolutePath(this.directory, path as RelativePath)
     const canonicalPath = getCanonicalPath(absolutePath)
     return this.#files.has(canonicalPath)
   }
 
   /** Clone this `Files` instance preserving all files listed by it */
   clone(path?: string): Files {
-    const directory = getDirectoryPath(this.directory, path)
+    const directory = getDirectoryPath(this.directory, path as RelativeDirectoryPath)
     const list = new Files(directory)
 
     for (const file of this.#cache.values()) {
@@ -127,7 +129,7 @@ export class Files implements Files {
     // Compute the target absolute path, this is either from the path specified
     // as an argument, or from the _relative_ path of the original file...
     const absolutePath =
-        path ? getAbsolutePath(this.directory, path) :
+        path ? getAbsolutePath(this.directory, path as RelativePath) :
         file ? getAbsolutePath(this.directory, file.relativePath) :
         undefined
     assert(absolutePath, 'No path for file to be added')
@@ -143,7 +145,7 @@ export class Files implements Files {
     // Create a new file
     let newFile: File
     if (options && options.originalPath) {
-      const originalPath = getAbsolutePath(this.directory, options.originalPath)
+      const originalPath = getAbsolutePath(this.directory, options.originalPath as RelativePath)
       newFile = new FileImpl(this, absolutePath, { ...options, originalPath })
     } else if (options) {
       newFile = new FileImpl(this, absolutePath, { ...options, originalPath: undefined })

@@ -37,7 +37,7 @@ export abstract class AbstractFile implements File {
 
   get(path: string): File {
     const directory = getParentDirectory(this.absolutePath)
-    const absolutePath = getAbsolutePath(directory, path)
+    const absolutePath = getAbsolutePath(directory, path as RelativePath)
     return this.files.get(absolutePath)
   }
 
