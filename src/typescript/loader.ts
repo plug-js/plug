@@ -1,6 +1,7 @@
 import { CompilePlug } from '../plugs/compile'
 import { Files } from '../files'
 import { Project } from '../project'
+import assert from 'assert'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
 
@@ -42,17 +43,20 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   // Await for the output of the compilation
   const output = await project.runTask('default')
 
-  // Build our output file list and require our build file
+  // Build our output file list, and figure out where the original
+  // typescript ended up in our compilation results
   const map = new Map<FilePath, string>()
-  output.list().forEach((file) => {
-    const contents = file.contentsSync()
-    map.set(file.absolutePath, contents)
-    map.set(file.originalPath, contents)
-  })
+  let compiled = undefined as FilePath | undefined
+  for (const file of output.list()) {
+    map.set(file.absolutePath, await file.contents())
+    if (file.originalPath === buildFile) compiled = file.absolutePath
+  }
 
+  // Make sure we have a proper result and load our file
+  assert(compiled, `Build file ${buildFile} was not compiled`)
   setupLoader(map)
   try {
-    return require(buildFile)
+    return require(compiled)
   } finally {
     setupLoader() // reset!
   }
