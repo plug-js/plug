@@ -111,6 +111,8 @@ export class CompilePlug implements Plug {
         sources?.forEach(({ fileName }) => originalPath = input.get(fileName).absolutePath)
       }
 
+      // TODO: better sourcemap generation
+
       // Add the result of the compilation to our output files
       output.add(fileName, { contents, sourceMap: true, originalPath })
     })

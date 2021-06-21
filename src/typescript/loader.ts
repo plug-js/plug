@@ -50,6 +50,8 @@ export function loadBuildFile(project: Project, fileName: string): any {
     map.set(file.originalPath, contents)
   })
 
+  // TODO: handle source map generation from virtual files
+
   setupLoader(map)
   try {
     return require(file.absolutePath)
