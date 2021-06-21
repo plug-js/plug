@@ -97,6 +97,8 @@ export class CompilePlug implements Plug {
       }
     }).filter((path) => path) as string[]
 
+    log.debug('Compiling', paths.length, 'files:', paths)
+
     // Get our build file and create the master program
     const program = createProgram(paths, options, host, undefined, diagnostics)
     checkDiagnostics(getPreEmitDiagnostics(program), host, 'Error compiling')
