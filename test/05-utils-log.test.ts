@@ -97,7 +97,7 @@ describe('Log', () => {
     const log = makeTestLog({ level: LogLevel.BASIC, times: false })
     const err = new Error('This is a test error')
     log('This is a test message', 'string', 1, true, err)
-    expect(log.logs).to.eql([ 'This is a test message \'string\' 1 true\n' + err.stack ])
+    expect(log.logs).to.eql([ 'This is a test message string 1 true\n' + err.stack ])
   })
 
   it('should log with times', () => {

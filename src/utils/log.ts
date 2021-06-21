@@ -145,8 +145,10 @@ function emit(
 
   // All other arguments
   for (const arg of args) {
-    push(null, arg instanceof Error ? EOL : ' ')
-    push(null, inspect(arg, { colors: options.colors }))
+    push(null,
+        arg instanceof Error ? EOL : ' ',
+        typeof arg === 'string' ? arg :
+            inspect(arg, { colors: options.colors }))
   }
 
   // Close up (always reset, convert to string, write)
