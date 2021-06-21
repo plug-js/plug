@@ -6,10 +6,9 @@ import {
   FilePath,
   CanonicalPath,
   RelativeFilePath,
-  resolvePath,
   getCanonicalPath,
-  getParent,
   getRelativePath,
+  resolveFilePath,
 } from '../utils/paths'
 
 export abstract class AbstractFile implements File {
@@ -36,9 +35,8 @@ export abstract class AbstractFile implements File {
   }
 
   get(path: string): File {
-    const directory = getParent(this.absolutePath)
-    const absolutePath = resolvePath(directory, path as RelativeFilePath)
-    return this.files.get(absolutePath)
+    const resolved = resolveFilePath(this.absolutePath, path as RelativeFilePath)
+    return this.files.get(resolved)
   }
 
   abstract exists(): Promise<boolean>

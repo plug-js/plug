@@ -14,11 +14,12 @@ import {
 
 import {
   FilePath,
-  getParent,
-  resolvePath,
-  getRelativePath,
   RelativeDirectoryPath,
   RelativeFilePath,
+  getParent,
+  getRelativePath,
+  resolveFilePath,
+  resolvePath,
 } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = {
@@ -63,7 +64,7 @@ function loadOptions(
   if (!extendsPath) return options
 
   // Check for circular extension errors
-  const extendedPath = resolvePath(getParent(file.absolutePath), extendsPath)
+  const extendedPath = resolveFilePath(file.absolutePath, extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
     const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)
