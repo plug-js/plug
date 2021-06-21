@@ -56,6 +56,7 @@ describe('TypeScript Compiler Options', () => {
         // those will be resolved
         outDir: './outDir',
         rootDir: './rootDir',
+        declarationDir: './declarationDir',
         rootDirs: [ './rootDirs/1', './rootDirs/2' ],
         outFile: './outDile.js',
       },
@@ -78,6 +79,7 @@ describe('TypeScript Compiler Options', () => {
       configFilePath: '/foo/ext/tsconfig.json',
       outDir: '/foo/base/outDir',
       rootDir: '/foo/base/rootDir',
+      declarationDir: '/foo/base/declarationDir',
       rootDirs: [ '/foo/base/rootDirs/1', '/foo/base/rootDirs/2' ],
       outFile: '/foo/base/outDile.js',
     }))
@@ -90,6 +92,7 @@ describe('TypeScript Compiler Options', () => {
       // those will be resolved
       outDir: './outDir',
       rootDir: './rootDir',
+      declarationDir: './declarationDir',
       rootDirs: [ './rootDirs/1', './rootDirs/2' ],
       outFile: './outDile.js',
     }))
@@ -99,6 +102,7 @@ describe('TypeScript Compiler Options', () => {
       configFilePath: '/foo/ext/tsconfig.json',
       outDir: '/foo/outDir',
       rootDir: '/foo/rootDir',
+      declarationDir: '/foo/declarationDir',
       rootDirs: [ '/foo/rootDirs/1', '/foo/rootDirs/2' ],
       outFile: '/foo/outDile.js',
     }))
