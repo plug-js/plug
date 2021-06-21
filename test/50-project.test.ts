@@ -1,6 +1,7 @@
 import { AssertionError } from 'assert'
 import { directory } from './support'
 import { expect } from 'chai'
+import fastGlob from 'fast-glob'
 import { load } from '../src/project'
 
 import { RelativeDirectoryPath, RelativeFilePath, getParent, resolvePath } from '../src/utils/paths'
@@ -11,31 +12,24 @@ describe('Project Loading', function() {
   this.slow(2000)
 
   it('should load a project', () => {
-    // theeeheee!!! this will recompile our entire source code!
     const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
     const project = load(file)
 
     expect(project.directory).to.equal(directory)
     expect(project.buildFile).to.equal(file)
 
-    expect(project.getTaskNames().sort()).to.eql([ 'default', 'task1', 'task2' ])
+    expect(project.getTaskNames().sort()).to.eql([ 'default' ])
     expect(project.getTaskDescriptions()).to.eql({
       default: '... the default ...',
-      task1: '... a description ...',
-      task2: undefined,
     })
 
-    const task0 = project.getTask('default')
-    const task1 = project.getTask('task1')
-    const task2 = project.getTask('task2')
-    expect(task0).be.an('object').with.property('description', '... the default ...')
-    expect(task1).be.an('object').with.property('description', '... a description ...')
-    expect(task2).be.an('object')
+    const call = project.getTask('default')
+    expect(call).be.an('object')
 
-    expect(project.getTaskName(task0!)).to.equal('default')
-    expect(project.getTaskName(task1!)).to.equal('task1')
-    expect(project.getTaskName(task2!)).to.equal('task2')
-    expect(project.getTaskName({} as any)).to.equal('unknown')
+    expect(project.getTaskName(call!)).to.equal('default')
+
+    expect(call?.description).to.equal('... the default ...')
+    expect(call?.run).to.equal(fastGlob)
   })
 
   it('should not load a project outside of its directory', () => {
