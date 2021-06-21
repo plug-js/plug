@@ -1,7 +1,7 @@
 import { AssertionError } from 'assert'
-import { DirectoryPath } from '../src/utils/paths'
 import { Files } from '../src/files'
 import { expect } from 'chai'
+import { DirectoryPath, FilePath } from '../src/utils/paths'
 
 describe('File List', () => {
   it('should create a new Files instance', () => {
@@ -239,6 +239,17 @@ describe('File List', () => {
     expect(files.list()).to.eql([ file1, file2 ])
     expect(files.list()[0]).to.equal(file1)
     expect(files.list()[1]).to.equal(file2)
+  })
+
+  it('should iterate files', () => {
+    const files = new Files('/foo' as DirectoryPath)
+    files.add('3.txt')
+    files.add('2.txt')
+    files.add('1.txt')
+
+    const paths: FilePath[] = []
+    for (const file of files) paths.push(file.absolutePath)
+    expect(paths.sort()).to.eql([ '/foo/1.txt', '/foo/2.txt', '/foo/3.txt' ])
   })
 
   it('should sort files', () => {
