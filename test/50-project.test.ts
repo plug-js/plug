@@ -11,9 +11,9 @@ describe('Project Loading', function() {
   this.timeout(5000)
   this.slow(2000)
 
-  it('should load a project', () => {
+  it('should load a project', async () => {
     const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
-    const project = load(file)
+    const project = await load(file)
 
     expect(project.directory).to.equal(directory)
     expect(project.buildFile).to.equal(file)
@@ -32,9 +32,9 @@ describe('Project Loading', function() {
     expect(call?.run).to.equal(fastGlob)
   })
 
-  it('should not load a project outside of its directory', () => {
+  it('should not load a project outside of its directory', async () => {
     const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
-    expect(() => load(file, resolvePath(getParent(file), 'foo' as RelativeDirectoryPath)))
-        .to.throw(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
+    await expect(load(file, resolvePath(getParent(file), 'foo' as RelativeDirectoryPath)))
+        .to.be.rejectedWith(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
   })
 })

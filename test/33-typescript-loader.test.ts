@@ -1,25 +1,28 @@
 import { ReportFailure } from '../src/failure'
+import { createFilePath } from '../src/utils/paths'
+import { directory } from './support'
 import { expect } from 'chai'
 import { loadBuildFile } from '../src/typescript/loader'
-import { directory, mock } from './support'
 
 describe('TypeScript Loader', function() {
   // compiling takes time...
   this.timeout(5000)
   this.slow(2000)
 
-  const { project } = mock(directory)
+  it('should load some basic build files', async () => {
+    const javascript = createFilePath(directory, 'javascript.js')
+    expect(await loadBuildFile(javascript)).to.equal('from javascript')
 
-  it('should load some basic build files', () => {
-    expect(loadBuildFile(project, 'javascript.js')).to.equal('from javascript')
-    expect(loadBuildFile(project, 'typescript.ts')).to.eql({
+    const typescript = createFilePath(directory, 'typescript.ts')
+    expect(await loadBuildFile(typescript)).to.eql({
       foo: 'from included typescript',
       bar: 'from typescript',
     })
   })
 
-  it('should fail when compilation fails', () => {
-    expect(() => loadBuildFile(project, 'bad-typescript.ts'))
-        .to.throw(ReportFailure, 'Error compiling')
+  it('should fail when compilation fails', async () => {
+    const file = createFilePath(directory, 'bad-typescript.ts')
+    await expect(loadBuildFile(file, directory))
+        .to.be.rejectedWith(ReportFailure, 'Error compiling')
   })
 })
