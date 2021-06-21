@@ -67,7 +67,7 @@ describe('File List', () => {
       expect(file.files).to.equal(files)
       expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
       expect(file.originalPath).to.equal('/Foo/Bar.Txt')
-      expect(file.relativePath).to.equal('bar.txt') // case insensitive
+      expect(file.relativePath).to.equal('Bar.Txt')
       expect(file.canonicalPath).to.equal('/foo/bar.txt') // case insensitive
 
       // Re-get the same file
@@ -154,7 +154,7 @@ describe('File List', () => {
       expect(files.length).to.equal(1)
 
       const file1 = files[0]
-      expect(file1.relativePath).to.equal('one.txt') // case insensitive
+      expect(file1.relativePath).to.equal('One.Txt')
       expect(file1.absolutePath).to.equal('/Foo/One.Txt')
       expect(file1.originalPath).to.equal('/Foo/One.Txt')
       expect(file1.canonicalPath).to.equal('/foo/one.txt') // case insensitive

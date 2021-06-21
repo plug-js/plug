@@ -26,15 +26,35 @@ export type CanonicalPath = FilePath & {
   __brand_canonical_path: any
 }
 
-/*
- * This is a bit of a hack: we determine case sensitivity on _this_ file
- * but maybe a Files from another directory might use a different
- * underlying filesystem... This is good enough for now!
- */
+// This is a bit of a hack: we determine case sensitivity on _this_ file
+// but maybe a Files from another directory might use a different
+// underlying filesystem... This is good enough for now!
 const __lfilename = __filename.toLowerCase()
 const __ufilename = __filename.toUpperCase()
 
 const __caseSensitivePaths = !(existsSync(__lfilename) && existsSync(__ufilename))
+
+// This computes the relative path considering the case sensitivity of the file
+// system and works quite easily as both directory and path are absolute paths.
+function relativePath(directory: string, path: string): string {
+  if (caseSensitivePaths()) return relative(directory, path)
+
+  // Use our lower case directory and path
+  const ldirectory = directory.toLowerCase()
+  const lpath = path.toLowerCase()
+  if (ldirectory === lpath) return ''
+
+  // Figure out the first position where dir and path differ case insensitive
+  let position = 0
+  const end = directory.length < path.length ? directory.length : path.length
+  while ((position< end) && (ldirectory[position] === lpath[position])) position ++
+
+  // Basically copy the casing for the common prefix from the path
+  const from = path.substr(0, position) + directory.substr(position)
+  return relative(from, path)
+}
+
+/* ========================================================================== */
 
 /** Indicates whether the underlying filesystem is case sensitive or not */
 export const caseSensitivePaths: () => boolean = (() => {
@@ -44,6 +64,16 @@ export const caseSensitivePaths: () => boolean = (() => {
       (<any> globalThis).caseSensitivePaths as boolean : __caseSensitivePaths
   } : () => __caseSensitivePaths
 })()
+
+/** Create a `FilePath` by resolving all of its path components */
+export function createFilePath(...paths: string[]): FilePath {
+  return resolve(sep, ...paths) as FilePath
+}
+
+/** Create a `FilePath` by resolving all of its path components */
+export function createDirectoryPath(...paths: string[]): DirectoryPath {
+  return resolve(sep, ...paths) as DirectoryPath
+}
 
 /** Resolve the specified path starting from the specified directory */
 export function resolvePath(directory: DirectoryPath, path: FilePath): FilePath
@@ -72,12 +102,22 @@ export function resolveFilePath(from: FilePath, path?: string): string {
   return path ? resolve(directory, path) as DirectoryPath : directory
 }
 
-/** Return the relative path from a directory to an absolute path */
+/** Return the relative path from a directory to a file */
 export function getRelativePath(directory: DirectoryPath, path: FilePath): RelativeFilePath
+/** Return the relative path from a directory to a directory */
 export function getRelativePath(directory: DirectoryPath, path: DirectoryPath): RelativeDirectoryPath
-export function getRelativePath(directory: DirectoryPath, path: FilePath | DirectoryPath): any {
-  if (caseSensitivePaths()) return relative(directory, path)
-  return relative(directory.toLowerCase(), path.toLowerCase())
+// overloaded methods implementation
+export function getRelativePath(directory: DirectoryPath, path: string): string {
+  return relativePath(directory, path)
+}
+
+/** Return the relative path from a file to another file */
+export function getRelativeFilePath(from: FilePath, path: FilePath): RelativeFilePath
+/** Return the relative path from a file to a directory */
+export function getRelativeFilePath(from: FilePath, path: DirectoryPath): RelativeDirectoryPath
+// overloaded methods implementation
+export function getRelativeFilePath(from: FilePath, path: string): string {
+  return relativePath(dirname(from), path)
 }
 
 /** Return the canonical path from an absolute path, considering filesystem case sensitivity */
@@ -85,9 +125,18 @@ export function getCanonicalPath(name: FilePath): CanonicalPath {
   return (caseSensitivePaths() ? name : name.toLowerCase()) as CanonicalPath
 }
 
-/** Returns whether the specified path is a _child_ of the given directory */
-export function isChild(directory: DirectoryPath, path: FilePath | DirectoryPath): boolean {
-  const relative = getRelativePath(directory, path as any)
+/** Checks whether the specified path is a child of the given directory or not */
+export function isChild(directory: DirectoryPath, path: FilePath): boolean
+/** Checks whether the specified path is a child of the given directory or not */
+export function isChild(directory: DirectoryPath, path: RelativeFilePath): boolean
+/** Checks whether the specified path is a child of the given directory or not */
+export function isChild(directory: DirectoryPath, path: DirectoryPath): boolean
+/** Checks whether the specified path is a child of the given directory or not */
+export function isChild(directory: DirectoryPath, path: RelativeDirectoryPath): boolean
+// overloaded methods implementation
+export function isChild(directory: DirectoryPath, path: string): boolean {
+  const resolved = resolve(directory, path)
+  const relative = relativePath(directory, resolved)
   return !! (relative && (! relative.startsWith('..' + sep)))
 }
 
