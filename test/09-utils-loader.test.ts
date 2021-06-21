@@ -1,13 +1,13 @@
 import { expect } from 'chai'
 import { setupLoader } from '../src/utils/loader'
-import { AbsolutePath } from '../src/utils/paths'
+import { FilePath } from '../src/utils/paths'
 import { directory } from './support'
 
 describe('Node Loader', () => {
   it('should load some files and clear caches', () => {
     try {
-      const map = new Map<AbsolutePath, string>()
-      map.set('/foo/bar.js' as AbsolutePath, 'module.exports = { test: true }')
+      const map = new Map<FilePath, string>()
+      map.set('/foo/bar.js' as FilePath, 'module.exports = { test: true }')
       setupLoader(map)
 
       const first = require('/foo/bar.js')
@@ -23,10 +23,10 @@ describe('Node Loader', () => {
 
   it('should load some files with inclusions', () => {
     try {
-      const map = new Map<AbsolutePath, string>()
-      map.set('/abc/foo.js' as AbsolutePath, 'module.exports = require("./bar")')
-      map.set('/abc/bar.js' as AbsolutePath, 'module.exports = require("../abc/baz")')
-      map.set('/abc/baz/index.js' as AbsolutePath, 'module.exports = "hello, world!"')
+      const map = new Map<FilePath, string>()
+      map.set('/abc/foo.js' as FilePath, 'module.exports = require("./bar")')
+      map.set('/abc/bar.js' as FilePath, 'module.exports = require("../abc/baz")')
+      map.set('/abc/baz/index.js' as FilePath, 'module.exports = "hello, world!"')
 
       setupLoader(map)
       expect(require('/abc/foo.js')).to.equal('hello, world!')
@@ -37,8 +37,8 @@ describe('Node Loader', () => {
 
   it('should load some files with module resolution', () => {
     try {
-      const map = new Map<AbsolutePath, string>()
-      map.set(`${directory}/foo.js` as AbsolutePath, 'module.exports = require("fast-glob")')
+      const map = new Map<FilePath, string>()
+      map.set(`${directory}/foo.js` as FilePath, 'module.exports = require("fast-glob")')
 
       setupLoader(map)
       expect(require(`${directory}/foo.js`)).to.be.a('function')
@@ -53,10 +53,10 @@ describe('Node Loader', () => {
     process.on('warning', listener)
 
     try {
-      const map = new Map<AbsolutePath, string>()
-      map.set('/abc/foo.js' as AbsolutePath, 'module.exports = "foo..." + require("./bar")')
-      map.set('/abc/bar.js' as AbsolutePath, 'module.exports = "bar..." + require("./baz")')
-      map.set('/abc/baz.js' as AbsolutePath, `
+      const map = new Map<FilePath, string>()
+      map.set('/abc/foo.js' as FilePath, 'module.exports = "foo..." + require("./bar")')
+      map.set('/abc/bar.js' as FilePath, 'module.exports = "bar..." + require("./baz")')
+      map.set('/abc/baz.js' as FilePath, `
         // module.exports will be the string "{}" as both "desc" and "prop"
         // should be undefined... if anything pops up, we should catch it...
         const foo = require('./foo')

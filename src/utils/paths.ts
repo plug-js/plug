@@ -2,13 +2,18 @@ import { existsSync } from 'fs'
 import { resolve, relative, dirname, sep } from 'path'
 
 /** An absolute file path always starts from "/" */
-export type AbsolutePath = string & {
+export type FilePath = string & {
   __brand_absolute_path: any
 }
 
 /** A path to a file relative to another file */
-export type RelativePath = string & {
+export type RelativeFilePath = string & {
   __brand_relative_file_path: any
+}
+
+/** An absolute path for a directory */
+export type DirectoryPath = string & {
+  __brand_directory_path: any
 }
 
 /** A path to a file relative to another file */
@@ -17,13 +22,8 @@ export type RelativeDirectoryPath = string & {
 }
 
 /** The absolute path canonicalized depending con case sensitivity */
-export type CanonicalPath = AbsolutePath & {
+export type CanonicalPath = FilePath & {
   __brand_canonical_path: any
-}
-
-/** An absolute path for a directory */
-export type DirectoryPath = string & {
-  __brand_directory_path: any
 }
 
 /*
@@ -45,36 +45,53 @@ export const caseSensitivePaths: () => boolean = (() => {
   } : () => __caseSensitivePaths
 })()
 
-/** Return the absolute path resolving the given path from a directory */
-export function getAbsolutePath(directory: DirectoryPath, path: RelativePath): AbsolutePath {
-  return resolve(directory, path) as AbsolutePath
+/** Resolve the specified path starting from the specified directory */
+export function resolvePath(directory: DirectoryPath, path: FilePath): FilePath
+/** Resolve the specified path starting from the specified directory */
+export function resolvePath(directory: DirectoryPath, path: RelativeFilePath): FilePath
+/** Resolve the specified path starting from the specified directory */
+export function resolvePath(directory: DirectoryPath, path?: DirectoryPath): DirectoryPath
+/** Resolve the specified path starting from the specified directory */
+export function resolvePath(directory: DirectoryPath, path?: RelativeDirectoryPath): DirectoryPath
+// overloaded methods implementation
+export function resolvePath(directory: DirectoryPath, path?: string): string {
+  return path ? resolve(directory, path) as DirectoryPath : directory
 }
 
-/** Get a directory path resolving the specified path */
-export function getDirectoryPath(directory: DirectoryPath, path?: RelativeDirectoryPath): DirectoryPath {
+/** Resolve the specified path starting from the parent directory of the specified file */
+export function resolveFilePath(from: FilePath, path: FilePath): FilePath
+/** Resolve the specified path starting from the parent directory of the specified file */
+export function resolveFilePath(from: FilePath, path: RelativeFilePath): FilePath
+/** Resolve the specified path starting from the parent directory of the specified file */
+export function resolveFilePath(from: FilePath, path?: DirectoryPath): DirectoryPath
+/** Resolve the specified path starting from the parent directory of the specified file */
+export function resolveFilePath(from: FilePath, path?: RelativeDirectoryPath): DirectoryPath
+// overloaded methods implementation
+export function resolveFilePath(from: FilePath, path?: string): string {
+  const directory = dirname(from) as DirectoryPath
   return path ? resolve(directory, path) as DirectoryPath : directory
 }
 
 /** Return the relative path from a directory to an absolute path */
-export function getRelativePath(directory: DirectoryPath, path: AbsolutePath): RelativePath
+export function getRelativePath(directory: DirectoryPath, path: FilePath): RelativeFilePath
 export function getRelativePath(directory: DirectoryPath, path: DirectoryPath): RelativeDirectoryPath
-export function getRelativePath(directory: DirectoryPath, path: AbsolutePath | DirectoryPath): any {
+export function getRelativePath(directory: DirectoryPath, path: FilePath | DirectoryPath): any {
   if (caseSensitivePaths()) return relative(directory, path)
   return relative(directory.toLowerCase(), path.toLowerCase())
 }
 
+/** Return the canonical path from an absolute path, considering filesystem case sensitivity */
+export function getCanonicalPath(name: FilePath): CanonicalPath {
+  return (caseSensitivePaths() ? name : name.toLowerCase()) as CanonicalPath
+}
+
 /** Returns whether the specified path is a _child_ of the given directory */
-export function isChild(directory: DirectoryPath, path: AbsolutePath | DirectoryPath): boolean {
+export function isChild(directory: DirectoryPath, path: FilePath | DirectoryPath): boolean {
   const relative = getRelativePath(directory, path as any)
   return !! (relative && (! relative.startsWith('..' + sep)))
 }
 
-/** Return the canonical path from an absolute path, considering filesystem case sensitivity */
-export function getCanonicalPath(name: AbsolutePath): CanonicalPath {
-  return (caseSensitivePaths() ? name : name.toLowerCase()) as CanonicalPath
-}
-
 /** Get the directory path for the specified absolute path */
-export function getParentDirectory(path: AbsolutePath | DirectoryPath): DirectoryPath {
+export function getParent(path: FilePath | DirectoryPath): DirectoryPath {
   return dirname(path) as DirectoryPath
 }

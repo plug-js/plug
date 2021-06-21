@@ -2,7 +2,7 @@ import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { Failure } from '../src/failure'
 import { Project } from '../src/project'
-import { AbsolutePath, DirectoryPath, getAbsolutePath, RelativePath } from '../src/utils/paths'
+import { FilePath, DirectoryPath, resolvePath, RelativeFilePath } from '../src/utils/paths'
 import { disableLogs } from './support'
 
 describe('Project', () => {
@@ -10,8 +10,8 @@ describe('Project', () => {
 
   it('should create a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file1 = getAbsolutePath(dir, 'build.ts' as RelativePath)
-    const file2 = getAbsolutePath(dir, 'bar/build.ts' as RelativePath)
+    const file1 = resolvePath(dir, 'build.ts' as RelativeFilePath)
+    const file2 = resolvePath(dir, 'bar/build.ts' as RelativeFilePath)
 
     const project1 = new Project({}, file1)
     expect(project1.directory).to.equal('/foo')
@@ -28,7 +28,7 @@ describe('Project', () => {
 
   it('should register and return a task name', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
+    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
 
     const task0: any = { run: () => {} }
     const task1: any = { run: () => {}, description: 'First task' }
@@ -65,7 +65,7 @@ describe('Project', () => {
 
   it('should cleanup what it can reading a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
+    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
     const task = { run: () => {} }
 
     const project = new Project({
@@ -81,11 +81,11 @@ describe('Project', () => {
 
   it('should not create a project with silly input', () => {
     const dir = '/foo' as DirectoryPath
-    const file = getAbsolutePath(dir, 'build.ts' as RelativePath)
+    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
 
     expect(() => new Project(null as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
     expect(() => new Project('xx' as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
-    expect(() => new Project(null as any, 'foo' as AbsolutePath))
+    expect(() => new Project(null as any, 'foo' as FilePath))
         .to.throw(AssertionError, 'Not an absolute build file: "foo"')
     expect(() => new Project(null as any, file, 'foo' as DirectoryPath))
         .to.throw(AssertionError, 'Not an absolute directory: "foo"')

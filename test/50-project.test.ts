@@ -1,7 +1,7 @@
 import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import { load } from '../src/project'
-import { getAbsolutePath, getDirectoryPath, getParentDirectory, RelativeDirectoryPath, RelativePath } from '../src/utils/paths'
+import { resolvePath, getParent, RelativeDirectoryPath, RelativeFilePath } from '../src/utils/paths'
 import { directory } from './support'
 
 describe('Project Loading', function() {
@@ -11,7 +11,7 @@ describe('Project Loading', function() {
 
   it('should load a project', () => {
     // theeeheee!!! this will recompile our entire source code!
-    const file = getAbsolutePath(directory, 'build.ts' as RelativePath)
+    const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
     const project = load(file)
 
     expect(project.directory).to.equal(directory)
@@ -38,8 +38,8 @@ describe('Project Loading', function() {
   })
 
   it('should not load a project outside of its directory', () => {
-    const file = getAbsolutePath(directory, 'build.ts' as RelativePath)
-    expect(() => load(file, getDirectoryPath(getParentDirectory(file), 'foo' as RelativeDirectoryPath)))
+    const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
+    expect(() => load(file, resolvePath(getParent(file), 'foo' as RelativeDirectoryPath)))
         .to.throw(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
   })
 })

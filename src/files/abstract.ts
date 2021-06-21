@@ -3,26 +3,26 @@ import { Files } from './files'
 import { RawSourceMap } from 'source-map'
 
 import {
-  AbsolutePath,
+  FilePath,
   CanonicalPath,
-  RelativePath,
-  getAbsolutePath,
+  RelativeFilePath,
+  resolvePath,
   getCanonicalPath,
-  getParentDirectory,
+  getParent,
   getRelativePath,
 } from '../utils/paths'
 
 export abstract class AbstractFile implements File {
   readonly files!: Files
-  readonly absolutePath!: AbsolutePath
-  readonly originalPath!: AbsolutePath
-  readonly relativePath!: RelativePath
+  readonly absolutePath!: FilePath
+  readonly originalPath!: FilePath
+  readonly relativePath!: RelativeFilePath
   readonly canonicalPath!: CanonicalPath
 
   constructor(
       files: Files,
-      absolutePath: AbsolutePath,
-      originalPath: AbsolutePath = absolutePath,
+      absolutePath: FilePath,
+      originalPath: FilePath = absolutePath,
   ) {
     const relativePath = getRelativePath(files.directory, absolutePath)
     const canonicalPath = getCanonicalPath(absolutePath)
@@ -36,8 +36,8 @@ export abstract class AbstractFile implements File {
   }
 
   get(path: string): File {
-    const directory = getParentDirectory(this.absolutePath)
-    const absolutePath = getAbsolutePath(directory, path as RelativePath)
+    const directory = getParent(this.absolutePath)
+    const absolutePath = resolvePath(directory, path as RelativeFilePath)
     return this.files.get(absolutePath)
   }
 

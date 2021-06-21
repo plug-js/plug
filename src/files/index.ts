@@ -1,9 +1,9 @@
 import { RawSourceMap } from 'source-map'
 
 import {
-  AbsolutePath,
+  FilePath,
   CanonicalPath,
-  RelativePath,
+  RelativeFilePath,
 } from '../utils/paths'
 
 // Import and re-export our `Files` class
@@ -31,13 +31,13 @@ export interface File {
   /** The `Files` associated with this `File` */
   readonly files: Files
   /** The _absolute_ path of this `File` */
-  readonly absolutePath: AbsolutePath
+  readonly absolutePath: FilePath
   /** The path of this `File` relative to its `Files`'s `baseDir` */
-  readonly relativePath: RelativePath
+  readonly relativePath: RelativeFilePath
   /** The _canonical_ path of this `File` (dependant on filesystem case sensitivity) */
   readonly canonicalPath: CanonicalPath
   /** An optional array of absolute paths indicating how this file can be `require(...)`d */
-  readonly originalPath: AbsolutePath
+  readonly originalPath: FilePath
 
   /** Checks if this `File` exists (its `contents()` can be accessed) */
   exists(): Promise<boolean>

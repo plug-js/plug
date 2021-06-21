@@ -10,7 +10,7 @@ import {
 } from 'fs'
 
 import {
-  AbsolutePath,
+  FilePath,
 } from '../utils/paths'
 
 /* ========================================================================== *
@@ -21,7 +21,7 @@ import {
 type FileData = { contents: string, lastModified: number, sourceMapFile?: string }
 
 interface FileImplOptions {
-  originalPath?: AbsolutePath,
+  originalPath?: FilePath,
   sourceMap?: boolean | RawSourceMap,
   contents?: string,
 }
@@ -34,7 +34,7 @@ export class FileImpl extends AbstractFile implements File {
 
   constructor(
       files: Files,
-      absolutePath: AbsolutePath,
+      absolutePath: FilePath,
       options: FileImplOptions = {},
   ) {
     super(files, absolutePath, options.originalPath)

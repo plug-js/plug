@@ -1,4 +1,4 @@
-import { AbsolutePath } from './paths'
+import { FilePath } from './paths'
 import { EOL } from 'os'
 import { RawSourceMap } from 'source-map'
 import { URL, pathToFileURL, fileURLToPath } from 'url'
@@ -31,7 +31,7 @@ const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/
 
 // Internal types for sanity...
 type ExtractedSourceMapURL = { contents: string, url?: string }
-type ParsedSourceMap = { sourceMap?: RawSourceMap, sourceMapFile?: AbsolutePath }
+type ParsedSourceMap = { sourceMap?: RawSourceMap, sourceMapFile?: FilePath }
 type ExtractedSourceMap = ParsedSourceMap & { contents: string }
 
 /**
@@ -79,7 +79,7 @@ export function extractSourceMappingURL(contents: string, wipe: boolean): Extrac
  * @param path The absolute path of the file containing the source mapping url
  * @param url The source map URL to parse as a sourcemap or external file
  */
-export function parseSourceMappingURL(path: AbsolutePath, url?: string): ParsedSourceMap | undefined {
+export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourceMap | undefined {
   // No URL? No source map!
   if (! url) return
 
@@ -98,7 +98,7 @@ export function parseSourceMappingURL(path: AbsolutePath, url?: string): ParsedS
   if (resolved.protocol !== 'file:') return
 
   // If the source map file does not exist, don't read the source map
-  const sourceMapFile = fileURLToPath(resolved) as AbsolutePath
+  const sourceMapFile = fileURLToPath(resolved) as FilePath
   return { sourceMapFile }
 }
 
@@ -111,7 +111,7 @@ export function parseSourceMappingURL(path: AbsolutePath, url?: string): ParsedS
  * @param code The code to parse for source mapping URLs
  * @param wipe Whether to wipe the source mapping URL from the file or not
  */
-export function extractSourceMap(path: AbsolutePath, code: string, wipe: boolean): ExtractedSourceMap | undefined {
+export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap | undefined {
   const { contents, url } = extractSourceMappingURL(code, wipe)
   const parsedSourceMap = parseSourceMappingURL(path, url)
   if (parsedSourceMap) return { contents, ...parsedSourceMap }

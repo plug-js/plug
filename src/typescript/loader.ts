@@ -1,4 +1,4 @@
-import { AbsolutePath } from '../utils/paths'
+import { FilePath } from '../utils/paths'
 import { Files } from '../files'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
@@ -43,7 +43,7 @@ export function loadBuildFile(project: Project, fileName: string): any {
   const output = compiler.process(files, run, run.log(compiler))
 
   // Build our output file list and require our build file
-  const map = new Map<AbsolutePath, string>()
+  const map = new Map<FilePath, string>()
   output.list().forEach((file) => {
     const contents = file.contentsSync()
     map.set(file.absolutePath, contents)

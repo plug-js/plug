@@ -4,20 +4,20 @@ import { Failure } from './failure'
 import { Task, TaskCall } from './task'
 import { loadBuildFile } from './typescript/loader'
 import { makeLog } from './utils/log'
-import { AbsolutePath, DirectoryPath, getParentDirectory, isChild } from './utils/paths'
+import { FilePath, DirectoryPath, getParent, isChild } from './utils/paths'
 
 export class Project {
   #taskNames = new Map<Task, string>()
   #tasks = new Map<string, Task>()
   #log = makeLog()
 
-  readonly buildFile: AbsolutePath
+  readonly buildFile: FilePath
   readonly directory: DirectoryPath
 
   constructor(
       build: Record<string, Task | TaskCall>,
-      buildFile: AbsolutePath,
-      directory = getParentDirectory(buildFile),
+      buildFile: FilePath,
+      directory = getParent(buildFile),
   ) {
     // Never start with a non-absolute file / directory
     assert(isAbsolute(buildFile), `Not an absolute build file: "${buildFile}"`)
@@ -73,7 +73,7 @@ export class Project {
   }
 }
 
-export function load(buildFile: AbsolutePath, directory?: DirectoryPath): Project {
+export function load(buildFile: FilePath, directory?: DirectoryPath): Project {
   // Create an initial project and load the build file
   const project = new Project({}, buildFile, directory)
   const build = loadBuildFile(project, buildFile)

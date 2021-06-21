@@ -1,7 +1,7 @@
 import { Files } from './files'
 import { PlugPipe, TaskPipe } from './pipe'
 import { glob, GlobOptions } from './utils/globs'
-import { DirectoryPath, getDirectoryPath, RelativeDirectoryPath } from './utils/paths'
+import { DirectoryPath, resolvePath, RelativeDirectoryPath } from './utils/paths'
 
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
@@ -31,7 +31,7 @@ export function read(...args: ReadArguments): TaskPipe {
 export function from(directory: string): { read: typeof read } {
   return { read: (...args: ReadArguments) =>
     new TaskPipe({ run: (run) =>
-      readDirectory(getDirectoryPath(run.directory, directory as RelativeDirectoryPath), ...args),
+      readDirectory(resolvePath(run.directory, directory as RelativeDirectoryPath), ...args),
     }) }
 }
 

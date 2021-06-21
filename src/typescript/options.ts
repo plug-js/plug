@@ -13,19 +13,18 @@ import {
 } from '../files'
 
 import {
-  AbsolutePath,
-  getAbsolutePath,
-  getParentDirectory,
-  getDirectoryPath,
+  FilePath,
+  getParent,
+  resolvePath,
   getRelativePath,
   RelativeDirectoryPath,
-  RelativePath,
+  RelativeFilePath,
 } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = {
   options: CompilerOptions,
   diagnostics: readonly Diagnostic[],
-  absolutePath?: AbsolutePath,
+  absolutePath?: FilePath,
 }
 
 // Load options from a file in our filesystem
@@ -33,7 +32,7 @@ function loadOptions(
     file: File,
     files: Files,
     diagnostics: Diagnostic[],
-    resolutionStack: AbsolutePath[] = [ file.absolutePath ],
+    resolutionStack: FilePath[] = [ file.absolutePath ],
 ): CompilerOptions | undefined {
   // A function to read files for TypeScript
   function readFile(name: string): string | undefined {
@@ -55,7 +54,7 @@ function loadOptions(
   // Convert "compilerOptions" parsing the JSON format and returning it with proper enums and validations
   const { options, errors } = convertCompilerOptionsFromJson(
       compilerOptions, // the compiler options as JSON
-      getParentDirectory(file.absolutePath), // dir of this config file
+      getParent(file.absolutePath), // dir of this config file
       file.absolutePath, // full path name of this config file
   )
   if (errors.length) return void diagnostics.push(...errors)
@@ -64,7 +63,7 @@ function loadOptions(
   if (!extendsPath) return options
 
   // Check for circular extension errors
-  const extendedPath = getAbsolutePath(getParentDirectory(file.absolutePath), extendsPath)
+  const extendedPath = resolvePath(getParent(file.absolutePath), extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
     const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)
@@ -117,11 +116,11 @@ export function getCompilerOptions(
   if (diagnostics.length) return { options: {}, diagnostics }
 
   // If we have some overrides with path, we must rewrite them
-  if (overrides.outDir) overrides.outDir = getDirectoryPath(files.directory, overrides.outDir as RelativeDirectoryPath)
-  if (overrides.outFile) overrides.outFile = getAbsolutePath(files.directory, overrides.outFile as RelativePath)
-  if (overrides.rootDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.rootDir as RelativeDirectoryPath)
-  if (overrides.declarationDir) overrides.rootDir = getDirectoryPath(files.directory, overrides.declarationDir as RelativeDirectoryPath)
-  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => getDirectoryPath(files.directory, d as RelativeDirectoryPath))
+  if (overrides.outDir) overrides.outDir = resolvePath(files.directory, overrides.outDir as RelativeDirectoryPath)
+  if (overrides.outFile) overrides.outFile = resolvePath(files.directory, overrides.outFile as RelativeFilePath)
+  if (overrides.rootDir) overrides.rootDir = resolvePath(files.directory, overrides.rootDir as RelativeDirectoryPath)
+  if (overrides.declarationDir) overrides.declarationDir = resolvePath(files.directory, overrides.declarationDir as RelativeDirectoryPath)
+  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => resolvePath(files.directory, d as RelativeDirectoryPath))
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)

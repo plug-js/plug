@@ -3,7 +3,7 @@
 import { resolve } from 'path'
 import { existsSync } from 'fs'
 import { dirname } from 'path'
-import { DirectoryPath, getAbsolutePath, RelativePath } from '../src/utils/paths'
+import { DirectoryPath, resolvePath, RelativeFilePath } from '../src/utils/paths'
 import { options, PlugLog, RunLog } from '../src/utils/log'
 import { Files } from '../src/files'
 import { Run } from '../src/run'
@@ -48,7 +48,7 @@ export function mock(
     ...names: string[]
 ): MockProject {
   const files = new Files(directory as DirectoryPath)
-  const build = getAbsolutePath(files.directory, 'build.ts' as RelativePath)
+  const build = resolvePath(files.directory, 'build.ts' as RelativeFilePath)
 
   const tasks: Record<string, Task> = {}
   for (const t of [ name, ...names ]) tasks[t] = { run: () => files }

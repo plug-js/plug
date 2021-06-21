@@ -1,6 +1,6 @@
 import { extractSourceMap, extractSourceMappingURL, parseSourceMappingURL } from '../src/utils/source-maps'
 import { expect } from 'chai'
-import { AbsolutePath } from '../src/utils/paths'
+import { FilePath } from '../src/utils/paths'
 
 describe('Source Maps', () => {
   it('should extract a source mapping url', () => {
@@ -45,7 +45,7 @@ describe('Source Maps', () => {
   })
 
   it('should parse a source mapping URL', () => {
-    const path = '/foo/bar/baz.js' as AbsolutePath
+    const path = '/foo/bar/baz.js' as FilePath
 
     expect(parseSourceMappingURL(path)).to.be.undefined
 
@@ -63,7 +63,7 @@ describe('Source Maps', () => {
   })
 
   it('should extract some source map data', () => {
-    const path = '/foo/bar/baz.js' as AbsolutePath
+    const path = '/foo/bar/baz.js' as FilePath
 
     expect(extractSourceMap(path, '//# sourceMappingURL=data:application/json;base64,e30\n// foobar', false)).to.eql({
       contents: '//# sourceMappingURL=data:application/json;base64,e30\n// foobar',

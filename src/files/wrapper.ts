@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import { AbsolutePath } from '../utils/paths'
+import { FilePath } from '../utils/paths'
 import { AbstractFile } from './abstract'
 import { Files } from './files'
 import { File } from './index'
@@ -7,7 +7,7 @@ import { File } from './index'
 export class FileWrapper extends AbstractFile implements File {
   #file: File
 
-  constructor(files: Files, file: File, path: AbsolutePath = file.absolutePath) {
+  constructor(files: Files, file: File, path: FilePath = file.absolutePath) {
     super(files, path, file.originalPath)
     this.#file = file
   }

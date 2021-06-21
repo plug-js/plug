@@ -2,7 +2,7 @@ import { Files } from '../files'
 import { Plug, install } from '../pipe'
 import { Run } from '../run'
 import { Log } from '../utils/log'
-import { getDirectoryPath, getRelativePath, RelativeDirectoryPath } from '../utils/paths'
+import { resolvePath, getRelativePath, RelativeDirectoryPath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -18,7 +18,7 @@ export class ToPlug implements Plug {
   }
 
   process(input: Files, run: Run, log: Log): Files {
-    const directory = getDirectoryPath(run.directory, this.#directory)
+    const directory = resolvePath(run.directory, this.#directory)
     if (directory === input.directory) return input
 
     const output = new Files(directory)

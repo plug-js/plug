@@ -11,7 +11,7 @@ import {
 
 import { Plug, install } from '../pipe'
 import { checkDiagnostics } from '../typescript/diagnostic'
-import { getAbsolutePath, getDirectoryPath, getRelativePath, isChild, RelativeDirectoryPath } from '../utils/paths'
+import { resolvePath, getRelativePath, isChild, RelativeDirectoryPath } from '../utils/paths'
 import { Run } from '../run'
 import { Log } from '../utils/log'
 
@@ -71,7 +71,8 @@ export class CompilePlug implements Plug {
     const { options, diagnostics } = getCompilerOptions(input, this.#config, this.#options)
     checkDiagnostics(diagnostics, host, 'Error in TypeScript configuration')
 
-    if (options.declaration !== false) options.declarationMap = true
+    options.declaration = !! options.declaration
+    options.declarationMap = options.declaration
     options.sourceMap = false
     options.inlineSourceMap = true
     options.inlineSources = false
@@ -81,8 +82,8 @@ export class CompilePlug implements Plug {
 
     // For each file in the input list, check if we can compile it, or
     // (if specified) allow it to be passed through to the output
-    const rootDir = getDirectoryPath(input.directory, options.rootDir as RelativeDirectoryPath)
-    const outDir = getDirectoryPath(input.directory, options.outDir as RelativeDirectoryPath)
+    const rootDir = resolvePath(input.directory, options.rootDir as RelativeDirectoryPath)
+    const outDir = resolvePath(input.directory, options.outDir as RelativeDirectoryPath)
 
     const output = new Files(input.directory)
     const paths = input.list().map((file) => {
@@ -91,7 +92,7 @@ export class CompilePlug implements Plug {
       if (options.allowJs && (extension === '.js')) return file.absolutePath
       if (options.passThrough && isChild(rootDir, file.absolutePath)) {
         const relativePath = getRelativePath(rootDir, file.absolutePath)
-        const passThroughPath = getAbsolutePath(outDir, relativePath)
+        const passThroughPath = resolvePath(outDir, relativePath)
         output.add(passThroughPath, file)
       }
     }).filter((path) => path) as string[]

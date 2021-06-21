@@ -1,40 +1,39 @@
 import { expect } from 'chai'
 import {
-  AbsolutePath,
+  FilePath,
   DirectoryPath,
   getRelativePath,
   getCanonicalPath,
-  getAbsolutePath,
-  getDirectoryPath,
-  getParentDirectory,
+  resolvePath,
+  getParent,
   isChild,
   caseSensitivePaths,
   RelativeDirectoryPath,
-  RelativePath,
+  RelativeFilePath,
 } from '../src/utils/paths'
 
 describe('Paths', () => {
   const x_dir = '/Foo/Bar' as DirectoryPath
-  const x_file = '/Foo/Bar/Baz.Txt' as AbsolutePath
-  const u_file = '/FOO/BAR/BAZ.TXT' as AbsolutePath
-  const l_file = '/foo/bar/baz.txt' as AbsolutePath
+  const x_file = '/Foo/Bar/Baz.Txt' as FilePath
+  const u_file = '/FOO/BAR/BAZ.TXT' as FilePath
+  const l_file = '/foo/bar/baz.txt' as FilePath
 
   it('should get a directory path', () => {
-    expect(getDirectoryPath(x_dir)).to.equal('/Foo/Bar')
-    expect(getDirectoryPath(x_dir, '.' as RelativeDirectoryPath)).to.equal('/Foo/Bar')
-    expect(getDirectoryPath(x_dir, 'Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(getDirectoryPath(x_dir, './Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(getDirectoryPath(x_dir, '../Baz' as RelativeDirectoryPath)).to.equal('/Foo/Baz')
+    expect(resolvePath(x_dir)).to.equal('/Foo/Bar')
+    expect(resolvePath(x_dir, '.' as RelativeDirectoryPath)).to.equal('/Foo/Bar')
+    expect(resolvePath(x_dir, 'Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
+    expect(resolvePath(x_dir, './Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
+    expect(resolvePath(x_dir, '../Baz' as RelativeDirectoryPath)).to.equal('/Foo/Baz')
   })
 
   it('should get an absolute path', () => {
-    expect(getAbsolutePath(x_dir, 'Baz.Txt' as RelativePath)).to.equal(x_file)
-    expect(getAbsolutePath(x_dir, './Baz.Txt' as RelativePath)).to.equal(x_file)
-    expect(getAbsolutePath(x_dir, '../Baz.Txt' as RelativePath)).to.equal('/Foo/Baz.Txt')
+    expect(resolvePath(x_dir, 'Baz.Txt' as RelativeFilePath)).to.equal(x_file)
+    expect(resolvePath(x_dir, './Baz.Txt' as RelativeFilePath)).to.equal(x_file)
+    expect(resolvePath(x_dir, '../Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Baz.Txt')
   })
 
   it('should get a directory for a file', () => {
-    expect(getParentDirectory(x_file)).to.equal(x_dir)
+    expect(getParent(x_file)).to.equal(x_dir)
   })
 
   it('should honor case sensitivity in tests', () => {
