@@ -31,9 +31,6 @@ export function loadBuildFile(project: Project, fileName: string): any {
     allowJs: false, // we won't read JS files
     module: ModuleKind.CommonJS, // use commonJS for now
     declaration: false, // we don't care about build's .d.ts
-    sourceMap: false, // don't generate external source maps
-    inlineSourceMap: true, // generate inline source maps
-    inlineSources: false, // don't include sources in source maps
     target: ScriptTarget.ES2019, // best for Node 14.x?
     esModuleInterop: true, // needed for node modules
     importHelpers: false, // maybe we don't have "tslib"

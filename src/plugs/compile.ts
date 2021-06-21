@@ -32,15 +32,28 @@ interface ExtendedCompilerOptions extends CompilerOptions {
    * @default: false
    */
   passThrough?: boolean
+
+  /** Source maps will always be available, use `save(...)` to write them */
+  declarationMap?: undefined
+  /** Source maps will always be available, use `save(...)` to write them */
+  sourceMap?: undefined
+  /** Source maps will always be available, use `save(...)` to write them */
+  inlineSourceMap?: undefined
+  /** Source maps will always be available, use `save(...)` to write them */
+  inlineSources?: undefined
+  /** Source maps will always be available, use `save(...)` to write them */
+  mapRoot?: undefined
 }
 
 export class CompilePlug implements Plug {
   #options?: ExtendedCompilerOptions
   #config?: string
 
+  /** ConstructorDoc w/ options */
   constructor(options?: ExtendedCompilerOptions)
+  /** ConstructorDoc w/ config */
   constructor(config?: string, options?: ExtendedCompilerOptions)
-  constructor(first: string | CompilerOptions | undefined, extra?: ExtendedCompilerOptions) {
+  constructor(first: string | ExtendedCompilerOptions | undefined, extra?: ExtendedCompilerOptions) {
     const { config, options } =
       typeof first === 'string' ? { config: first, options: extra } :
       first === undefined ? { config: undefined, options: extra } :
@@ -57,6 +70,12 @@ export class CompilePlug implements Plug {
     const host = new TypeScriptHost(input)
     const { options, diagnostics } = getCompilerOptions(input, this.#config, this.#options)
     checkDiagnostics(diagnostics, host, 'Error in TypeScript configuration')
+
+    if (options.declaration !== false) options.declarationMap = true
+    options.sourceMap = false
+    options.inlineSourceMap = true
+    options.inlineSources = false
+    options.mapRoot = undefined
 
     // For each file in the input list, check if we can compile it, or
     // (if specified) allow it to be passed through to the output
