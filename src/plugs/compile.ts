@@ -60,12 +60,14 @@ export class CompilePlug implements Plug {
 
   process(input: Files, run: Run, log: Log): Files {
     const now = Date.now()
+    const output = new Files(input.directory)
 
     // Read our compiler options and fail on error
     const host = new TypeScriptHost(input)
     const { options, diagnostics } = getCompilerOptions(input, this.#config, this.#options)
     checkDiagnostics(diagnostics, host, 'Error in TypeScript configuration')
 
+    // We always want inline sourcemaps
     options.declaration = !! options.declaration
     options.declarationMap = options.declaration
     options.sourceMap = false
@@ -73,22 +75,25 @@ export class CompilePlug implements Plug {
     options.inlineSources = false
     options.mapRoot = undefined
 
-    // TODO: there's a better way to do this, look at "to" sources!
-
-    // For each file in the input list, check if we can compile it, or
-    // (if specified) allow it to be passed through to the output
+    // Make sure we _always_ have both `rootDir` and `outDir`...
     const rootDir = resolvePath(input.directory, options.rootDir as RelativeDirectoryPath)
     const outDir = resolvePath(input.directory, options.outDir as RelativeDirectoryPath)
+    options.rootDir = rootDir
+    options.outDir = outDir
 
-    const output = new Files(input.directory)
+    // Figure out what to do with our input files
     const paths = input.list().map((file) => {
+      // Compile all ".ts", ".d.ts", ".tsx" (or ".js" with allowJs)
       const extension = extname(file.absolutePath).toLowerCase()
-      if (extensions.includes(extension)) return file.absolutePath
-      if (options.allowJs && (extension === '.js')) return file.absolutePath
+      if (extensions.includes(extension)) return file.relativePath
+      if (options.allowJs && (extension === '.js')) return file.relativePath
+
+      // We pass-through any other file child of our "rootDir" basically
+      // re-creating the same structure into "outDir"
       if (options.passThrough && isChild(rootDir, file.absolutePath)) {
-        const relativePath = getRelativePath(rootDir, file.absolutePath)
-        const passThroughPath = resolvePath(outDir, relativePath)
-        output.add(passThroughPath, file)
+        const relative = getRelativePath(rootDir, file.absolutePath)
+        const resolved = resolvePath(outDir, relative)
+        output.add(resolved, file)
       }
     }).filter((path) => path) as string[]
 
@@ -109,17 +114,13 @@ export class CompilePlug implements Plug {
         sources?.forEach(({ fileName }) => originalPath = input.get(fileName).absolutePath)
       }
 
-      // TODO: better sourcemap generation
-
       // Add the result of the compilation to our output files
       output.add(fileName, { contents, sourceMap: true, originalPath })
     })
+
+    // Ceck errors and log times after everything is emitted
     checkDiagnostics(result.diagnostics, host, 'Error emitting compilation')
-
-    // Some logging
     log.debug('Compliled', paths.length, 'in', Date.now() - now, 'ms')
-
-    // All done!
     return output
   }
 }
