@@ -47,7 +47,7 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   // typescript ended up in our compilation results
   const map = new Map<FilePath, string>()
   let compiled = undefined as FilePath | undefined
-  for (const file of output.list()) {
+  for (const file of output) {
     map.set(file.absolutePath, await file.contents())
     if (file.originalPath === buildFile) compiled = file.absolutePath
   }

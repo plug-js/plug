@@ -43,6 +43,23 @@ export class Files implements Files {
     this.directory = directory
   }
 
+  /** Return the number of `File`s listed by this instance */
+  get length(): number {
+    return this.#files.size
+  }
+
+  /** Invoke the given call back function for each file listed by this */
+  forEach(callback: (value: File) => void, thisArg?: any): void {
+    for (const file of this) callback.call(thisArg, file)
+  }
+
+  /** Map each file listed by this according to the given callback function */
+  map<U>(callback: (value: File) => U, thisArg?: any): U[] {
+    const result: U[] = []
+    for (const file of this) result.push(callback.call(thisArg, file))
+    return result
+  }
+
   /** Return a `File` associated with this `Files` list */
   get(path: string): File {
     const absolutePath = resolvePath(this.directory, path as RelativeFilePath)

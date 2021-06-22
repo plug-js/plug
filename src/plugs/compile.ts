@@ -82,7 +82,7 @@ export class CompilePlug implements Plug {
     options.outDir = outDir
 
     // Figure out what to do with our input files
-    const paths = input.list().map((file) => {
+    const paths = input.map((file) => {
       // Compile all ".ts", ".d.ts", ".tsx" (or ".js" with allowJs)
       const extension = extname(file.absolutePath).toLowerCase()
       if (extensions.includes(extension)) return file.relativePath
