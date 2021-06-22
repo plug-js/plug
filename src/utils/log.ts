@@ -30,13 +30,13 @@ export interface LogOptions {
 }
 
 /** The main `Log` */
-export type Log = ((message: string, ...args: any[]) => void) & {
+export type Log = ((...args: [ any, ...any ]) => void) & {
   /** Emit a _debug_ message */
-  debug(message: string, ...args: any[]): void
+  debug(...args: [ any, ...any ]): void
   /** Emit an _alert_ message */
-  alert(message: string, ...args: any[]): void
+  alert(...args: [ any, ...any ]): void
   /** Emit an _error_ message */
-  error(message: string, ...args: any[]): void
+  error(...args: [ any, ...any ]): void
 } & Readonly<Omit<LogOptions, 'write'>>
 
 /**
@@ -85,16 +85,16 @@ function emit(
     level: LogLevel,
     run: Run | undefined,
     plug: Plug | undefined,
-    message: string,
-    ...args: any[]
+    ...args: [ any, ...any ]
 ): void {
   // First check if we _really_ have to log this message
   if (level < options.level) return
 
   // Simplify wrinting colors here
+  const colors = options.colors
   const strings: string[] = []
   const push = (col: STYLE | RGB | null, ...args: string[]): void => {
-    options.colors && col ? strings.push(col, ...args) : strings.push(...args)
+    colors && col ? strings.push(col, ...args) : strings.push(...args)
   }
 
   // Reset our color at the beginning of the line
@@ -140,15 +140,13 @@ function emit(
     push(RGB['#005f00'], '} ')
   }
 
-  // Message, the least with "w(...)"
-  push(STYLE.RESET, message)
+  // Reset before giving control to "inspect"
+  push(STYLE.RESET)
 
   // All other arguments
-  for (const arg of args) {
-    push(null,
-        arg instanceof Error ? EOL : ' ',
-        typeof arg === 'string' ? arg :
-            inspect(arg, { colors: options.colors }))
+  for (let i = 0, arg = args[0]; i < args.length; arg = args[++ i]) {
+    if (i) strings.push(arg instanceof Error ? EOL : ' ')
+    strings.push(typeof arg === 'string' ? arg : inspect(arg, { colors }))
   }
 
   // Close up (always reset, convert to string, write)

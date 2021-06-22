@@ -121,7 +121,8 @@ export class FileImpl extends AbstractFile implements File {
         const sourceMap = JSON.parse(sourceMapContents)
         data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap)
       } catch (error) {
-        log.debug(`Error source map for "${this.absolutePath}" from "${sourceMapFile}"`)
+        log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
+        log.debug(error)
         delete data.sourceMap
       }
     }
@@ -159,7 +160,8 @@ export class FileImpl extends AbstractFile implements File {
         const sourceMap = JSON.parse(sourceMapContents)
         data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap)
       } catch (error) {
-        log.debug(`Error source map for "${this.absolutePath}" from "${sourceMapFile}"`)
+        log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
+        log.debug(error)
         delete data.sourceMap
       }
     }
