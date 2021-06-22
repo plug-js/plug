@@ -15,6 +15,8 @@ export type FileOptions = {
    * @default true
    */
   sourceMap?: boolean | SourceMapV3,
+  /** A `Files` instance where source map source attachments can be read from */
+  sourceMapSources?: Files,
   /** The original path of the file (if any) defaulting to its path */
   originalPath?: FilePath,
 }

@@ -117,7 +117,7 @@ export class CompilePlug implements Plug {
       }
 
       // Add the result of the compilation to our output files
-      output.add(fileName, { contents, sourceMap: true, originalPath: originalPath }) // TODO
+      output.add(fileName, { contents, sourceMap: true, originalPath, sourceMapSources: input })
     })
 
     // Ceck errors and log times after everything is emitted

@@ -69,8 +69,8 @@ export class FileSourceMap {
     }
   }
 
-  attachSources(files: Files): void {
-    this.#sourcesContent = this.#sources.map((file) => files.get(file))
+  attachSources(files?: Files): void {
+    if (files) this.#sourcesContent = this.#sources.map((file) => files.get(file))
   }
 
   async produceSourceMap(attachSources?: boolean): Promise<SourceMapV3> {
