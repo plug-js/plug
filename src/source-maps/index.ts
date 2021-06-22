@@ -1,5 +1,5 @@
 import { FilePath } from '../utils/paths'
-import { SourceMapV3 } from './source-map'
+import { FileSourceMap } from './source-map'
 import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
@@ -7,7 +7,7 @@ export { SourceMapV3, FileSourceMap } from './source-map'
 
 interface ExtractedSourceMap {
   contents: string,
-  sourceMap?: SourceMapV3,
+  sourceMap?: FileSourceMap,
   sourceMapFile?: FilePath,
 }
 
@@ -22,7 +22,9 @@ interface ExtractedSourceMap {
  */
 export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap {
   const { contents, url } = extractSourceMappingURL(code, wipe)
-  const parsedSourceMap = parseSourceMappingURL(path, url)
-  if (parsedSourceMap) return { contents, ...parsedSourceMap }
-  return { contents: code }
+  const { sourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
+
+  if (sourceMap) return { contents, sourceMap: new FileSourceMap(path, sourceMap) }
+  if (sourceMapFile) return { contents, sourceMapFile }
+  return { contents }
 }

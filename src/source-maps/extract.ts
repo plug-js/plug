@@ -24,7 +24,7 @@ const sourceMappingURLRegExp = RegExp(
  * ========================================================================== */
 
 // Internal types for sanity...
-type ExtractedSourceMapURL = { contents: string, url?: string }
+type ExtractedSourceMappingURL = { contents: string, url?: string }
 
 /**
  * Extract the source mapping URL from a chunk of code, optionally wiping it.
@@ -32,7 +32,7 @@ type ExtractedSourceMapURL = { contents: string, url?: string }
  * @param contents The code where the source mapping URL is located.
  * @param wipe Whether to wipe the URL from the source or not.
  */
-export function extractSourceMappingURL(contents: string, wipe: boolean): ExtractedSourceMapURL {
+export function extractSourceMappingURL(contents: string, wipe: boolean): ExtractedSourceMappingURL {
   // Split the code into lines
   const lines = contents.split(/^/m)
 

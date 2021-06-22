@@ -49,9 +49,9 @@ describe('Source Maps', () => {
   it('should parse a source mapping URL', () => {
     const path = '/foo/bar/baz.js' as FilePath
 
-    expect(parseSourceMappingURL(path)).to.be.undefined
+    expect(parseSourceMappingURL(path)).to.eql({})
 
-    expect(parseSourceMappingURL(path, 'http://www/')).to.be.undefined
+    expect(parseSourceMappingURL(path, 'http://www/')).to.eql({})
 
     expect(parseSourceMappingURL(path, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
     expect(parseSourceMappingURL(path, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })

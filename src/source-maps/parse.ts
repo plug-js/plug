@@ -10,7 +10,7 @@ const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/
  * ========================================================================== */
 
 // Internal types for sanity...
-type ParsedSourceMap = { sourceMap?: SourceMapV3, sourceMapFile?: FilePath }
+type ParsedSourceMappingURL = { sourceMap?: SourceMapV3, sourceMapFile?: FilePath }
 
 /**
  * Parse a source mapping URL returning either a raw sourcemap (if inline,
@@ -22,9 +22,9 @@ type ParsedSourceMap = { sourceMap?: SourceMapV3, sourceMapFile?: FilePath }
  * @param path The absolute path of the file containing the source mapping url
  * @param url The source map URL to parse as a sourcemap or external file
  */
-export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourceMap | undefined {
+export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourceMappingURL {
   // No URL? No source map!
-  if (! url) return
+  if (! url) return {}
 
   // Decode the base64 from inline source maps
   if (innlineSourceMapRegExp.test(url)) {
@@ -38,7 +38,7 @@ export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourc
   const resolved = new URL(url, base)
 
   // If the resolved URL is not a file, don't read the source map
-  if (resolved.protocol !== 'file:') return
+  if (resolved.protocol !== 'file:') return {}
 
   // If the source map file does not exist, don't read the source map
   const sourceMapFile = fileURLToPath(resolved) as FilePath
