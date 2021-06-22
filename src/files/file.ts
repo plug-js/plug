@@ -1,6 +1,6 @@
 import { AbstractFile } from './abstract'
 import { FilePath } from '../utils/paths'
-import { extractSourceMap } from '../utils/source-maps'
+import { extractSourceMap } from '../source-maps'
 import { makeLog } from '../utils/log'
 
 import { File, Files } from './index'
