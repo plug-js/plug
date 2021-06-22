@@ -13,7 +13,7 @@ function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
     colors: false,
   })
 
-  const log = makeLog() as TestLog
+  const log = makeLog(undefined as any) as TestLog
   log.logs = lines
   return log
 }

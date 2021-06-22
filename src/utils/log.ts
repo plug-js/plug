@@ -156,13 +156,11 @@ function emit(
 
 /* ========================================================================== */
 
-/* Create a `Log` */
-export function makeLog(): Log
 /* Create a `Log` for the given `Run` */
 export function makeLog(run: Run): RunLog
 /* Create a `Log` for the given `Run` and `Plug` instance */
 export function makeLog(run: Run, plug: Plug): PlugLog
-
+// overloaded function
 export function makeLog(run?: Run, plug?: Plug): Log {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
@@ -175,3 +173,6 @@ export function makeLog(run?: Run, plug?: Plug): Log {
     'run': { value: run },
   }) as Log
 }
+
+/* A shared log instance not associated with a particular `Run` or `Plug` */
+export const log = makeLog(undefined as any)

@@ -4,7 +4,7 @@ import { Run } from './run'
 import assert from 'assert'
 import { isAbsolute } from 'path'
 import { loadBuildFile } from './typescript/loader'
-import { makeLog } from './utils/log'
+import { log } from './utils/log'
 
 import { DirectoryPath, FilePath, getParent, isChild } from './utils/paths'
 import { Task, TaskCall } from './task'
@@ -20,7 +20,6 @@ function checkPaths(file: FilePath, directory = getParent(file)): DirectoryPath 
 export class Project {
   #taskNames = new Map<Task, string>()
   #tasks = new Map<string, Task>()
-  #log = makeLog()
 
   readonly buildFile: FilePath
   readonly directory: DirectoryPath
@@ -53,7 +52,7 @@ export class Project {
 
       // Now we _should_ have a task... but check it!
       if (typeof task?.run !== 'function') {
-        this.#log.alert(`Export "${name}" does not seem to be a valid task`)
+        log.alert(`Export "${name}" does not seem to be a valid task`)
       } else {
         this.#taskNames.set(task, name)
         this.#tasks.set(name, task)

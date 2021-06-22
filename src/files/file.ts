@@ -2,7 +2,7 @@ import { AbstractFile } from './abstract'
 import { FilePath } from '../utils/paths'
 import { FileSourceMap } from '../source-maps'
 import { extractSourceMap } from '../source-maps'
-import { makeLog } from '../utils/log'
+import { log } from '../utils/log'
 
 import { File, FileOptions, Files } from './index'
 import { promises as fs, readFileSync, statSync } from 'fs'
@@ -10,8 +10,6 @@ import { promises as fs, readFileSync, statSync } from 'fs'
 /* ========================================================================== *
  * VIRTUAL FILE IMPLEMENTATION                                                *
  * ========================================================================== */
-
-const log = makeLog()
 
 /* Internal type associating content and an (optional) source map */
 type FileData = {
