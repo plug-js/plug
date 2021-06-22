@@ -96,8 +96,21 @@ describe('Log', () => {
   it('should log with stack traces', () => {
     const log = makeTestLog({ level: LogLevel.BASIC, times: false })
     const err = new Error('This is a test error')
-    log('This is a test message', 'string', 1, true, err)
-    expect(log.logs).to.eql([ 'This is a test message string 1 true\n' + err.stack ])
+
+    log(err) // Only an error
+    expect(log.logs).to.eql([ err.stack ])
+    log.logs.splice(0) // Wipe logs for next
+
+    log('Test', 1, true, err) // Error at the end
+    expect(log.logs).to.eql([ 'Test 1 true', err.stack ])
+    log.logs.splice(0) // Wipe logs for next
+
+    log(err, 'Test', 1, true) // Error at the beginning
+    expect(log.logs).to.eql([ err.stack, 'Test 1 true' ])
+    log.logs.splice(0) // Wipe logs for next
+
+    log('Test', 1, true, err, 'More', 2, false) // Error at the beginning
+    expect(log.logs).to.eql([ 'Test 1 true', err.stack, 'More 2 false' ])
   })
 
   it('should log with times', () => {

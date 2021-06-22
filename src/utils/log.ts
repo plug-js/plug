@@ -1,4 +1,3 @@
-import { EOL } from 'os'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 import { inspect } from 'util'
@@ -85,16 +84,21 @@ function emit(
     level: LogLevel,
     run: Run | undefined,
     plug: Plug | undefined,
-    ...args: [ any, ...any ]
+    ...args: any[]
 ): void {
   // First check if we _really_ have to log this message
   if (level < options.level) return
+  if (args.length === 0) return
 
-  // Simplify wrinting colors here
+  // Simplify writing with colors, and writing lines
   const colors = options.colors
   const strings: string[] = []
-  const push = (col: STYLE | RGB | null, ...args: string[]): void => {
+  function push(col: STYLE | RGB | null, ...args: string[]): void {
     colors && col ? strings.push(col, ...args) : strings.push(...args)
+  }
+  function line(): void {
+    push(STYLE.RESET)
+    options.write(strings.join(''))
   }
 
   // Reset our color at the beginning of the line
@@ -143,15 +147,29 @@ function emit(
   // Reset before giving control to "inspect"
   push(STYLE.RESET)
 
-  // All other arguments
+  // Emit all arguments...
   for (let i = 0, arg = args[0]; i < args.length; arg = args[++ i]) {
-    if (i) strings.push(arg instanceof Error ? EOL : ' ')
-    strings.push(typeof arg === 'string' ? arg : inspect(arg, { colors }))
+    // Break lines on errors, be nice
+    if (arg instanceof Error) {
+      if (i == 0) { // first in arguments? emit error
+        push(null, inspect(arg, { colors }))
+        line()
+      } else { // not the first? break this line and emit the error
+        line()
+        emit(level, run, plug, arg)
+      }
+      // error is emitted, if we have further arguments emit them too
+      if ((++i) < args.length) emit(level, run, plug, ...args.slice(i))
+      return // nothing else to be done here...
+    }
+
+    // Not an error, add a space and continue...
+    if (i) push(null, ' ')
+    push(null, typeof arg === 'string' ? arg : inspect(arg, { colors }))
   }
 
   // Close up (always reset, convert to string, write)
-  push(STYLE.RESET)
-  options.write(strings.join(''))
+  line()
 }
 
 /* ========================================================================== */
