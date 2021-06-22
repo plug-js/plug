@@ -16,7 +16,7 @@ export type FileOptions = {
    */
   sourceMap?: boolean | SourceMapV3,
   /** The original path of the file (if any) defaulting to its path */
-  originalPath?: string,
+  originalPath?: FilePath,
 }
 
 /**

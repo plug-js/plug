@@ -199,7 +199,7 @@ describe('File List', () => {
     const file2 = files.add('bar.txt', {
       contents: 'hello, world!',
       sourceMap: { test: false } as any,
-      originalPath: '../from/original.txt',
+      originalPath: '/from/original.txt' as FilePath,
     })
 
     expect(files.list()).to.eql([ file2 ])

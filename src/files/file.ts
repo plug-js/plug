@@ -1,10 +1,10 @@
 import { AbstractFile } from './abstract'
 import { FilePath } from '../utils/paths'
+import { FileSourceMap } from '../source-maps'
 import { extractSourceMap } from '../source-maps'
 import { makeLog } from '../utils/log'
 
-import { File, Files } from './index'
-import { FileSourceMap, SourceMapV3 } from '../source-maps'
+import { File, FileOptions, Files } from './index'
 import { promises as fs, readFileSync, statSync } from 'fs'
 
 /* ========================================================================== *
@@ -18,12 +18,6 @@ type FileData = {
   contents: string,
   lastModified: number,
   sourceMap: FileSourceMap | FilePath | null,
-}
-
-interface FileImplOptions {
-  originalPath?: FilePath,
-  sourceMap?: boolean | SourceMapV3,
-  contents?: string,
 }
 
 function parseContentsForSourceMap(file: File, code: string, lastModified: number): FileData {
@@ -45,7 +39,7 @@ export class FileImpl extends AbstractFile implements File {
   constructor(
       files: Files,
       absolutePath: FilePath,
-      options: FileImplOptions = {},
+      options: FileOptions = {},
   ) {
     super(files, absolutePath, options.originalPath)
 

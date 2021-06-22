@@ -145,7 +145,7 @@ export class Files implements Files {
     // Create a new file
     let newFile: File
     if (options && options.originalPath) {
-      const originalPath = resolvePath(this.directory, options.originalPath as RelativeFilePath)
+      const originalPath = options.originalPath
       newFile = new FileImpl(this, absolutePath, { ...options, originalPath })
     } else if (options) {
       newFile = new FileImpl(this, absolutePath, { ...options, originalPath: undefined })

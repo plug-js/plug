@@ -7,8 +7,8 @@ import { extname } from 'path'
 import { getCompilerOptions } from '../typescript/options'
 
 import { CompilerOptions, createProgram, getPreEmitDiagnostics } from 'typescript'
+import { FilePath, RelativeDirectoryPath, getRelativePath, isChild, resolvePath } from '../utils/paths'
 import { Plug, install } from '../pipe'
-import { RelativeDirectoryPath, getRelativePath, isChild, resolvePath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -107,7 +107,7 @@ export class CompilePlug implements Plug {
     // filename.ts file name in our virtual directory... they'll be handled by
     // our extension handler hacked above
     const result = program.emit(undefined, (fileName, contents, bom, oe, sources) => {
-      let originalPath = undefined as string | undefined
+      let originalPath = undefined as FilePath | undefined
 
       // For JS files, figure out the _original_ path of the ".ts" file by looking
       // into the source files associated with this output
@@ -117,7 +117,7 @@ export class CompilePlug implements Plug {
       }
 
       // Add the result of the compilation to our output files
-      output.add(fileName, { contents, sourceMap: true, originalPath })
+      output.add(fileName, { contents, sourceMap: true, originalPath: originalPath }) // TODO
     })
 
     // Ceck errors and log times after everything is emitted
