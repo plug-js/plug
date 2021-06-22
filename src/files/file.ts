@@ -87,11 +87,19 @@ export class FileImpl extends AbstractFile implements File {
     if (this.#promise) return this.#promise
     if (this.#data) return this.#promise = Promise.resolve(this.#data)
 
-    return this.#promise = (async (): Promise<FileData> => {
-      const code = await fs.readFile(this.originalPath, 'utf8')
-      const lastModified = (await fs.stat(this.originalPath)).mtimeMs
-      return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources, lastModified)
-    })()
+    return this.#promise = Promise.resolve()
+        .then(() => Promise.all([
+          fs.readFile(this.originalPath, 'utf8'),
+          fs.stat(this.originalPath),
+        ])).then(([ content, stats ]) => {
+          return this.#data = parseContentsForSourceMap(this, content, this.#sourceMapSources, stats.mtimeMs)
+        }).catch((error) => {
+          // No idea why sometimes stacks don't have a trace when coming out of
+          // the "fs.promises" api... There is a _stack_ property on the object
+          // but it simply includes the first line, no whatsoever trace???
+          Error.captureStackTrace(error)
+          throw error
+        })
   }
 
   /* ======================================================================== *
