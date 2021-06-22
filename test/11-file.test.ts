@@ -1,10 +1,13 @@
 import { DirectoryPath } from '../src/utils/paths'
 import { basename } from 'path'
+import { disableLogs } from './support'
 import { expect } from 'chai'
 import { File, Files } from '../src/files'
 import { readFileSync, statSync } from 'fs'
 
 describe('Files', () => {
+  disableLogs()
+
   describe('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
       const file1 = new Files(__dirname as DirectoryPath).get('this does not exist')
