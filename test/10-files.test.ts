@@ -193,12 +193,12 @@ describe('File List', () => {
     expect(file1.absolutePath).to.equal('/foo/bar.txt')
     expect(file1.originalPath).to.equal('/foo/bar.txt')
     expect(file1.contentsSync()).to.equal('hello, world!')
-    expect(file1.sourceMapSync()?.file).to.eql(file1.absolutePath)
+    expect(file1.sourceMapSync()).to.eql({ file: file1.absolutePath })
 
     // overwrite file...
     const file2 = files.add('bar.txt', {
       contents: 'hello, world!',
-      sourceMap: { test: false } as any,
+      sourceMap: { version: 3 } as any,
       originalPath: '/from/original.txt' as FilePath,
     })
 
@@ -208,7 +208,7 @@ describe('File List', () => {
     expect(file2.absolutePath).to.equal('/foo/bar.txt')
     expect(file2.originalPath).to.equal('/from/original.txt')
     expect(file2.contentsSync()).to.equal('hello, world!')
-    expect(file2.sourceMapSync()?.file).to.eql(file2.absolutePath)
+    expect(file2.sourceMapSync()).to.eql({ file: file2.absolutePath })
   })
 
   it('should add a file', () => {

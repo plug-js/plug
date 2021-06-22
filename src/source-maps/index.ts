@@ -24,7 +24,5 @@ export function extractSourceMap(path: FilePath, code: string, wipe: boolean): E
   const { contents, url } = extractSourceMappingURL(code, wipe)
   const { sourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
 
-  if (sourceMap) return { contents, sourceMap: new FileSourceMap(path, sourceMap) }
-  if (sourceMapFile) return { contents, sourceMapFile }
-  return { contents }
+  return { contents, sourceMap, sourceMapFile }
 }

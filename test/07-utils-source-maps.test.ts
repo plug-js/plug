@@ -3,6 +3,7 @@ import { expect } from 'chai'
 import { extractSourceMap } from '../src/source-maps'
 import { extractSourceMappingURL } from '../src/source-maps/extract'
 import { parseSourceMappingURL } from '../src/source-maps/parse'
+// import { SourceMapGenerator } from 'source-map'
 
 describe('Source Maps', () => {
   it('should extract a source mapping url', () => {
@@ -47,51 +48,75 @@ describe('Source Maps', () => {
   })
 
   it('should parse a source mapping URL', () => {
-    const path = '/foo/bar/baz.js' as FilePath
+    const file = '/foo/bar/baz.js' as FilePath
 
-    expect(parseSourceMappingURL(path)).to.eql({})
+    expect(parseSourceMappingURL(file)).to.eql({})
 
-    expect(parseSourceMappingURL(path, 'http://www/')).to.eql({})
+    expect(parseSourceMappingURL(file, 'http://www/')).to.eql({})
 
-    expect(parseSourceMappingURL(path, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(path, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(path, '../bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(path, './baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(path, 'baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(file, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(file, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(file, '../bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(file, './baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(file, 'baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
 
-    expect(parseSourceMappingURL(path, 'data:application/json;base64,e30=')).to.eql({ sourceMap: {} })
-    expect(parseSourceMappingURL(path, 'data:application/json;base64,e30')).to.eql({ sourceMap: {} })
-    expect(() => parseSourceMappingURL(path, 'data:application/json;base64,')).to.throw(SyntaxError)
+    expect(parseSourceMappingURL(file, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ==')).to.eql({ sourceMap: { file } })
+    expect(parseSourceMappingURL(file, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ')).to.eql({ sourceMap: { file } })
+    expect(() => parseSourceMappingURL(file, 'data:application/json;base64,')).to.throw(SyntaxError)
   })
 
   it('should extract some source map data', () => {
-    const path = '/foo/bar/baz.js' as FilePath
+    const file = '/foo/bar/baz.js' as FilePath
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=data:application/json;base64,e30\n// foobar', false)).to.eql({
-      contents: '//# sourceMappingURL=data:application/json;base64,e30\n// foobar',
-      sourceMap: {},
+    expect(extractSourceMap(file, '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foobar', false)).to.eql({
+      contents: '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foobar',
+      sourceMapFile: undefined,
+      sourceMap: { file },
     })
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=data:application/json;base64,e30\n// foobar', true)).to.eql({
+    expect(extractSourceMap(file, '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foobar', true)).to.eql({
       contents: '\n// foobar',
-      sourceMap: {},
+      sourceMapFile: undefined,
+      sourceMap: { file },
     })
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=baz.js.map\n// foobar', false)).to.eql({
+    expect(extractSourceMap(file, '//# sourceMappingURL=baz.js.map\n// foobar', false)).to.eql({
       contents: '//# sourceMappingURL=baz.js.map\n// foobar',
       sourceMapFile: '/foo/bar/baz.js.map',
+      sourceMap: undefined,
     })
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=baz.js.map\n// foobar', true)).to.eql({
+    expect(extractSourceMap(file, '//# sourceMappingURL=baz.js.map\n// foobar', true)).to.eql({
       contents: '\n// foobar',
       sourceMapFile: '/foo/bar/baz.js.map',
+      sourceMap: undefined,
     })
 
-    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', false)).to.eql({
+    expect(extractSourceMap(file, '//# sourceMappingURL=\n// foobar', false)).to.eql({
       contents: '//# sourceMappingURL=\n// foobar',
+      sourceMapFile: undefined,
+      sourceMap: undefined,
     })
-    expect(extractSourceMap(path, '//# sourceMappingURL=\n// foobar', true)).to.eql({
+
+    expect(extractSourceMap(file, '//# sourceMappingURL=\n// foobar', true)).to.eql({
       contents: '//# sourceMappingURL=\n// foobar',
+      sourceMapFile: undefined,
+      sourceMap: undefined,
+    })
+  })
+
+  describe('File based source maps', () => {
+    it.skip('should do something', async () => {
+      // const file = '/foo/bar.js' as FilePath
+      // const generator = new SourceMapGenerator({ file })
+      // generator.addMapping({
+      //   name: 'first',
+      //   source: 'bar.ts',
+      //   original: { line: 1, column: 1 },
+      //   generated: { line: 2, column: 2 },
+      // })
+      // console.log(generator.toJSON())
+      // console.log(generator.toString())
     })
   })
 })

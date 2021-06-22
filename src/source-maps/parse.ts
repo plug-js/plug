@@ -1,5 +1,5 @@
 import { FilePath } from '../utils/paths'
-import { RawSourceMap } from 'source-map'
+import { FileSourceMap } from './source-map'
 import { URL, fileURLToPath, pathToFileURL } from 'url'
 
 // Lifted from "source-map-support"
@@ -10,7 +10,7 @@ const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/
  * ========================================================================== */
 
 // Internal types for sanity...
-type ParsedSourceMappingURL = { sourceMap?: RawSourceMap, sourceMapFile?: FilePath }
+type ParsedSourceMappingURL = { sourceMap?: FileSourceMap, sourceMapFile?: FilePath }
 
 /**
  * Parse a source mapping URL returning either a raw sourcemap (if inline,
@@ -30,7 +30,8 @@ export function parseSourceMappingURL(path: FilePath, url?: string): ParsedSourc
   if (innlineSourceMapRegExp.test(url)) {
     const rawData = url.slice(url.indexOf(',') + 1)
     const sourceMapData = Buffer.from(rawData, 'base64').toString('utf8')
-    return { sourceMap: JSON.parse(sourceMapData) }
+    const sourceMapSource = JSON.parse(sourceMapData)
+    return { sourceMap: FileSourceMap.for(path, sourceMapSource) }
   }
 
   // This is an URL (relative or whatnot) resolve it!

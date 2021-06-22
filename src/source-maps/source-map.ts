@@ -11,10 +11,14 @@ export class FileSourceMap {
   readonly #mappings: string = ''
   #sourcesContent?: File[]
 
-  constructor(file: FilePath, data: Record<string, any>) {
-    Object.defineProperty(this, 'file', { value: file })
+  private constructor(file: FilePath, data: RawSourceMap) {
+    Object.defineProperty(this, 'file', { enumerable: true, value: file })
 
-    if (data && (typeof data === 'object') && (parseInt(data.version) === 3)) {
+    if (data && (typeof data === 'object') && data.version) {
+      // sometimes version is a string, and only accept version 3
+      const version = typeof data.version === 'string' ? parseInt(data.version) : data.version
+      if (version !== 3) return
+
       this.#sources = Array.isArray(data.sources) ?
           data.sources.map((source: any) => {
             return (typeof source === 'string') ?
@@ -29,25 +33,28 @@ export class FileSourceMap {
     }
   }
 
-  attachSources(files?: Files): void {
+  attachSources(files?: Files): this {
     if (files) this.#sourcesContent = this.#sources.map((file) => files.get(file))
+    return this
   }
 
   async produceSourceMap(attachSources?: boolean): Promise<RawSourceMap> {
-    const sourceMap: RawSourceMap = {
+    void attachSources
+
+    return {
       version: 3,
       file: basename(this.file),
       sources: this.#sources.map((source) => getRelativeFilePath(this.file, source)),
       names: [ ...this.#names ],
       mappings: this.#mappings,
     }
+  }
 
-    if (attachSources && this.#sourcesContent) {
-      const promises = this.#sourcesContent.map((sourceFile) =>
-        sourceFile.contents().catch(() => null as any as string))
-      sourceMap.sourcesContent = await Promise.all(promises)
+  static for(file: FilePath, data: RawSourceMap): FileSourceMap | undefined {
+    if (data && (typeof data === 'object') && data.version) {
+      // sometimes version is a string, and only accept version 3
+      const version = typeof data.version === 'string' ? parseInt(data.version) : data.version
+      if (version === 3) return new FileSourceMap(file, data)
     }
-
-    return sourceMap
   }
 }
