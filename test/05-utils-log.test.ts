@@ -26,6 +26,13 @@ describe('Log', () => {
     Object.assign(options, defaults)
   })
 
+  it('should not log when nothing is specified', () => {
+    const log = makeTestLog({ level: LogLevel.DEBUG, times: false })
+    ;(<any> log)() // this goes agains typing, but you never know...
+    expect(log.logs).to.eql([])
+  })
+
+
   it('should log at "debug" level', () => {
     const log = makeTestLog({ level: LogLevel.DEBUG, times: false })
 
