@@ -21,12 +21,13 @@ type FileData = {
 function parseContentsForSourceMap(
     file: File,
     code: string,
+    sourceMapSources: Files | undefined,
     lastModified: number,
-    sourceMapSources?: Files,
 ): FileData {
   const { contents, sourceMap, sourceMapFile } = extractSourceMap(file.absolutePath, code, true)
   if (sourceMap) {
-    return { contents, lastModified, sourceMap: sourceMap.attachSources(sourceMapSources) }
+    if (sourceMapSources) sourceMap.attachSources(sourceMapSources)
+    return { contents, lastModified, sourceMap }
   } else if (sourceMapFile) {
     return { contents, lastModified, sourceMap: sourceMapFile }
   } else {
@@ -53,12 +54,16 @@ export class FileImpl extends AbstractFile implements File {
       sourceMap: sourceMapSource = true,
     } = options
 
+    // Remember the source map sources for this file's sitemap
+    this.#sourceMapSources = sourceMapSources
+
+    // Process contents and related source map
     if (contents !== undefined) {
       const lastModified = Date.now()
       if (sourceMapSource === true) { // parse the source map
-        this.#data = parseContentsForSourceMap(this, contents, lastModified, sourceMapSources)
+        this.#data = parseContentsForSourceMap(this, contents, sourceMapSources, lastModified)
       } else if (sourceMapSource !== false) {
-        const sourceMap = FileSourceMap.for(absolutePath, sourceMapSource)
+        const sourceMap = FileSourceMap.for(absolutePath, sourceMapSource, sourceMapSources)
         this.#data = { lastModified, contents, sourceMap: sourceMap }
       } else {
         this.#data = { lastModified, contents }
@@ -75,7 +80,7 @@ export class FileImpl extends AbstractFile implements File {
 
     const code = readFileSync(this.originalPath, 'utf8')
     const lastModified = statSync(this.originalPath).mtimeMs
-    return this.#data = parseContentsForSourceMap(this, code, lastModified, this.#sourceMapSources)
+    return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources, lastModified)
   }
 
   #read(): Promise<FileData> {
@@ -85,7 +90,7 @@ export class FileImpl extends AbstractFile implements File {
     return this.#promise = (async (): Promise<FileData> => {
       const code = await fs.readFile(this.originalPath, 'utf8')
       const lastModified = (await fs.stat(this.originalPath)).mtimeMs
-      return this.#data = parseContentsForSourceMap(this, code, lastModified, this.#sourceMapSources)
+      return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources, lastModified)
     })()
   }
 
@@ -117,7 +122,7 @@ export class FileImpl extends AbstractFile implements File {
       try {
         const sourceMapContents = sourceMapFile.contentsSync()
         const sourceMap = JSON.parse(sourceMapContents)
-        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap)
+        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
       } catch (error) {
         log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
         log.debug(error)
@@ -156,7 +161,7 @@ export class FileImpl extends AbstractFile implements File {
       try {
         const sourceMapContents = await sourceMapFile.contents()
         const sourceMap = JSON.parse(sourceMapContents)
-        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap)
+        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
       } catch (error) {
         log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
         log.debug(error)
