@@ -1,6 +1,7 @@
+import { FileSourceMap } from '../source-maps'
 import { Files } from './files'
+import { RawSourceMap } from 'source-map'
 import { CanonicalPath, FilePath, RelativeFilePath } from '../utils/paths'
-import { FileSourceMap, SourceMapV3 } from '../source-maps'
 
 // Import and re-export our `Files` class
 export { Files } from './files'
@@ -14,7 +15,7 @@ export type FileOptions = {
    * map should be extracted from the file's contents themselves
    * @default true
    */
-  sourceMap?: boolean | SourceMapV3,
+  sourceMap?: boolean | RawSourceMap,
   /** A `Files` instance where source map source attachments can be read from */
   sourceMapSources?: Files,
   /** The original path of the file (if any) defaulting to its path */

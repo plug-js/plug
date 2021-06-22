@@ -1,5 +1,5 @@
 import { FilePath } from '../utils/paths'
-import { SourceMapV3 } from './source-map'
+import { RawSourceMap } from 'source-map'
 import { URL, fileURLToPath, pathToFileURL } from 'url'
 
 // Lifted from "source-map-support"
@@ -10,7 +10,7 @@ const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/
  * ========================================================================== */
 
 // Internal types for sanity...
-type ParsedSourceMappingURL = { sourceMap?: SourceMapV3, sourceMapFile?: FilePath }
+type ParsedSourceMappingURL = { sourceMap?: RawSourceMap, sourceMapFile?: FilePath }
 
 /**
  * Parse a source mapping URL returning either a raw sourcemap (if inline,

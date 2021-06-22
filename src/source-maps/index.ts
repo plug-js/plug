@@ -3,7 +3,7 @@ import { FileSourceMap } from './source-map'
 import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
-export { SourceMapV3, FileSourceMap } from './source-map'
+export { FileSourceMap } from './source-map'
 
 interface ExtractedSourceMap {
   contents: string,
