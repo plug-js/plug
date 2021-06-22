@@ -25,7 +25,7 @@ const logWriter = options.write
 export function disableLogs(): void {
   before(() => {
     console.log('    \u001b[38;5;63m\u2605\u001b[0m disabling logs')
-    options.write = () => {}
+    if (process.env.LOG_LEVEL !== 'debug') options.write = () => {}
   })
   after(() => {
     console.log('    \u001b[38;5;63m\u2605\u001b[0m re-enabling logs')
