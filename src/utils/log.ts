@@ -1,9 +1,9 @@
-import { Plug } from '../pipe'
-import { Run } from '../run'
-import { inspect } from 'util'
-import { isatty } from 'tty'
+import type { Plug } from '../pipe'
+import type { Run } from '../run'
 
 import { RGB, STYLE } from './colors'
+import { inspect } from 'util'
+import { isatty } from 'tty'
 
 /* ========================================================================== */
 

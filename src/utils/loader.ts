@@ -1,6 +1,9 @@
+import type { DirectoryPath, FilePath, RelativeDirectoryPath } from './paths'
+
 import Module from 'module'
 import sourceMapSupport from 'source-map-support'
-import { DirectoryPath, FilePath, RelativeDirectoryPath, getParent, resolvePath } from './paths'
+
+import { getParent, resolvePath } from './paths'
 import { dirname, isAbsolute, resolve, sep } from 'path'
 
 // Install support for source maps. Here "hookRequire" will instrument the
