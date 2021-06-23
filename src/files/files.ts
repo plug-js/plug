@@ -21,7 +21,7 @@ import { File, FileOptions } from './index'
  * The `Files` class represents an extremely simple view over the _physical_
  * filesystem where a number of `File`s can be listed and accessed.
  */
-export class Files implements Files {
+export class Files {
   // Internal cache of all previously seen files
   #cache = new Map<CanonicalPath, File>()
   // Internal list of all files added to this list
@@ -39,35 +39,17 @@ export class Files implements Files {
   constructor(files: Files)
   constructor(project: Project)
   constructor(arg: Files | Project | Run) {
-    const directory: DirectoryPath = arg.directory
     const project: Project = 'project' in arg ? arg.project : arg
+    const directory: DirectoryPath = project.directory
     Object.defineProperties(this, {
       directory: { enumerable: true, value: directory },
       project: { enumerable: false, value: project },
     })
   }
 
-  /** Return the number of `File`s listed by this instance */
-  get length(): number {
-    return this.#files.size
-  }
-
-  /** Create an `IterableIterator` over all `File`s listed by this instance */
-  [Symbol.iterator](): IterableIterator<File> {
-    return this.#files.values()
-  }
-
-  /** Invoke the given call back function for each file listed by this */
-  forEach(callback: (value: File) => void, thisArg?: any): void {
-    for (const file of this) callback.call(thisArg, file)
-  }
-
-  /** Map each file listed by this according to the given callback function */
-  map<U>(callback: (value: File) => U, thisArg?: any): U[] {
-    const result: U[] = []
-    for (const file of this) result.push(callback.call(thisArg, file))
-    return result
-  }
+  /* ======================================================================== *
+   * GETTING FILES                                                            *
+   * ======================================================================== */
 
   /** Return a `File` associated with this `Files` list */
   get(path: string): File | undefined {
@@ -86,35 +68,9 @@ export class Files implements Files {
     }
   }
 
-  /** Return all `File`s previously _added_ to this `Files` instance */
-  list(): File[] {
-    // Create the new array
-    const list = [ ...this.#files.values() ]
-
-    // Inject the sort property (typed)
-    list.sort = function(compare?) {
-      if (! compare) compare = (a, b) => a.absolutePath.localeCompare(b.absolutePath)
-      return Array.prototype.sort.call(this, compare)
-    }
-
-    // Make sure it's not enumerable
-    Object.defineProperty(list, 'sort', {
-      enumerable: false,
-      configurable: true,
-      writable: true,
-      value: list.sort,
-    })
-
-    // Return our list
-    return list
-  }
-
-  /** Checks whether this `Files` instance was added the given path */
-  has(path: string): boolean {
-    const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
-    const canonicalPath = getCanonicalPath(absolutePath)
-    return this.#files.has(canonicalPath)
-  }
+  /* ======================================================================== *
+   * ADDING FILES                                                             *
+   * ======================================================================== */
 
   /** Add a `File` to this `Files` instance */
   add(file: File): File
@@ -171,5 +127,65 @@ export class Files implements Files {
     this.#cache.set(newFile.canonicalPath, newFile)
     this.#files.set(newFile.canonicalPath, newFile)
     return newFile
+  }
+
+  /* ======================================================================== *
+   * LISTING FILES                                                            *
+   * ======================================================================== */
+
+  /** Return all `File`s previously _added_ to this `Files` instance */
+  list(): File[] {
+    // Create the new array
+    const list = [ ...this.#files.values() ]
+
+    // Inject the sort property (typed)
+    list.sort = function(compare?) {
+      if (! compare) compare = (a, b) => a.absolutePath.localeCompare(b.absolutePath)
+      return Array.prototype.sort.call(this, compare)
+    }
+
+    // Make sure it's not enumerable
+    Object.defineProperty(list, 'sort', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: list.sort,
+    })
+
+    // Return our list
+    return list
+  }
+
+  /* ======================================================================== *
+   * PSEUDO-ARRAY OF FILES                                                    *
+   * ======================================================================== */
+
+  /** Create an `IterableIterator` over all `File`s listed by this instance */
+  [Symbol.iterator](): IterableIterator<File> {
+    return this.#files.values()
+  }
+
+  /** Return the number of `File`s listed by this instance */
+  get length(): number {
+    return this.#files.size
+  }
+
+  /** Invoke the given call back function for each file listed by this */
+  forEach(callback: (value: File) => void, thisArg?: any): void {
+    for (const file of this) callback.call(thisArg, file)
+  }
+
+  /** Map each file listed by this according to the given callback function */
+  map<U>(callback: (value: File) => U, thisArg?: any): U[] {
+    const result: U[] = []
+    for (const file of this) result.push(callback.call(thisArg, file))
+    return result
+  }
+
+  /** Checks whether this `Files` instance was added the given path */
+  has(path: string): boolean {
+    const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
+    const canonicalPath = getCanonicalPath(absolutePath)
+    return this.#files.has(canonicalPath)
   }
 }
