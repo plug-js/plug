@@ -1,4 +1,3 @@
-import { DirectoryPath } from './utils/paths'
 import type { Files } from './files'
 import type { Plug } from './pipe'
 import { Project } from './project'
@@ -19,7 +18,6 @@ export class Run {
   readonly id!: RunId
   readonly tasks!: readonly Task[]
   readonly project!: Project
-  readonly directory!: DirectoryPath
 
   constructor(project: Project)
   constructor(run: Run, task: Task)

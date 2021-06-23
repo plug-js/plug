@@ -30,14 +30,20 @@ async function readDirectory(
 }
 
 export function read(...args: ReadArguments): TaskPipe {
-  return new TaskPipe({ run: (run) => readDirectory(run.project, run.directory, ...args) })
+  return new TaskPipe({ run: (run) => {
+    const directory = run.project.directory
+    return readDirectory(run.project, directory, ...args)
+  } })
 }
 
-export function from(directory: string): { read: typeof read } {
+export function from(path: string): { read: typeof read } {
   return { read: (...args: ReadArguments) =>
-    new TaskPipe({ run: (run) =>
-      readDirectory(run.project, resolvePath(run.directory, directory as RelativeDirectoryPath), ...args),
-    }) }
+    new TaskPipe({ run: (run) => {
+      const project = run.project
+      const directory = resolvePath(project.directory, path as RelativeDirectoryPath)
+      return readDirectory(run.project, directory, ...args)
+    } }),
+  }
 }
 
 export function pipe(): PlugPipe {
