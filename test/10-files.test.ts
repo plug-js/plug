@@ -1,22 +1,25 @@
 import { AssertionError } from 'assert'
+import { FilePath } from '../src/utils/paths'
 import { Files } from '../src/files'
+import { Project } from '../src/project'
 import { expect } from 'chai'
-import { DirectoryPath, FilePath } from '../src/utils/paths'
 
 describe('File List', () => {
-  it('should create a new Files instance', () => {
-    expect(new Files('/foo' as DirectoryPath))
+  function makeFiles(directory: string): Files {
+    return new Files({ directory } as Project)
+  }
+
+  it('should create a Files instance', () => {
+    expect(makeFiles('/foo'))
         .to.be.instanceOf(Files)
         .to.have.property('directory', '/foo')
-    expect(() => new Files('foo' as DirectoryPath))
-        .to.throw(AssertionError, 'Not an absolute directory: "foo"')
   })
 
   it('should get files from a Files instance with case sensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
 
-      const files = new Files('/Foo' as DirectoryPath)
+      const files = makeFiles('/Foo')
       const file = files.get('Bar.Txt')
 
       expect(file.files).to.equal(files)
@@ -61,7 +64,7 @@ describe('File List', () => {
     try {
       (<any> globalThis).caseSensitivePaths = false
 
-      const files = new Files('/Foo' as DirectoryPath)
+      const files = makeFiles('/Foo')
       const file = files.get('Bar.Txt')
 
       expect(file.files).to.equal(files)
@@ -105,83 +108,85 @@ describe('File List', () => {
   it('should add a simple path with case sensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
-      const list = new Files('/Foo' as DirectoryPath)
-      list.add('One.Txt')
+      const files = makeFiles('/Foo')
+      files.add('One.Txt')
 
-      const files = list.list()
+      const list = files.list()
+      expect(list.length).to.equal(1)
       expect(files.length).to.equal(1)
 
-      const file1 = files[0]
+      const file1 = list[0]
       expect(file1.relativePath).to.equal('One.Txt')
       expect(file1.absolutePath).to.equal('/Foo/One.Txt')
       expect(file1.originalPath).to.equal('/Foo/One.Txt')
       expect(file1.canonicalPath).to.equal('/Foo/One.Txt')
-      expect(file1.files).to.equal(list)
+      expect(file1.files).to.equal(files)
 
-      expect(list.get('One.Txt')).to.equal(file1) // same instance
-      expect(list.get('./One.Txt')).to.equal(file1) // same instance
-      expect(list.get('/Foo/One.Txt')).to.equal(file1) // same instance
+      expect(files.get('One.Txt')).to.equal(file1) // same instance
+      expect(files.get('./One.Txt')).to.equal(file1) // same instance
+      expect(files.get('/Foo/One.Txt')).to.equal(file1) // same instance
 
-      expect(list.get('one.txt')).to.not.equal(file1) // case sensitive
-      expect(list.get('./one.txt')).to.not.equal(file1) // case sensitive
-      expect(list.get('/foo/one.txt')).to.not.equal(file1) // case sensitive
+      expect(files.get('one.txt')).to.not.equal(file1) // case sensitive
+      expect(files.get('./one.txt')).to.not.equal(file1) // case sensitive
+      expect(files.get('/foo/one.txt')).to.not.equal(file1) // case sensitive
 
-      expect(list.has('One.Txt')).to.be.true
-      expect(list.has('./One.Txt')).to.be.true
-      expect(list.has('/Foo/One.Txt')).to.be.true
+      expect(files.has('One.Txt')).to.be.true
+      expect(files.has('./One.Txt')).to.be.true
+      expect(files.has('/Foo/One.Txt')).to.be.true
 
-      expect(list.has('one.txt')).to.be.false // case sensitive
-      expect(list.has('./one.txt')).to.be.false // case sensitive
-      expect(list.has('/foo/one.txt')).to.be.false // case sensitive
+      expect(files.has('one.txt')).to.be.false // case sensitive
+      expect(files.has('./one.txt')).to.be.false // case sensitive
+      expect(files.has('/foo/one.txt')).to.be.false // case sensitive
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }
   })
 
   it('should not add with an empty or invalid path', () => {
-    expect(() => new Files('/foo' as DirectoryPath).add('')).to.throw(AssertionError, 'No path for file to be added')
-    expect(() => new Files('/foo' as DirectoryPath).add('/bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
-    expect(() => new Files('/foo' as DirectoryPath).add('../bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+    expect(() => makeFiles('/foo').add('')).to.throw(AssertionError, 'No path for file to be added')
+    expect(() => makeFiles('/foo').add('/bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
+    expect(() => makeFiles('/foo').add('../bar')).to.throw(AssertionError, 'Refusing to add file "/bar" to "/foo"')
   })
 
   it('should add a simple path with case insensitive paths', () => {
     try {
       (<any> globalThis).caseSensitivePaths = false
-      const list = new Files('/Foo' as DirectoryPath)
-      list.add('One.Txt')
+      const files = makeFiles('/Foo')
+      files.add('One.Txt')
 
-      const files = list.list()
+      const list = files.list()
+      expect(list.length).to.equal(1)
       expect(files.length).to.equal(1)
 
-      const file1 = files[0]
+      const file1 = list[0]
       expect(file1.relativePath).to.equal('One.Txt')
       expect(file1.absolutePath).to.equal('/Foo/One.Txt')
       expect(file1.originalPath).to.equal('/Foo/One.Txt')
       expect(file1.canonicalPath).to.equal('/foo/one.txt') // case insensitive
-      expect(file1.files).to.equal(list)
+      expect(file1.files).to.equal(files)
 
-      expect(list.get('One.Txt')).to.equal(file1) // same instance
-      expect(list.get('./One.Txt')).to.equal(file1) // same instance
-      expect(list.get('/Foo/One.Txt')).to.equal(file1) // same instance
+      expect(files.get('One.Txt')).to.equal(file1) // same instance
+      expect(files.get('./One.Txt')).to.equal(file1) // same instance
+      expect(files.get('/Foo/One.Txt')).to.equal(file1) // same instance
 
-      expect(list.get('one.txt')).to.equal(file1) // case insensitive
-      expect(list.get('./one.txt')).to.equal(file1) // case insensitive
-      expect(list.get('/foo/one.txt')).to.equal(file1) // case insensitive
+      expect(files.get('one.txt')).to.equal(file1) // case insensitive
+      expect(files.get('./one.txt')).to.equal(file1) // case insensitive
+      expect(files.get('/foo/one.txt')).to.equal(file1) // case insensitive
 
-      expect(list.has('One.Txt')).to.be.true
-      expect(list.has('./One.Txt')).to.be.true
-      expect(list.has('/Foo/One.Txt')).to.be.true
+      expect(files.has('One.Txt')).to.be.true
+      expect(files.has('./One.Txt')).to.be.true
+      expect(files.has('/Foo/One.Txt')).to.be.true
 
-      expect(list.has('one.txt')).to.be.true // case insensitive
-      expect(list.has('./one.txt')).to.be.true // case insensitive
-      expect(list.has('/foo/one.txt')).to.be.true // case insensitive
+      expect(files.has('one.txt')).to.be.true // case insensitive
+      expect(files.has('./one.txt')).to.be.true // case insensitive
+      expect(files.has('/foo/one.txt')).to.be.true // case insensitive
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }
   })
 
   it('should add a path with some options', () => {
-    const files = new Files('/foo' as DirectoryPath)
+    const files = makeFiles('/foo')
     const file1 = files.add('bar.txt', {
       contents: 'hello, world!',
       sourceMap: { version: 3 } as any,
@@ -212,7 +217,7 @@ describe('File List', () => {
   })
 
   it('should add a file', () => {
-    const files = new Files('/foo' as DirectoryPath)
+    const files = makeFiles('/foo')
 
     const file1 = files.get('bar.txt') // just get the file
     expect(files.list()).to.eql([])
@@ -242,7 +247,7 @@ describe('File List', () => {
   })
 
   it('should iterate files', () => {
-    const files = new Files('/foo' as DirectoryPath)
+    const files = makeFiles('/foo')
     files.add('3.txt')
     files.add('2.txt')
     files.add('1.txt')
@@ -253,7 +258,7 @@ describe('File List', () => {
   })
 
   it('should sort files', () => {
-    const files = new Files('/foo' as DirectoryPath)
+    const files = makeFiles('/foo')
     files.add('3.txt')
     files.add('2.txt')
     files.add('1.txt')
@@ -270,41 +275,5 @@ describe('File List', () => {
       { absolutePath: '/foo/2.txt', originalPath: '/foo/2.txt' },
       { absolutePath: '/foo/1.txt', originalPath: '/foo/1.txt' },
     ])
-  })
-
-  it('should clone a file list', () => {
-    const filesA = new Files('/foo' as DirectoryPath)
-    const fileA1 = filesA.add('bar.txt', { contents: 'hello, world 1!' })
-    const fileA2 = filesA.add('bar/baz.txt', { contents: 'hello, world 2!' })
-
-    expect(filesA.list()).to.eql([ fileA1, fileA2 ])
-    expect(filesA.list()[0]).to.equal(fileA1)
-    expect(filesA.list()[1]).to.equal(fileA2)
-
-    expect(filesA.get('bar.txt').contentsSync()).to.equals('hello, world 1!')
-    expect(filesA.get('bar/baz.txt').contentsSync()).to.equals('hello, world 2!')
-
-    const filesB = filesA.clone()
-    const fileB1 = filesB.get('bar.txt')
-    const fileB2 = filesB.get('bar/baz.txt')
-
-    expect(fileB1.contentsSync()).to.equals('hello, world 1!')
-    expect(fileB2.contentsSync()).to.equals('hello, world 2!')
-
-    expect(filesB.list().sort()).to.eql([ fileB1, fileB2 ])
-    expect(filesB.list().sort()[0]).to.equal(fileB1)
-    expect(filesB.list().sort()[1]).to.equal(fileB2)
-
-    const filesC = filesA.clone('bar')
-    const fileC1 = filesC.get('../bar.txt')
-    const fileC2 = filesC.get('baz.txt')
-
-    // file C1 is _outside_ of our list, so won't be listed, but still cached!
-    expect(fileC1.contentsSync()).to.equals('hello, world 1!')
-    expect(fileC2.contentsSync()).to.equals('hello, world 2!')
-
-    // only file C2 (which is in the correct directory) shows up in the list
-    expect(filesC.list()).to.eql([ fileC2 ])
-    expect(filesC.list()[0]).to.equal(fileC2)
   })
 })

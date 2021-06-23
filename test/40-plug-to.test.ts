@@ -3,7 +3,7 @@ import { ToPlug } from '../src/plugs/to'
 import { expect } from 'chai'
 import { mock } from './support'
 
-describe('Plug From / To', function() {
+describe.skip('Plug From / To', function() {
   const { run, log } = mock('/foo')
 
   it('should be installed', () => {

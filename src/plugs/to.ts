@@ -21,7 +21,7 @@ export class ToPlug implements Plug {
     const directory = resolvePath(run.directory, this.#directory)
     if (directory === input.directory) return input
 
-    const output = new Files(directory)
+    const output = new Files(run)
 
     for (const file of input) output.add(file.relativePath, file)
     log.debug('Relocated', output.length,

@@ -1,4 +1,4 @@
-import { DirectoryPath } from '../src/utils/paths'
+import { Project } from '../src/project'
 import { basename } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
@@ -6,11 +6,15 @@ import { File, Files } from '../src/files'
 import { readFileSync, statSync } from 'fs'
 
 describe('Files', () => {
+  function makeFiles(directory: string): Files {
+    return new Files({ directory } as Project)
+  }
+
   disableLogs()
 
   describe('Asynchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', async () => {
-      const file1 = new Files(__dirname as DirectoryPath).get('this does not exist')
+      const file1 = makeFiles(__dirname).get('this does not exist')
       expect(await file1.exists()).to.be.false
       await expect(file1.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
@@ -19,7 +23,7 @@ describe('Files', () => {
       await expect(file1.lastModified()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('ENOENT'))
 
-      const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
+      const file2 = makeFiles(__dirname).get(__dirname)
       expect(await file2.exists()).to.be.false
       await expect(file2.contents()).to.be.rejectedWith(Error)
           .then((error) => expect(error.code).to.equal('EISDIR'))
@@ -31,7 +35,7 @@ describe('Files', () => {
 
     it('should create a File', async () => {
       function create(contents: string): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents })
+        return makeFiles('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -51,7 +55,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
+        return makeFiles('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -83,7 +87,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        const list = new Files('/foo' as DirectoryPath)
+        const list = makeFiles('/foo')
         list.add('bar.js.map', { contents: '{"version":"3"}' }) // yep, string!
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -117,7 +121,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
+        return makeFiles('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -146,7 +150,7 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', async () => {
-      const files = new Files(__dirname as DirectoryPath)
+      const files = makeFiles(__dirname)
       const file = files.get(__filename)
       const relative = basename(__filename)
 
@@ -172,13 +176,13 @@ describe('Files', () => {
 
   describe('Synchronous Virtual File Access', () => {
     it('should not access missing or unreadable files', () => {
-      const file1 = new Files(__dirname as DirectoryPath).get('this does not exist')
+      const file1 = makeFiles(__dirname).get('this does not exist')
       expect(file1.existsSync()).to.be.false
       expect(() => file1.contentsSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.sourceMapSync()).to.throw(Error).with.property('code', 'ENOENT')
       expect(() => file1.lastModifiedSync()).to.throw(Error).with.property('code', 'ENOENT')
 
-      const file2 = new Files(__dirname as DirectoryPath).get(__dirname)
+      const file2 = makeFiles(__dirname).get(__dirname)
       expect(file2.existsSync()).to.be.false
       expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
       expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
@@ -187,7 +191,7 @@ describe('Files', () => {
 
     it('should create a File', () => {
       function create(contents: string): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents })
+        return makeFiles('/foo').add('bar.js', { contents })
       }
 
       const file1 = create('')
@@ -207,7 +211,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
+        return makeFiles('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -239,7 +243,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        const list = new Files('/foo' as DirectoryPath)
+        const list = makeFiles('/foo')
         list.add('bar.js.map', { contents: '{"version":"3"}' }) // yep, string!
         return list.add('bar.js', { contents, sourceMap })
       }
@@ -273,7 +277,7 @@ describe('Files', () => {
       const contents = '//# sourceMappingURL=bar.js.map\n// foo'
 
       function create(sourceMap?: any): File {
-        return new Files('/foo' as DirectoryPath).add('bar.js', { contents, sourceMap })
+        return makeFiles('/foo').add('bar.js', { contents, sourceMap })
       }
 
       const file1 = create() // extract source map (default)
@@ -302,7 +306,7 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', () => {
-      const files = new Files(__dirname as DirectoryPath)
+      const files = makeFiles(__dirname)
       const file = files.get(__filename)
       const relative = basename(__filename)
 

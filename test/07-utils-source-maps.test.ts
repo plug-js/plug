@@ -1,13 +1,11 @@
 import { AssertionError } from 'assert'
-import { Files } from '../src/files'
-import { disableLogs } from './support'
+import { FilePath } from '../src/utils/paths'
 import { expect } from 'chai'
 import { extractSourceMappingURL } from '../src/source-maps/extract'
 import { parseSourceMappingURL } from '../src/source-maps/parse'
-
-import { DirectoryPath, FilePath } from '../src/utils/paths'
 import { FileSourceMap, extractSourceMap } from '../src/source-maps'
 import { MappingItem, RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
+import { disableLogs, mock } from './support'
 
 describe('Source Maps', () => {
   disableLogs()
@@ -209,7 +207,8 @@ describe('Source Maps', () => {
       expect(sm?.attachedSources).to.eql([])
 
       // the directory is ignored, sources are already absolute!
-      sm?.attachSources(new Files('/sources' as DirectoryPath))
+      const { files } = mock('/sources')
+      sm?.attachSources(files)
 
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
       expect(sm?.attachedSources).to.eql([ {
@@ -222,7 +221,7 @@ describe('Source Maps', () => {
     })
 
     it('should produce a simple source map', async () => {
-      const files = new Files('/src' as DirectoryPath)
+      const { files } = mock('/src')
       files.add('three.txt', { contents: 'content for three' })
 
       const file = '/foo/bar.txt' as FilePath
@@ -273,7 +272,7 @@ describe('Source Maps', () => {
     })
 
     it('should produce a combined source map', async () => {
-      const files = new Files('/sources' as DirectoryPath)
+      const { files } = mock('/sources')
 
       // this maps result1.txt => source1.txt (content from file)
       files.add('source1.txt', { contents: '1 contents of source1.txt' })

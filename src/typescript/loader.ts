@@ -1,11 +1,12 @@
 import { CompilePlug } from '../plugs/compile'
 import { Files } from '../files'
 import { Project } from '../project'
+import { Task } from '../task'
 import assert from 'assert'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
 
-import { DirectoryPath, FilePath, getParent } from '../utils/paths'
+import { DirectoryPath, FilePath } from '../utils/paths'
 import { ModuleKind, ScriptTarget } from 'typescript'
 
 /* ========================================================================== *
@@ -17,11 +18,6 @@ import { ModuleKind, ScriptTarget } from 'typescript'
  */
 export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPath): Promise<any> {
   if (extname(buildFile) === '.js') return require(buildFile)
-
-  // Prepare our initial file system
-  if (! directory) directory = getParent(buildFile)
-  const files = new Files(directory)
-  files.add(buildFile)
 
   // Create our compiler
   const compiler = new CompilePlug({
@@ -36,12 +32,17 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   })
 
   // Create a project
-  const project = new Project({
-    default: { run: (run) => compiler.process(files, run, run.log(compiler)) },
-  }, buildFile, directory)
+  const init: Task = {
+    run(run) {
+      const files = new Files(run)
+      files.add(buildFile)
+      const log = run.log(compiler)
+      return compiler.process(files, run, log)
+    },
+  }
 
   // Await for the output of the compilation
-  const output = await project.runTask('default')
+  const output = await new Project({ init }, buildFile, directory).runTask('init')
 
   // Build our output file list, and figure out where the original
   // typescript ended up in our compilation results

@@ -1,18 +1,16 @@
 import { FileImpl } from './file'
 import { FileWrapper } from './wrapper'
+import { Project } from '../project'
+import { Run } from '../run'
 import assert from 'assert'
-import { isAbsolute } from 'path'
-
 import {
   CanonicalPath,
   DirectoryPath,
-  RelativeDirectoryPath,
   RelativeFilePath,
   getCanonicalPath,
   isChild,
   resolvePath,
 } from '../utils/paths'
-
 import { File, FileOptions } from './index'
 
 /* ========================================================================== *
@@ -30,22 +28,30 @@ export class Files implements Files {
   #files = new Map<CanonicalPath, File>()
 
   /** The base directory of this `Files` instance */
-  readonly directory: DirectoryPath
+  readonly directory!: DirectoryPath
+  /** The `Project` associated with this `Files` instance */
+  readonly project!: Project
 
   /**
-   * Create a new `Files` instance at the specified directory.
-   *
-   * If the path was not specified the default `getProjectDirectory()` will
-   * be used.
+   * Create a new `Files` instance associated with the specified `Project`.
    */
-  constructor(directory: DirectoryPath) {
-    assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
-    this.directory = directory
+  constructor(run: Run)
+  constructor(project: Project)
+  constructor(arg: Project | Run) {
+    Object.defineProperties(this, {
+      directory: { enumerable: true, value: arg.directory },
+      project: { enumerable: false, value: arg },
+    })
   }
 
   /** Return the number of `File`s listed by this instance */
   get length(): number {
     return this.#files.size
+  }
+
+  /** Create an `IterableIterator` over all `File`s listed by this instance */
+  [Symbol.iterator](): IterableIterator<File> {
+    return this.#files.values()
   }
 
   /** Invoke the given call back function for each file listed by this */
@@ -101,28 +107,6 @@ export class Files implements Files {
     const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
     const canonicalPath = getCanonicalPath(absolutePath)
     return this.#files.has(canonicalPath)
-  }
-
-  /** Clone this `Files` instance preserving all files listed by it */
-  clone(path?: string): Files {
-    const directory = resolvePath(this.directory, path as RelativeDirectoryPath)
-    const list = new Files(directory)
-
-    for (const file of this.#cache.values()) {
-      const wrapped = new FileWrapper(list, file)
-      list.#cache.set(wrapped.canonicalPath, wrapped)
-
-      // Preserve file list
-      if (this.#files.has(file.canonicalPath) && isChild(list.directory, file.absolutePath)) {
-        list.#files.set(wrapped.canonicalPath, wrapped)
-      }
-    }
-
-    return list
-  }
-
-  [Symbol.iterator](): IterableIterator<File> {
-    return this.#files.values()
   }
 
   /** Add a `File` to this `Files` instance */

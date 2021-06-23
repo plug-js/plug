@@ -60,7 +60,7 @@ export class CompilePlug implements Plug {
 
   process(input: Files, run: Run, log: Log): Files {
     const now = Date.now()
-    const output = new Files(input.directory)
+    const output = new Files(run)
 
     // Read our compiler options and fail on error
     const host = new TypeScriptHost(input)

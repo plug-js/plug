@@ -7,7 +7,8 @@ import { Task } from '../src/task'
 import { dirname } from 'path'
 import { existsSync } from 'fs'
 import { resolve } from 'path'
-import { DirectoryPath, RelativeFilePath, resolvePath } from '../src/utils/paths'
+
+import { DirectoryPath, createFilePath } from '../src/utils/paths'
 import { PlugLog, RunLog, options } from '../src/utils/log'
 
 function findDirectory(directory: string): string {
@@ -47,13 +48,13 @@ export function mock(
     name: string = 'task',
     ...names: string[]
 ): MockProject {
-  const files = new Files(directory as DirectoryPath)
-  const build = resolvePath(files.directory, 'build.ts' as RelativeFilePath)
+  const build = createFilePath(directory, 'build.ts')
 
   const tasks: Record<string, Task> = {}
-  for (const t of [ name, ...names ]) tasks[t] = { run: () => files }
+  for (const t of [ name, ...names ]) tasks[t] = { run: () => new Files(run) }
 
   const project = new Project(tasks, build)
+  const files = new Files(project)
   const run = new Run(project)
   const log = run.log() as PlugLog & RunLog
 
