@@ -1,11 +1,11 @@
-import { Failure } from '../failure'
+import type { FileOptions } from './index'
+import type { Files } from './files'
+import type { FilePath } from '../utils/paths'
+
 import { File } from './file'
-import { FilePath } from '../utils/paths'
 import { FileSourceMap } from '../source-maps'
 import { extractSourceMap } from '../source-maps'
 import { log } from '../utils/log'
-
-import { FileOptions, Files } from './index'
 import { promises as fs, readFileSync, statSync } from 'fs'
 
 /* ========================================================================== *
@@ -67,9 +67,9 @@ export class FileImpl extends File {
       try {
         stat = statSync(absolutePath)
       } catch (error) {
-        throw new Failure(`File "${absolutePath}" not found`)
+        throw new Error(`File "${absolutePath}" not found`)
       }
-      if (! stat.isFile()) throw new Failure(`File "${absolutePath}" is not a file`)
+      if (! stat.isFile()) throw new Error(`File "${absolutePath}" is not a file`)
     }
   }
 

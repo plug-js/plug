@@ -1,4 +1,3 @@
-import { Failure } from '../src/failure'
 import { FileImpl } from '../src/files/impl'
 import { Project } from '../src/project'
 import { basename } from 'path'
@@ -21,10 +20,10 @@ describe('Files', () => {
     const files = makeFiles(getParent(dir))
 
     expect(() => new FileImpl(files, createFilePath(dir, 'this does not exist')))
-        .to.throw(Failure, `File "${__dirname}/this does not exist" not found`)
+        .to.throw(Error, `File "${__dirname}/this does not exist" not found`)
 
     expect(() => new FileImpl(files, createFilePath(dir)))
-        .to.throw(Failure, `File "${__dirname}" is not a file`)
+        .to.throw(Error, `File "${__dirname}" is not a file`)
 
     expect(new FileImpl(files, createFilePath(__filename))).to.be.instanceof(FileImpl)
   })

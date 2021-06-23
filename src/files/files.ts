@@ -1,21 +1,14 @@
-import { File } from './file'
-import { FileImpl } from './impl'
+import assert from 'assert'
+
+import type { CanonicalPath, DirectoryPath, RelativeFilePath } from '../utils/paths'
 import type { FileOptions } from './index'
-import { FileWrapper } from './wrapper'
 import type { Project } from '../project'
 import type { Run } from '../run'
-import assert from 'assert'
-import type {
-  CanonicalPath,
-  DirectoryPath,
-  RelativeFilePath,
-} from '../utils/paths'
 
-import {
-  getCanonicalPath,
-  isChild,
-  resolvePath,
-} from '../utils/paths'
+import { File } from './file'
+import { FileImpl } from './impl'
+import { FileWrapper } from './wrapper'
+import { getCanonicalPath, isChild, resolvePath } from '../utils/paths'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *

@@ -1,5 +1,4 @@
 import { AssertionError } from 'assert'
-import { Failure } from '../src/failure'
 import { Files } from '../src/files'
 import { Project } from '../src/project'
 import { Run } from '../src/run'
@@ -7,7 +6,7 @@ import { basename } from 'path'
 import { expect } from 'chai'
 import { FilePath, getCanonicalPath } from '../src/utils/paths'
 
-describe('File List', () => {
+describe('File lists', () => {
   function makeFiles(directory: string): Files {
     return new Files({ directory } as Project)
   }
@@ -139,7 +138,7 @@ describe('File List', () => {
     it('should not add a non-existant file', () => {
       const files = makeFiles(__dirname)
       expect(() => files.add('this does not exist for sure'))
-          .to.throw(Failure, `File "${__dirname}/this does not exist for sure" not found`)
+          .to.throw(Error, `File "${__dirname}/this does not exist for sure" not found`)
     })
 
     it('should add a simple file with case sensitive paths', () => {
