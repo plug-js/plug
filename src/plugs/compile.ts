@@ -24,7 +24,7 @@ interface ExtendedCompilerOptions extends CompilerOptions {
    * Indicates whether non-compilable files are passed through to the next
    * step, or ignored entirely and not available in the resulting file list.
    *
-   * @default: false
+   * @default true
    */
   passThrough?: boolean
 
@@ -41,7 +41,8 @@ interface ExtendedCompilerOptions extends CompilerOptions {
 }
 
 export class CompilePlug implements Plug {
-  #options?: ExtendedCompilerOptions
+  #passThrough: boolean
+  #options?: CompilerOptions
   #config?: string
 
   /** ConstructorDoc w/ options */
@@ -54,6 +55,7 @@ export class CompilePlug implements Plug {
       first === undefined ? { config: undefined, options: extra } :
       { config: undefined, options: first }
 
+    this.#passThrough = options?.passThrough === undefined ? true : options.passThrough
     this.#options = options
     this.#config = config
   }
@@ -85,8 +87,8 @@ export class CompilePlug implements Plug {
     const paths = input.map((file) => {
       // Compile all ".ts", ".d.ts", ".tsx" (or ".js" with allowJs)
       const extension = extname(file.absolutePath).toLowerCase()
-      if (extensions.includes(extension)) return file.relativePath
-      if (options.allowJs && (extension === '.js')) return file.relativePath
+      if (extensions.includes(extension)) return file.absolutePath
+      if (options.allowJs && (extension === '.js')) return file.absolutePath
 
       // We pass-through any other file child of our "rootDir" basically
       // re-creating the same structure into "outDir"
@@ -97,7 +99,9 @@ export class CompilePlug implements Plug {
       }
     }).filter((path) => path) as string[]
 
-    log.debug('Compiling', paths.length, 'files:', paths)
+    // Log what we're doing
+    for (const path of paths) log.trace(`Compiling "${path}"`)
+    for (const file of output) log.trace(`File "${file.absolutePath}" passed through`)
 
     // Get our build file and create the master program
     const program = createProgram(paths, options, host, undefined, diagnostics)
