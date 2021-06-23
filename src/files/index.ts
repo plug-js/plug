@@ -9,7 +9,7 @@ export { Files } from './files'
 /** A type describing how to _add_ a virtual file to a list */
 export type FileOptions = {
   /** The contents (if any) of the file to add */
-  contents?: string,
+  contents: string,
   /**
    * A source map for this file or a boolean indicating whether the source
    * map should be extracted from the file's contents themselves
@@ -63,7 +63,4 @@ export interface File {
   sourceMap(): Promise<FileSourceMap | undefined>
   /** Return a `FileSourceMap` associated with this `File` if any */
   sourceMapSync(): FileSourceMap | undefined
-
-  /** Return a `File` whose path is relative to this one */
-  get(path: string): File
 }

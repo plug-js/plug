@@ -41,20 +41,6 @@ describe('File List', () => {
       expect(files.get('baz/../bar.txt')).not.to.equal(file)
       expect(files.get('../foo/bar.txt')).not.to.equal(file)
       expect(files.get('/foo/bar.txt')).not.to.equal(file)
-
-      // Re-get the same file, from our File instance
-      expect(file.get('Bar.Txt')).to.equal(file)
-      expect(file.get('./Bar.Txt')).to.equal(file)
-      expect(file.get('Baz/../Bar.Txt')).to.equal(file)
-      expect(file.get('../Foo/Bar.Txt')).to.equal(file)
-      expect(file.get('/Foo/Bar.Txt')).to.equal(file)
-
-      // Case sensitive, it should not get the same file
-      expect(file.get('bar.txt')).to.not.equal(file)
-      expect(file.get('./bar.txt')).to.not.equal(file)
-      expect(file.get('baz/../bar.txt')).to.not.equal(file)
-      expect(file.get('../foo/bar.txt')).to.not.equal(file)
-      expect(file.get('/foo/bar.txt')).to.not.equal(file)
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }
@@ -86,20 +72,6 @@ describe('File List', () => {
       expect(files.get('baz/../bar.txt')).to.equal(file)
       expect(files.get('../foo/bar.txt')).to.equal(file)
       expect(files.get('/foo/bar.txt')).to.equal(file)
-
-      // Re-get the same file, from our File instance
-      expect(file.get('Bar.Txt')).to.equal(file)
-      expect(file.get('./Bar.Txt')).to.equal(file)
-      expect(file.get('Baz/../Bar.Txt')).to.equal(file)
-      expect(file.get('../Foo/Bar.Txt')).to.equal(file)
-      expect(file.get('/Foo/Bar.Txt')).to.equal(file)
-
-      // Case sensitive, it should not get the same file
-      expect(file.get('bar.txt')).to.equal(file)
-      expect(file.get('./bar.txt')).to.equal(file)
-      expect(file.get('baz/../bar.txt')).to.equal(file)
-      expect(file.get('../foo/bar.txt')).to.equal(file)
-      expect(file.get('/foo/bar.txt')).to.equal(file)
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }

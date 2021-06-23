@@ -44,27 +44,21 @@ export class FileImpl extends AbstractFile implements File {
   constructor(
       files: Files,
       absolutePath: FilePath,
-      options: FileOptions = {},
+      options?: FileOptions,
   ) {
-    super(files, absolutePath, options.originalPath)
-
-    const {
-      contents,
-      sourceMapSources,
-      sourceMap: sourceMapSource = true,
-    } = options
-
-    // Remember the source map sources for this file's sitemap
-    this.#sourceMapSources = sourceMapSources
+    super(files, absolutePath, options ? options.originalPath : undefined)
 
     // Process contents and related source map
-    if (contents !== undefined) {
+    if (options) {
+      const { contents, sourceMap = true, sourceMapSources } = options
+      this.#sourceMapSources = sourceMapSources
       const lastModified = Date.now()
-      if (sourceMapSource === true) { // parse the source map
+
+      if (sourceMap === true) { // parse the source map
         this.#data = parseContentsForSourceMap(this, contents, sourceMapSources, lastModified)
-      } else if (sourceMapSource !== false) {
-        const sourceMap = FileSourceMap.for(absolutePath, sourceMapSource, sourceMapSources)
-        this.#data = { lastModified, contents, sourceMap: sourceMap }
+      } else if (sourceMap !== false) {
+        const fileSourceMap = FileSourceMap.for(absolutePath, sourceMap, sourceMapSources)
+        this.#data = { lastModified, contents, sourceMap: fileSourceMap }
       } else {
         this.#data = { lastModified, contents }
       }
