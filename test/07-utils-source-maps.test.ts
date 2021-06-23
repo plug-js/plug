@@ -206,8 +206,10 @@ describe('Source Maps', () => {
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
       expect(sm?.attachedSources).to.eql([])
 
-      // the directory is ignored, sources are already absolute!
-      const { files } = mock('/sources')
+      const { files } = mock('/foo')
+      files.add('one.txt', 'one')
+      files.add('two.txt', 'two')
+      files.add('three.txt', 'three')
       sm?.attachSources(files)
 
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
@@ -253,10 +255,7 @@ describe('Source Maps', () => {
 
       sm?.attachSources(files)
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
-      expect(sm?.attachedSources).to.eql([ {
-        absolutePath: '/baz/one.txt',
-        originalPath: '/baz/one.txt',
-      }, undefined, {
+      expect(sm?.attachedSources).to.eql([ undefined, undefined, {
         absolutePath: '/src/three.txt',
         originalPath: '/src/three.txt',
       } ])

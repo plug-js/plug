@@ -33,10 +33,6 @@ export abstract class AbstractFile implements File {
     })
   }
 
-  abstract exists(): Promise<boolean>
-  abstract existsSync(): boolean
-  abstract lastModified(): Promise<number>
-  abstract lastModifiedSync(): number
   abstract contents(): Promise<string>
   abstract contentsSync(): string
   abstract sourceMap(): Promise<FileSourceMap | undefined>

@@ -12,22 +12,6 @@ export class FileWrapper extends AbstractFile implements File {
     this.#file = file
   }
 
-  exists(): Promise<boolean> {
-    return this.#file.exists()
-  }
-
-  existsSync(): boolean {
-    return this.#file.existsSync()
-  }
-
-  lastModified(): Promise<number> {
-    return this.#file.lastModified()
-  }
-
-  lastModifiedSync(): number {
-    return this.#file.lastModifiedSync()
-  }
-
   contents(): Promise<string> {
     return this.#file.contents()
   }

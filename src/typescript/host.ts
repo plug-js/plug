@@ -3,7 +3,14 @@ import { Files } from '../files'
 import { createHash } from 'crypto'
 import { extname } from 'path'
 
-import { CanonicalPath, caseSensitivePaths } from '../utils/paths'
+import {
+  CanonicalPath,
+  RelativeFilePath,
+  caseSensitivePaths,
+  getCanonicalPath,
+  resolvePath,
+} from '../utils/paths'
+
 import {
   CompilerHost,
   CompilerOptions,
@@ -59,7 +66,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
   ): SourceFile | undefined {
     try {
       const file = this.#files.get(fileName)
-      if (! file.existsSync()) return
+      if (! file) return
 
       const data = file.contentsSync()
       const path = file.absolutePath
@@ -114,13 +121,12 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Check for the existence of a given file */
   fileExists(fileName: string): boolean {
-    return this.#files.get(fileName).existsSync()
+    return !! this.#files.get(fileName)
   }
 
   /** [TS] Read the file if it exists, otherwise return undefined */
   readFile(fileName: string): string | undefined {
-    const file = this.#files.get(fileName)
-    if (file.existsSync()) return file.contentsSync()
+    return this.#files.get(fileName)?.contentsSync()
   }
 
   /** [TS] Return the current working directory */
@@ -130,7 +136,8 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Return the canonical name for the specified file */
   getCanonicalFileName(fileName: string): string {
-    return this.#files.get(fileName).canonicalPath
+    const path = resolvePath(this.#files.directory, fileName as RelativeFilePath)
+    return getCanonicalPath(path)
   }
 
   /** [TS] Create a hash for the given string, uses SHA256(HEX) */

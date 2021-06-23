@@ -1,4 +1,5 @@
 import { AbstractFile } from './abstract'
+import { Failure } from '../failure'
 import { FilePath } from '../utils/paths'
 import { FileSourceMap } from '../source-maps'
 import { extractSourceMap } from '../source-maps'
@@ -14,7 +15,6 @@ import { promises as fs, readFileSync, statSync } from 'fs'
 /* Internal type associating content and an (optional) source map */
 type FileData = {
   contents: string,
-  lastModified: number,
   sourceMap?: FileSourceMap | FilePath,
 }
 
@@ -22,16 +22,15 @@ function parseContentsForSourceMap(
     file: File,
     code: string,
     sourceMapSources: Files | undefined,
-    lastModified: number,
 ): FileData {
   const { contents, sourceMap, sourceMapFile } = extractSourceMap(file.absolutePath, code, true)
   if (sourceMap) {
     if (sourceMapSources) sourceMap.attachSources(sourceMapSources)
-    return { contents, lastModified, sourceMap }
+    return { contents, sourceMap }
   } else if (sourceMapFile) {
-    return { contents, lastModified, sourceMap: sourceMapFile }
+    return { contents, sourceMap: sourceMapFile }
   } else {
-    return { contents, lastModified }
+    return { contents }
   }
 }
 
@@ -52,16 +51,23 @@ export class FileImpl extends AbstractFile implements File {
     if (options) {
       const { contents, sourceMap = true, sourceMapSources } = options
       this.#sourceMapSources = sourceMapSources
-      const lastModified = Date.now()
 
       if (sourceMap === true) { // parse the source map
-        this.#data = parseContentsForSourceMap(this, contents, sourceMapSources, lastModified)
+        this.#data = parseContentsForSourceMap(this, contents, sourceMapSources)
       } else if (sourceMap !== false) {
         const fileSourceMap = FileSourceMap.for(absolutePath, sourceMap, sourceMapSources)
-        this.#data = { lastModified, contents, sourceMap: fileSourceMap }
+        this.#data = { contents, sourceMap: fileSourceMap }
       } else {
-        this.#data = { lastModified, contents }
+        this.#data = { contents }
       }
+    } else {
+      let stat
+      try {
+        stat = statSync(absolutePath)
+      } catch (error) {
+        throw new Failure(`File "${absolutePath}" not found`)
+      }
+      if (! stat.isFile()) throw new Failure(`File "${absolutePath}" not found`)
     }
   }
 
@@ -73,8 +79,7 @@ export class FileImpl extends AbstractFile implements File {
     if (this.#data) return this.#data
 
     const code = readFileSync(this.originalPath, 'utf8')
-    const lastModified = statSync(this.originalPath).mtimeMs
-    return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources, lastModified)
+    return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources)
   }
 
   #read(): Promise<FileData> {
@@ -82,12 +87,9 @@ export class FileImpl extends AbstractFile implements File {
     if (this.#data) return this.#promise = Promise.resolve(this.#data)
 
     return this.#promise = Promise.resolve()
-        .then(() => Promise.all([
-          fs.readFile(this.originalPath, 'utf8'),
-          fs.stat(this.originalPath),
-        ])).then(([ content, stats ]) => {
-          return this.#data = parseContentsForSourceMap(this, content, this.#sourceMapSources, stats.mtimeMs)
-        }).catch((error) => {
+        .then(() => fs.readFile(this.originalPath, 'utf8'))
+        .then((content) => this.#data = parseContentsForSourceMap(this, content, this.#sourceMapSources))
+        .catch((error) => {
           // No idea why sometimes stacks don't have a trace when coming out of
           // the "fs.promises" api... There is a _stack_ property on the object
           // but it simply includes the first line, no whatsoever trace???
@@ -100,18 +102,6 @@ export class FileImpl extends AbstractFile implements File {
    * SYNCHRONOUS IMPLEMENTATION                                               *
    * ======================================================================== */
 
-  existsSync(): boolean {
-    try {
-      return !! (this.#data || this.#readSync())
-    } catch (error) {
-      return false
-    }
-  }
-
-  lastModifiedSync(): number {
-    return this.#readSync().lastModified
-  }
-
   contentsSync(): string {
     return this.#readSync().contents
   }
@@ -121,6 +111,11 @@ export class FileImpl extends AbstractFile implements File {
 
     if (typeof data.sourceMap === 'string') {
       const sourceMapFile = this.files.get(data.sourceMap)
+      if (! sourceMapFile) {
+        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
+        return
+      }
+      // TODO: unwrap this try/catch
       try {
         const sourceMapContents = sourceMapFile.contentsSync()
         const sourceMap = JSON.parse(sourceMapContents)
@@ -139,18 +134,6 @@ export class FileImpl extends AbstractFile implements File {
    * ASYNC IMPLEMENTATION                                                     *
    * ======================================================================== */
 
-  async exists(): Promise<boolean> {
-    try {
-      return !! (this.#data || await this.#read())
-    } catch (error) {
-      return false
-    }
-  }
-
-  async lastModified(): Promise<number> {
-    return this.#data ? this.#data.lastModified : (await this.#read()).lastModified
-  }
-
   async contents(): Promise<string> {
     return this.#data ? this.#data.contents : (await this.#read()).contents
   }
@@ -160,6 +143,11 @@ export class FileImpl extends AbstractFile implements File {
 
     if (typeof data.sourceMap === 'string') {
       const sourceMapFile = this.files.get(data.sourceMap)
+      if (! sourceMapFile) {
+        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
+        return
+      }
+      // TODO: unwrap this try/catch
       try {
         const sourceMapContents = await sourceMapFile.contents()
         const sourceMap = JSON.parse(sourceMapContents)

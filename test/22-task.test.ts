@@ -138,8 +138,8 @@ describe('Plug Tasks', () => {
       expect(input).to.equal(files)
       const list = new Files(run)
       for (const file of files) list.add(file)
-      list.add('xxxx.txt', { contents: 'first' })
-      list.add(`foo${++ counter}.txt`)
+      list.add('xxxx.txt', 'first')
+      list.add(`foo${++ counter}.txt`, counter.toString())
       return list
     })))
 
@@ -150,7 +150,7 @@ describe('Plug Tasks', () => {
       const list = new Files(run)
       for (const file of files) list.add(file)
       list.add('xxxx.txt', { contents: 'second' })
-      list.add(`bar${++ counter}.txt`)
+      list.add(`bar${++ counter}.txt`, counter.toString())
       return list
     })))
 
@@ -161,7 +161,7 @@ describe('Plug Tasks', () => {
       const list = new Files(run)
       for (const file of files) list.add(file)
       list.add('xxxx.txt', { contents: 'third' })
-      list.add(`baz${++ counter}.txt`)
+      list.add(`baz${++ counter}.txt`, counter.toString())
       return Promise.resolve(list)
     })))
 
@@ -180,7 +180,7 @@ describe('Plug Tasks', () => {
 
     // Always rooted in project path
     expect(resultA.directory).to.equal('/foo')
-    expect(resultA.get('xxxx.txt').contentsSync()).to.equal('third') // task3 is last
+    expect(resultA.get('xxxx.txt')?.contentsSync()).to.equal('third') // task3 is last
 
     // Tasks stack
     expect(tasks).to.have.length(3)
@@ -204,7 +204,7 @@ describe('Plug Tasks', () => {
 
     // Always rooted in project path
     expect(resultB.directory).to.equal('/foo')
-    expect(resultB.get('xxxx.txt').contentsSync()).to.equal('first') // task1 is last
+    expect(resultB.get('xxxx.txt')?.contentsSync()).to.equal('first') // task1 is last
 
     // Tasks stack
     expect(tasks).to.have.length(3)

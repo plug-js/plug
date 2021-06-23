@@ -1,3 +1,5 @@
+import { Files } from '../files'
+
 import {
   CompilerOptions,
   Diagnostic,
@@ -6,11 +8,6 @@ import {
   getDefaultCompilerOptions,
   readConfigFile,
 } from 'typescript'
-
-import {
-  File,
-  Files,
-} from '../files'
 
 import {
   FilePath,
@@ -25,20 +22,19 @@ import {
 type CompilerOptionsAndDiagnostics = {
   options: CompilerOptions,
   diagnostics: readonly Diagnostic[],
-  absolutePath?: FilePath,
+  filePath?: FilePath,
 }
 
 // Load options from a file in our filesystem
 function loadOptions(
-    file: File,
+    file: FilePath,
     files: Files,
     diagnostics: Diagnostic[],
-    resolutionStack: FilePath[] = [ file.absolutePath ],
+    resolutionStack: FilePath[] = [ file ],
 ): CompilerOptions | undefined {
   // A function to read files for TypeScript
   function readFile(name: string): string | undefined {
-    const file = files.get(name)
-    if (file.existsSync()) return file.contentsSync()
+    return files.get(name)?.contentsSync()
   }
 
   // istanbul ignore next - destructure "readConfigFile(...)" results in
@@ -49,14 +45,14 @@ function loadOptions(
       extends: extendsPath = undefined as string | undefined,
     } = {},
     error,
-  } = readConfigFile(file.absolutePath, readFile)
+  } = readConfigFile(file, readFile)
   if (error) return void diagnostics.push(error)
 
   // Convert "compilerOptions" parsing the JSON format and returning it with proper enums and validations
   const { options, errors } = convertCompilerOptionsFromJson(
       compilerOptions, // the compiler options as JSON
-      getParent(file.absolutePath), // dir of this config file
-      file.absolutePath, // full path name of this config file
+      getParent(file), // dir of this config file
+      file, // full path name of this config file
   )
   if (errors.length) return void diagnostics.push(...errors)
 
@@ -64,7 +60,7 @@ function loadOptions(
   if (!extendsPath) return options
 
   // Check for circular extension errors
-  const extendedPath = resolveFilePath(file.absolutePath, extendsPath)
+  const extendedPath = resolveFilePath(file, extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
     const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)
@@ -81,8 +77,7 @@ function loadOptions(
 
   // Push our file in the stack and load recursively
   resolutionStack.push(extendedPath)
-  const extendedFile = files.get(extendedPath)
-  const extendsOptions = loadOptions(extendedFile, files, diagnostics, resolutionStack)
+  const extendsOptions = loadOptions(extendedPath, files, diagnostics, resolutionStack)
   resolutionStack.pop()
   return Object.assign({}, extendsOptions, options)
 }
@@ -98,20 +93,22 @@ export function getCompilerOptions(
   const defaults = getDefaultCompilerOptions()
 
   // If there's no file, we load either "tsconfig.json" or the defaults
-  let file = undefined as File | undefined
+  let path = undefined as FilePath | undefined
   if (fileName) {
-    file = files.get(fileName)
+    path = resolvePath(files.directory, fileName as RelativeFilePath)
   } else {
-    file = files.get('tsconfig.json')
-    if (! file.existsSync()) {
-      const options = Object.assign(defaults, overrides)
-      return { options, diagnostics: [] }
-    }
+    path = files.get('tsconfig.json')?.absolutePath
+  }
+
+  // If we have no path, return the defaults
+  if (! path) {
+    const options = Object.assign(defaults, overrides)
+    return { options, diagnostics: [] }
   }
 
   // We have a file, so we read it...
   const diagnostics: Diagnostic[] = []
-  const loaded = loadOptions(file, files, diagnostics)
+  const loaded = loadOptions(path, files, diagnostics)
 
   // Check if we had some issues while reading the file
   if (diagnostics.length) return { options: {}, diagnostics }
@@ -125,5 +122,5 @@ export function getCompilerOptions(
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)
-  return { options, diagnostics, absolutePath: file.absolutePath }
+  return { options, diagnostics, filePath: path }
 }

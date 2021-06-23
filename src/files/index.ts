@@ -37,16 +37,6 @@ export interface File {
   /** An optional array of absolute paths indicating how this file can be `require(...)`d */
   readonly originalPath: FilePath
 
-  /** Checks if this `File` exists (its `contents()` can be accessed) */
-  exists(): Promise<boolean>
-  /** Checks if this `File` exists (its `contents()` can be accessed) */
-  existsSync(): boolean
-
-  /** The last modified timestamp of this `File` */
-  lastModified(): Promise<number>
-  /** The last modified timestamp of this `File` */
-  lastModifiedSync(): number
-
   /**
    * Return the contents of this `File`
    *

@@ -1,19 +1,17 @@
 import { EOL } from 'os'
 import { TypeScriptHost } from '../src/typescript/host'
-import { caseSensitivePaths } from '../src/utils/paths'
 import { expect } from 'chai'
 import { mock } from './support'
 
 import { ScriptKind, ScriptTarget } from 'typescript'
 import { basename, isAbsolute } from 'path'
+import { caseSensitivePaths, getCanonicalPath } from '../src/utils/paths'
 
 describe('TypeScript Host', () => {
   it('should correctly return the basics required by typescript', () => {
     const host = new TypeScriptHost({
-      directory: 'the current directory',
-      get: (filename: string):any => ({
-        canonicalPath: `canonical ${filename}`,
-        existsSync: (): string => filename != 'no' ? `existsSync ${filename}` : '',
+      directory: '/foo',
+      get: (filename: string): any => ( filename === 'missing' ? undefined : {
         contentsSync: (): string => `contentsSync ${filename}`,
       }),
     } as any)
@@ -27,14 +25,16 @@ describe('TypeScript Host', () => {
     expect(host.createHash('')).to.equal('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
     expect(host.getNewLine()).to.equal(EOL)
 
-    expect(host.fileExists('foobar')).to.equal('existsSync foobar')
+    expect(host.fileExists('foobar')).to.be.true
+    expect(host.fileExists('missing')).to.be.false
 
-    expect(host.getCurrentDirectory()).to.equal('the current directory')
+    expect(host.getCurrentDirectory()).to.equal('/foo')
 
-    expect(host.getCanonicalFileName('baz.txt')).to.equal('canonical baz.txt')
+    expect(host.getCanonicalFileName('Baz.Txt')).to.equal(getCanonicalPath('/foo/Baz.Txt' as any))
+    expect(host.getCanonicalFileName('missing')).to.equal(getCanonicalPath('/foo/missing' as any))
 
     expect(host.readFile('baz.txt')).to.equal('contentsSync baz.txt')
-    expect(host.readFile('no')).to.be.undefined
+    expect(host.readFile('missing')).to.be.undefined
   })
 
   it('should create some source files', () => {

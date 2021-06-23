@@ -70,16 +70,21 @@ export class Files implements Files {
   }
 
   /** Return a `File` associated with this `Files` list */
-  get(path: string): File {
+  get(path: string): File | undefined {
     const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
     const canonicalPath = getCanonicalPath(absolutePath)
 
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
-    const file = new FileImpl(this, absolutePath)
-    this.#cache.set(file.canonicalPath, file)
-    return file
+    // TODO cleanup this
+    try {
+      const file = new FileImpl(this, absolutePath)
+      this.#cache.set(file.canonicalPath, file)
+      return file
+    } catch (error) {
+      return undefined
+    }
   }
 
   /** Return all `File`s previously _added_ to this `Files` instance */
@@ -116,13 +121,20 @@ export class Files implements Files {
   add(file: File): File
   /** Add a `File` to this `Files` instance with a new path */
   add(path: string, file: File): File
+
+  /** Add a `File` to this `Files` instance */
+  add(path: string): File
   /** Add a `File` to this `Files` instance */
   add(path: string, options?: FileOptions): File
+  /** Add a `File` to this `Files` instance */
+  add(path: string, contents?: string): File
 
-  add(first: string | File, extra?: File | FileOptions): File {
+  add(first: string | File, extra?: string | File | FileOptions): File {
     // Destructure our arguments
     const { path, file, options } =
         typeof first === 'string' ?
+            typeof extra === 'string' ?
+              { path: first, file: undefined, options: { contents: extra } } :
             extra !== undefined ?
                 'files' in extra ?
                     { path: first, file: extra, options: undefined } :

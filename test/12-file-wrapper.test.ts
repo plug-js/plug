@@ -17,10 +17,6 @@ describe('File Wrapper', () => {
       relativePath: 'relative path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
-      exists: (): Promise<boolean> => 'exists' as any,
-      existsSync: (): boolean => 'existsSync' as any,
-      lastModified: (): Promise<number> => 'lastModified' as any,
-      lastModifiedSync: (): number => 'lastModifiedSync' as any,
       contents: (): Promise<string> => 'contents' as any,
       contentsSync: (): string => 'contentsSync' as any,
       sourceMap: (): Promise<FileSourceMap | undefined> => 'sourceMap' as any,
@@ -34,10 +30,6 @@ describe('File Wrapper', () => {
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/absolute path') // recomputed!
 
-    expect(wrapper.exists()).to.equal('exists')
-    expect(wrapper.existsSync()).to.equal('existsSync')
-    expect(wrapper.lastModified()).to.equal('lastModified')
-    expect(wrapper.lastModifiedSync()).to.equal('lastModifiedSync')
     expect(wrapper.contents()).to.equal('contents')
     expect(wrapper.contentsSync()).to.equal('contentsSync')
     expect(wrapper.sourceMap()).to.equal('sourceMap')
@@ -52,10 +44,6 @@ describe('File Wrapper', () => {
       relativePath: 'relative path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
-      exists: (): Promise<boolean> => 'exists' as any,
-      existsSync: (): boolean => 'existsSync' as any,
-      lastModified: (): Promise<number> => 'lastModified' as any,
-      lastModifiedSync: (): number => 'lastModifiedSync' as any,
       contents: (): Promise<string> => 'contents' as any,
       contentsSync: (): string => 'contentsSync' as any,
       sourceMap: (): Promise<FileSourceMap | undefined> => 'sourceMap' as any,
@@ -69,10 +57,6 @@ describe('File Wrapper', () => {
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/another absolute path') // recomputed
 
-    expect(wrapper.exists()).to.equal('exists')
-    expect(wrapper.existsSync()).to.equal('existsSync')
-    expect(wrapper.lastModified()).to.equal('lastModified')
-    expect(wrapper.lastModifiedSync()).to.equal('lastModifiedSync')
     expect(wrapper.contents()).to.equal('contents')
     expect(wrapper.contentsSync()).to.equal('contentsSync')
     expect(wrapper.sourceMap()).to.equal('sourceMap')
