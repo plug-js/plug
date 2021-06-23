@@ -7,6 +7,7 @@ import { tmpdir } from 'os'
 import { DirectoryPath, createFilePath, getParent } from '../src/utils/paths'
 import { File, Files } from '../src/files'
 import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
+import { FileSourceMap } from '../src/source-maps'
 
 describe('Files', () => {
   function makeFiles(directory: string): Files {
@@ -41,6 +42,11 @@ describe('Files', () => {
       const file2 = create('// foobar')
       expect(await file2.contents()).to.equal('// foobar')
       expect(await file2.sourceMap()).to.be.undefined
+
+      const sourceMap = FileSourceMap.for('/foo' as any, { version: 3 } as any)
+      const file3 = makeFiles('/foo').add('bar.js', { contents: 'any', sourceMap })
+      expect(await file3.contents()).to.equal('any')
+      expect(await file3.sourceMap()).to.equal(sourceMap)
     })
 
     it('should create a File with an inline source map', async () => {
@@ -177,6 +183,11 @@ describe('Files', () => {
       const file2 = create('// foobar')
       expect(file2.contentsSync()).to.equal('// foobar')
       expect(file2.sourceMapSync()).to.be.undefined
+
+      const sourceMap = FileSourceMap.for('/foo' as any, { version: 3 } as any)
+      const file3 = makeFiles('/foo').add('bar.js', { contents: 'any', sourceMap })
+      expect(file3.contentsSync()).to.equal('any')
+      expect(file3.sourceMapSync()).to.equal(sourceMap)
     })
 
     it('should create a File with an inline source map', async () => {
