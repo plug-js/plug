@@ -1,4 +1,5 @@
-import { FilePath } from '../utils/paths'
+import type { FilePath } from '../utils/paths'
+
 import { FileSourceMap } from './source-map'
 import { URL, fileURLToPath, pathToFileURL } from 'url'
 

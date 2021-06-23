@@ -1,23 +1,9 @@
-import { Files } from '../files'
+import type { CompilerOptions, Diagnostic } from 'typescript'
+import type { Files } from '../files'
 
-import {
-  CompilerOptions,
-  Diagnostic,
-  DiagnosticCategory,
-  convertCompilerOptionsFromJson,
-  getDefaultCompilerOptions,
-  readConfigFile,
-} from 'typescript'
-
-import {
-  FilePath,
-  RelativeDirectoryPath,
-  RelativeFilePath,
-  getParent,
-  getRelativePath,
-  resolveFilePath,
-  resolvePath,
-} from '../utils/paths'
+import { FilePath, RelativeDirectoryPath, RelativeFilePath } from '../utils/paths'
+import { convertCompilerOptionsFromJson, DiagnosticCategory, getDefaultCompilerOptions, readConfigFile } from 'typescript'
+import { getParent, getRelativePath, resolveFilePath, resolvePath } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = {
   options: CompilerOptions,

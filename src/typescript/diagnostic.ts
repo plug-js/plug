@@ -1,12 +1,7 @@
-import { ReportFailure } from '../failure'
+import type { Diagnostic, FormatDiagnosticsHost } from 'typescript'
 
-import {
-  Diagnostic,
-  DiagnosticCategory,
-  FormatDiagnosticsHost,
-  formatDiagnostics,
-  formatDiagnosticsWithColorAndContext,
-} from 'typescript'
+import { ReportFailure } from '../failure'
+import { DiagnosticCategory, formatDiagnostics, formatDiagnosticsWithColorAndContext } from 'typescript'
 
 export class TypeScriptFailure extends ReportFailure {
   private _host!: FormatDiagnosticsHost

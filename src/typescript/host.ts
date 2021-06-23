@@ -1,26 +1,12 @@
+import type { CanonicalPath, RelativeFilePath } from '../utils/paths'
+import type { CompilerHost, CompilerOptions, FormatDiagnosticsHost, ScriptTarget, SourceFile } from 'typescript'
+import type { Files } from '../files'
+
 import { EOL } from 'os'
-import { Files } from '../files'
+import { ScriptKind, createSourceFile, getDefaultLibFilePath } from 'typescript'
+import { caseSensitivePaths, getCanonicalPath, resolvePath } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
-
-import {
-  CanonicalPath,
-  RelativeFilePath,
-  caseSensitivePaths,
-  getCanonicalPath,
-  resolvePath,
-} from '../utils/paths'
-
-import {
-  CompilerHost,
-  CompilerOptions,
-  FormatDiagnosticsHost,
-  ScriptKind,
-  ScriptTarget,
-  SourceFile,
-  createSourceFile,
-  getDefaultLibFilePath,
-} from 'typescript'
 
 /* ========================================================================== *
  * CACHING - works out of the SHA256 of the contents of a file an it's shared *
