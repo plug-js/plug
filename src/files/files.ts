@@ -36,11 +36,14 @@ export class Files implements Files {
    * Create a new `Files` instance associated with the specified `Project`.
    */
   constructor(run: Run)
+  constructor(files: Files)
   constructor(project: Project)
-  constructor(arg: Project | Run) {
+  constructor(arg: Files | Project | Run) {
+    const directory: DirectoryPath = arg.directory
+    const project: Project = 'project' in arg ? arg.project : arg
     Object.defineProperties(this, {
-      directory: { enumerable: true, value: arg.directory },
-      project: { enumerable: false, value: arg },
+      directory: { enumerable: true, value: directory },
+      project: { enumerable: false, value: project },
     })
   }
 
