@@ -1,10 +1,10 @@
 import { Files } from '../files'
 import { Log } from '../utils/log'
 import { Run } from '../run'
-import { SourceMapOptions } from '../source-maps/source-map'
 
 import { FilePath, getParent } from '../utils/paths'
 import { Plug, install } from '../pipe'
+import { SourceMapsOptions, SourceMapsPlug } from './sourcemaps'
 import { mkdir, writeFile } from 'fs/promises'
 
 declare module '../pipe' {
@@ -13,80 +13,34 @@ declare module '../pipe' {
   }
 }
 
-interface SaveOptions {
-  /**
-   * How to write source maps, whether they need to be `inline`, saved as an
-   * external file (`true`), or not generated at all (`false`)
-   *
-   * @default 'inline'
-   */
-  sourceMaps?: 'inline' | boolean
-
-  /**
-   * The `sourceRoot` to inject in source maps
-   *
-   * @default undefined
-   */
-  sourceRoot?: string
-
-  /**
-   * Whether to combine source maps resulting from multiple transformation
-   * stages or not
-   *
-   * @default true
-   */
-  combineSourceMaps?: boolean
-
-  /**
-   * Whether to attach the original sources the the source maps.
-   *
-   * @default false
-   */
-   attachSources?: boolean
-
+export interface SaveOptions extends SourceMapsOptions {
   /**
    * The encoding used to write files.
    *
    * @default 'utf8'
    */
-  encoding?: BufferEncoding
+   encoding?: BufferEncoding
 }
 
-export class SavePlug implements Plug {
+export class SavePlug extends SourceMapsPlug implements Plug {
   #encoding: BufferEncoding
-  #sourceMapOptions: SourceMapOptions
-  #sourceMaps: 'inline' | boolean
-  #sourceRoot?: string
-
   #directory?: string
 
   constructor(directory?: string)
   constructor(options?: SaveOptions)
   constructor(directory: string, options?: SaveOptions)
   constructor(first?: string | SaveOptions, extra?: SaveOptions) {
+    super(typeof first === 'string' ? extra : first)
+
     // Destructure our arguments
-    const { directory, options = {} } =
+    const { directory, options } =
         typeof first === 'string' ? { directory: first, options: extra } :
             first ? { directory: undefined, options: first } :
-                { directory: undefined }
+                { directory: undefined, options: undefined }
 
-    // Directory is quite easy...
+    // Let's build us up
+    this.#encoding = options?.encoding || 'utf8'
     this.#directory = directory
-
-    // Other options with defaults...
-    const {
-      sourceMaps = 'inline',
-      sourceRoot = undefined,
-      combineSourceMaps = true,
-      attachSources = false,
-      encoding = 'utf8',
-    } = options
-
-    // Setup what we need
-    this.#encoding = encoding
-    this.#sourceMaps = sourceMaps
-    this.#sourceRoot = sourceRoot
-    this.#sourceMapOptions = { attachSources, combineSourceMaps: combineSourceMaps }
   }
 
   /** The function used for writing files (mainly for testing) */
@@ -97,18 +51,8 @@ export class SavePlug implements Plug {
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
-    const output = new Files(run)
-
-    for (const file of input) {
-      if (this.#sourceMaps) {
-        const fileSourceMap = await file.sourceMap()
-        const sourceMap = fileSourceMap?.produceSourceMap(this.#sourceMapOptions)
-        void sourceMap
-      }
-    }
-
-    log.debug('Written a total of', output.length)
-    return output
+    void log
+    return input
   }
 }
 
