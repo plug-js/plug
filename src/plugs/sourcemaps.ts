@@ -135,7 +135,7 @@ export class SourceMapsPlug implements Plug {
       let contents = await file.contents()
 
       // if we have a URL to our sourcemap we'll add it to the content
-      if (url) contents += `\n//# sourceMappingURL=${url}`
+      if (url) contents += `\n//# ${'sourceMappingURL'}=${url}`
 
       // add our file with the modified source map
       output.add(file.absolutePath, {
