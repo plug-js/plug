@@ -5,4 +5,4 @@ import sourceMapSupport from 'source-map-support'
 chai.use(chaiAsPromised)
 sourceMapSupport.install({ hookRequire: true })
 
-// process.env.LOG_LEVEL = 'debug'
+// process.env.LOG_LEVEL = 'trace'
