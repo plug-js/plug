@@ -93,21 +93,21 @@ export function getCanonicalPath(name: FilePath): CanonicalPath {
   return (caseSensitivePaths() ? name : name.toLowerCase()) as CanonicalPath
 }
 
-/** Checks whether the specified path is a child of the given directory or not */
-export function isChild(directory: DirectoryPath, path: FilePath): boolean
-/** Checks whether the specified path is a child of the given directory or not */
-export function isChild(directory: DirectoryPath, path: DirectoryPath): boolean
+/** Checks whether the specified file is a child of the given base directory or not */
+export function isChild(base: DirectoryPath, path: FilePath): boolean
+/** Checks whether the specified directory is a child of the given base directory or not */
+export function isChild(base: DirectoryPath, path: DirectoryPath): boolean
 // overloaded methods implementation
-export function isChild(directory: DirectoryPath, path: string): boolean {
-  const resolved = resolve(directory, path)
-  const relative = relativePath(directory, resolved)
+export function isChild(base: DirectoryPath, path: string): boolean {
+  const resolved = resolve(base, path)
+  const relative = relativePath(base, resolved)
   return !! (relative && (! relative.startsWith('..' + sep)))
 }
 
-/** Checks whether the specified path is a child or same of the given directory or not */
-export function isChildOrSame(directory: DirectoryPath, path: DirectoryPath): boolean {
-  const resolved = resolve(directory, path)
-  const relative = relativePath(directory, resolved)
+/** Checks whether the specified directory is a child or same of the given base directory or not */
+export function isChildOrSame(base: DirectoryPath, path: DirectoryPath): boolean {
+  const resolved = resolve(base, path)
+  const relative = relativePath(base, resolved)
   return relative ? (! relative.startsWith('..' + sep)) : true
 }
 
