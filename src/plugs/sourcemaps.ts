@@ -17,11 +17,11 @@ declare module '../pipe' {
 export interface SourceMapsOptions {
   /**
    * How to write source maps, whether they need to be `inline`, saved as an
-   * external file (`true`), or not generated at all (`false`)
+   * external file (`external`), or stripped entirely (`none`)
    *
    * @default 'inline'
    */
-  sourceMaps?: 'inline' | boolean
+  sourceMaps?: 'inline' | 'external' | 'none'
 
   /**
    * The `sourceRoot` to inject in source maps
@@ -49,7 +49,7 @@ export interface SourceMapsOptions {
 // The sourcemap URL clearly states that "version" must come first, so we take
 // no chances here when encoding our source map... call me paranoid...
 // https://sourcemaps.info/spec.html
-function encodeSourceMap(sourceMap: RawSourceMap, base64: boolean): string {
+function encodeSourceMap(sourceMap: RawSourceMap): string {
   // Version always comes first
   const array = [ `{"version":${JSON.stringify(sourceMap.version || 3)}` ]
   // Spec says "name" is optional
@@ -68,14 +68,13 @@ function encodeSourceMap(sourceMap: RawSourceMap, base64: boolean): string {
   array.push('}')
 
   // Encode the string... Data URIs use plain base64 (not URL-encoded)
-  const encoded = array.join('')
-  return base64 ? Buffer.from(encoded, 'utf8').toString('base64') : encoded
+  return array.join('')
 }
 
 export class SourceMapsPlug implements Plug {
-  // #encoding: BufferEncoding
+  protected readonly sourceMaps: 'inline' | 'external' | undefined
+
   #sourceMapOptions: SourceMapOptions
-  #sourceMaps: 'inline' | boolean
   #sourceRoot?: string
 
   constructor(options: SourceMapsOptions = {}) {
@@ -88,7 +87,7 @@ export class SourceMapsPlug implements Plug {
     } = options
 
     // Setup what we need
-    this.#sourceMaps = sourceMaps
+    this.sourceMaps = sourceMaps === 'none' ? undefined : sourceMaps
     this.#sourceRoot = sourceRoot
     this.#sourceMapOptions = { attachSources, combineSourceMaps: combineSourceMaps }
   }
@@ -100,29 +99,45 @@ export class SourceMapsPlug implements Plug {
     for (const file of input) {
       const fileSourceMap = await file.sourceMap()
 
-      let sourceMap
-      if (this.#sourceMaps) { // either "inline" or true
-        sourceMap = await fileSourceMap?.produceSourceMap(this.#sourceMapOptions)
+      let url // this will be the url to inject in the content, if any
+      if (this.sourceMaps && fileSourceMap) {
+        // produce the _real_ sourcemap, combining, attaching, ...
+        const sourceMap = await fileSourceMap.produceSourceMap(this.#sourceMapOptions)
+        const encodedSourceMap = encodeSourceMap(sourceMap) // JSON!
+
+        // attach any "sourceRoot" info to the real source map
+        if (this.#sourceRoot) sourceMap.sourceRoot = this.#sourceRoot
+
+        // if we need to inline the source map, we need to encode the JSON
+        if (this.sourceMaps === 'inline') {
+          log.trace(`Inlining source map to "${file.absolutePath}`)
+
+          // the spec says that data URIs use plain "base64", not "base64url"
+          const base64 = Buffer.from(encodedSourceMap, 'utf8').toString('base64')
+          url = `data:application/json;base64,${base64}`
+
+        // if we need to write an external source map, then we add a file...
+        } else if (this.sourceMaps === 'external') {
+          log.trace(`Adding external source map to "${file.absolutePath}`)
+
+          // add the file as "file.ext.map"
+          const path = file.absolutePath + '.map'
+          url = basename(path)
+          output.add(path, {
+            contents: encodedSourceMap, // the JSON
+            originalPath: file.absolutePath, // derived from our file
+            sourceMap: false, // definitely there is no sourcemap here
+          })
+        }
       }
 
-      let url
-      if (sourceMap && this.#sourceMaps === 'inline') {
-        log.trace(`Inlining source map to "${file.absolutePath}`)
-        url = `data:application/json;base64,${encodeSourceMap(sourceMap, true)}`
-      } else if (sourceMap && this.#sourceMaps) {
-        log.trace(`Adding external source map to "${file.absolutePath}`)
-        const path = file.absolutePath + '.map'
-        url = basename(path)
-        const contents = encodeSourceMap(sourceMap, false)
-        output.add(path, {
-          contents,
-          sourceMap: false,
-          originalPath: file.absolutePath,
-        })
-      }
-
+      // reading contents will strip the original source map (if any)
       let contents = await file.contents()
+
+      // if we have a URL to our sourcemap we'll add it to the content
       if (url) contents += `\n//# sourceMappingURL=${url}`
+
+      // add our file with the modified source map
       output.add(file.absolutePath, {
         contents,
         sourceMap: fileSourceMap || false,
