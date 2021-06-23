@@ -148,11 +148,8 @@ export class Files implements Files {
 
     // Create a new file
     let newFile: File
-    if (options && options.originalPath) {
-      const originalPath = options.originalPath
-      newFile = new FileImpl(this, absolutePath, { ...options, originalPath })
-    } else if (options) {
-      newFile = new FileImpl(this, absolutePath, { ...options, originalPath: undefined })
+    if (options) {
+      newFile = new FileImpl(this, absolutePath, options)
     } else if (file) {
       newFile = new FileWrapper(this, file, absolutePath)
     } else {
