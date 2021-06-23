@@ -1,12 +1,12 @@
-import type { CanonicalPath, RelativeFilePath } from '../utils/paths'
-import type { CompilerHost, CompilerOptions, FormatDiagnosticsHost, ScriptTarget, SourceFile } from 'typescript'
-import type { Files } from '../files'
-
 import { EOL } from 'os'
 import { ScriptKind, createSourceFile, getDefaultLibFilePath } from 'typescript'
-import { caseSensitivePaths, getCanonicalPath, resolvePath } from '../utils/paths'
+import { caseSensitivePaths, createFilePath, getCanonicalPath } from '../utils/paths'
 import { createHash } from 'crypto'
 import { extname } from 'path'
+
+import type { CanonicalPath } from '../utils/paths'
+import type { CompilerHost, CompilerOptions, FormatDiagnosticsHost, ScriptTarget, SourceFile } from 'typescript'
+import type { Files } from '../files'
 
 /* ========================================================================== *
  * CACHING - works out of the SHA256 of the contents of a file an it's shared *
@@ -122,7 +122,7 @@ export class TypeScriptHost implements CompilerHost, FormatDiagnosticsHost {
 
   /** [TS] Return the canonical name for the specified file */
   getCanonicalFileName(fileName: string): string {
-    const path = resolvePath(this.#files.directory, fileName as RelativeFilePath)
+    const path = createFilePath(this.#files.directory, fileName)
     return getCanonicalPath(path)
   }
 

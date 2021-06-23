@@ -1,17 +1,16 @@
-import type { CompilerOptions } from 'typescript'
-import type { Log } from '../utils/log'
-import type { Plug } from '../pipe'
-import type { RelativeDirectoryPath } from '../utils/paths'
-import type { Run } from '../run'
-
 import { Files } from '../files'
 import { TypeScriptHost } from '../typescript/host'
 import { checkDiagnostics } from '../typescript/diagnostic'
 import { createProgram, getPreEmitDiagnostics } from 'typescript'
 import { extname } from 'path'
 import { getCompilerOptions } from '../typescript/options'
-import { getRelativePath, isChild, resolvePath } from '../utils/paths'
+import { createDirectoryPath, createFilePath, getRelativePath, isChild } from '../utils/paths'
 import { install } from '../pipe'
+
+import type { CompilerOptions } from 'typescript'
+import type { Log } from '../utils/log'
+import type { Plug } from '../pipe'
+import type { Run } from '../run'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -81,8 +80,8 @@ export class CompilePlug implements Plug {
     options.mapRoot = undefined
 
     // Make sure we _always_ have both `rootDir` and `outDir`...
-    const rootDir = resolvePath(input.directory, options.rootDir as RelativeDirectoryPath)
-    const outDir = resolvePath(input.directory, options.outDir as RelativeDirectoryPath)
+    const rootDir = createDirectoryPath(input.directory, options.rootDir)
+    const outDir = createDirectoryPath(input.directory, options.outDir)
     options.rootDir = rootDir
     options.outDir = outDir
 
@@ -97,7 +96,7 @@ export class CompilePlug implements Plug {
       // re-creating the same structure into "outDir"
       if (options.passThrough && isChild(rootDir, file.absolutePath)) {
         const relative = getRelativePath(rootDir, file.absolutePath)
-        const resolved = resolvePath(outDir, relative)
+        const resolved = createFilePath(outDir, relative)
         output.add(resolved, file)
       }
     }).filter((path) => path) as string[]

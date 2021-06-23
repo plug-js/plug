@@ -3,15 +3,15 @@ import { Failure } from '../src/failure'
 import { Project } from '../src/project'
 import { disableLogs } from './support'
 import { expect } from 'chai'
-import { DirectoryPath, FilePath, RelativeFilePath, resolvePath } from '../src/utils/paths'
+import { createFilePath, DirectoryPath, FilePath } from '../src/utils/paths'
 
 describe('Project', () => {
   disableLogs()
 
   it('should create a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file1 = resolvePath(dir, 'build.ts' as RelativeFilePath)
-    const file2 = resolvePath(dir, 'bar/build.ts' as RelativeFilePath)
+    const file1 = createFilePath(dir, 'build.ts')
+    const file2 = createFilePath(dir, 'bar/build.ts')
 
     const project1 = new Project({}, file1)
     expect(project1.directory).to.equal('/foo')
@@ -28,7 +28,7 @@ describe('Project', () => {
 
   it('should register and return a task name', async () => {
     const dir = '/foo' as DirectoryPath
-    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
+    const file = createFilePath(dir, 'build.ts')
 
     const task0: any = { run: () => 0 }
     const task1: any = { run: () => 1, description: 'First task' }
@@ -70,7 +70,7 @@ describe('Project', () => {
 
   it('should cleanup what it can reading a project', () => {
     const dir = '/foo' as DirectoryPath
-    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
+    const file = createFilePath(dir, 'build.ts')
     const task = { run: () => {} }
 
     const project = new Project({
@@ -86,7 +86,7 @@ describe('Project', () => {
 
   it('should not create a project with silly input', () => {
     const dir = '/foo' as DirectoryPath
-    const file = resolvePath(dir, 'build.ts' as RelativeFilePath)
+    const file = createFilePath(dir, 'build.ts')
 
     expect(() => new Project(null as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
     expect(() => new Project('xx' as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')

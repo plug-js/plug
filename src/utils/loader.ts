@@ -1,10 +1,11 @@
-import type { DirectoryPath, FilePath, RelativeDirectoryPath } from './paths'
-
 import Module from 'module'
 import sourceMapSupport from 'source-map-support'
 
-import { getParent, resolvePath } from './paths'
+import { createDirectoryPath, getParent } from './paths'
 import { dirname, isAbsolute, resolve, sep } from 'path'
+
+import type { DirectoryPath, FilePath } from './paths'
+
 
 // Install support for source maps. Here "hookRequire" will instrument the
 // "Module._compile" function which will receive our source code (which should
@@ -51,10 +52,10 @@ function createCircularWarningEmitter(file: string, from: string): object {
 const _loader = cjs._load
 
 function findPaths(file: FilePath): DirectoryPath[] {
-  function walk(dir: DirectoryPath, paths: DirectoryPath[] = []): DirectoryPath[] {
-    paths.push(resolvePath(dir, 'node_modules' as RelativeDirectoryPath))
-    const parent = getParent(dir)
-    return parent === dir ? paths : walk(parent, paths)
+  function walk(directory: DirectoryPath, paths: DirectoryPath[] = []): DirectoryPath[] {
+    paths.push(createDirectoryPath(directory, 'node_modules'))
+    const parent = getParent(directory)
+    return parent === directory ? paths : walk(parent, paths)
   }
   return walk(getParent(file))
 }

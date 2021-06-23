@@ -1,24 +1,15 @@
+import assert from 'assert'
 import { existsSync } from 'fs'
-import { dirname, relative, resolve, sep } from 'path'
+import { dirname, isAbsolute, relative, resolve, sep } from 'path'
 
 /** An absolute file path always starts from "/" */
 export type FilePath = string & {
   __brand_absolute_path: any
 }
 
-/** A path to a file relative to another file */
-export type RelativeFilePath = string & {
-  __brand_relative_file_path: any
-}
-
 /** An absolute path for a directory */
 export type DirectoryPath = string & {
   __brand_directory_path: any
-}
-
-/** A path to a file relative to another file */
-export type RelativeDirectoryPath = string & {
-  __brand_relative_directory_path: any
 }
 
 /** The absolute path canonicalized depending con case sensitivity */
@@ -66,55 +57,32 @@ export const caseSensitivePaths: () => boolean = (() => {
 })()
 
 /** Create a `FilePath` by resolving all of its path components */
-export function createFilePath(...paths: string[]): FilePath {
-  return resolve(sep, ...paths) as FilePath
+export function createFilePath(root: DirectoryPath, path: string, ...paths: string[]): FilePath {
+  assert(isAbsolute(root), `Not an absolute path: ${root}`)
+  return resolve(root, path, ...paths) as FilePath
 }
 
 /** Create a `FilePath` by resolving all of its path components */
-export function createDirectoryPath(...paths: string[]): DirectoryPath {
-  return resolve(sep, ...paths) as DirectoryPath
-}
-
-/** Resolve the specified path starting from the specified directory */
-export function resolvePath(directory: DirectoryPath, path: FilePath): FilePath
-/** Resolve the specified path starting from the specified directory */
-export function resolvePath(directory: DirectoryPath, path: RelativeFilePath): FilePath
-/** Resolve the specified path starting from the specified directory */
-export function resolvePath(directory: DirectoryPath, path?: DirectoryPath): DirectoryPath
-/** Resolve the specified path starting from the specified directory */
-export function resolvePath(directory: DirectoryPath, path?: RelativeDirectoryPath): DirectoryPath
-// overloaded methods implementation
-export function resolvePath(directory: DirectoryPath, path?: string): string {
-  return path ? resolve(directory, path) as DirectoryPath : directory
-}
-
-/** Resolve the specified path starting from the parent directory of the specified file */
-export function resolveFilePath(from: FilePath, path: FilePath): FilePath
-/** Resolve the specified path starting from the parent directory of the specified file */
-export function resolveFilePath(from: FilePath, path: RelativeFilePath): FilePath
-/** Resolve the specified path starting from the parent directory of the specified file */
-export function resolveFilePath(from: FilePath, path?: DirectoryPath): DirectoryPath
-/** Resolve the specified path starting from the parent directory of the specified file */
-export function resolveFilePath(from: FilePath, path?: RelativeDirectoryPath): DirectoryPath
-// overloaded methods implementation
-export function resolveFilePath(from: FilePath, path?: string): string {
-  const directory = dirname(from) as DirectoryPath
-  return path ? resolve(directory, path) as DirectoryPath : directory
+export function createDirectoryPath(root: DirectoryPath, path?: string): DirectoryPath
+export function createDirectoryPath(root: DirectoryPath, path: string, ...paths: string[]): DirectoryPath
+export function createDirectoryPath(root: DirectoryPath, path?: string | undefined, ...paths: string[]): DirectoryPath {
+  assert(isAbsolute(root), `Not an absolute path: ${root}`)
+  return path ? resolve(root, path, ...paths) as DirectoryPath : root
 }
 
 /** Return the relative path from a directory to a file */
-export function getRelativePath(directory: DirectoryPath, path: FilePath): RelativeFilePath
+export function getRelativePath(directory: DirectoryPath, path: FilePath): string
 /** Return the relative path from a directory to a directory */
-export function getRelativePath(directory: DirectoryPath, path: DirectoryPath): RelativeDirectoryPath
+export function getRelativePath(directory: DirectoryPath, path: DirectoryPath): string
 // overloaded methods implementation
 export function getRelativePath(directory: DirectoryPath, path: string): string {
   return relativePath(directory, path)
 }
 
 /** Return the relative path from a file to another file */
-export function getRelativeFilePath(from: FilePath, path: FilePath): RelativeFilePath
+export function getRelativeFilePath(from: FilePath, path: FilePath): string
 /** Return the relative path from a file to a directory */
-export function getRelativeFilePath(from: FilePath, path: DirectoryPath): RelativeDirectoryPath
+export function getRelativeFilePath(from: FilePath, path: DirectoryPath): string
 // overloaded methods implementation
 export function getRelativeFilePath(from: FilePath, path: string): string {
   return relativePath(dirname(from), path)
@@ -128,16 +96,19 @@ export function getCanonicalPath(name: FilePath): CanonicalPath {
 /** Checks whether the specified path is a child of the given directory or not */
 export function isChild(directory: DirectoryPath, path: FilePath): boolean
 /** Checks whether the specified path is a child of the given directory or not */
-export function isChild(directory: DirectoryPath, path: RelativeFilePath): boolean
-/** Checks whether the specified path is a child of the given directory or not */
 export function isChild(directory: DirectoryPath, path: DirectoryPath): boolean
-/** Checks whether the specified path is a child of the given directory or not */
-export function isChild(directory: DirectoryPath, path: RelativeDirectoryPath): boolean
 // overloaded methods implementation
 export function isChild(directory: DirectoryPath, path: string): boolean {
   const resolved = resolve(directory, path)
   const relative = relativePath(directory, resolved)
   return !! (relative && (! relative.startsWith('..' + sep)))
+}
+
+/** Checks whether the specified path is a child or same of the given directory or not */
+export function isChildOrSame(directory: DirectoryPath, path: DirectoryPath): boolean {
+  const resolved = resolve(directory, path)
+  const relative = relativePath(directory, resolved)
+  return relative ? (! relative.startsWith('..' + sep)) : true
 }
 
 /** Get the directory path for the specified absolute path */

@@ -4,7 +4,7 @@ import { basename } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
 import { tmpdir } from 'os'
-import { DirectoryPath, createFilePath, getParent } from '../src/utils/paths'
+import { DirectoryPath, createFilePath, getParent, FilePath } from '../src/utils/paths'
 import { File, Files } from '../src/files'
 import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
 import { FileSourceMap } from '../src/source-maps'
@@ -23,10 +23,10 @@ describe('Files', () => {
     expect(() => new FileImpl(files, createFilePath(dir, 'this does not exist')))
         .to.throw(Error, `File "${__dirname}/this does not exist" not found`)
 
-    expect(() => new FileImpl(files, createFilePath(dir)))
+    expect(() => new FileImpl(files, __dirname as FilePath))
         .to.throw(Error, `File "${__dirname}" is not a file`)
 
-    expect(new FileImpl(files, createFilePath(__filename))).to.be.instanceof(FileImpl)
+    expect(new FileImpl(files, __filename as FilePath)).to.be.instanceof(FileImpl)
   })
 
   describe('Asynchronous Virtual File Access', () => {

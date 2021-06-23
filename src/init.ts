@@ -1,11 +1,11 @@
-import type { DirectoryPath, RelativeDirectoryPath } from './utils/paths'
-import type { GlobOptions } from './utils/globs'
-import type { Run } from './run'
-
 import { Files } from './files'
 import { PlugPipe, TaskPipe } from './pipe'
 import { glob } from './utils/globs'
-import { resolvePath } from './utils/paths'
+import { createDirectoryPath } from './utils/paths'
+
+import type { DirectoryPath } from './utils/paths'
+import type { GlobOptions } from './utils/globs'
+import type { Run } from './run'
 
 // At least one glob, and optional options at the end
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
@@ -46,7 +46,7 @@ export function read(...args: ReadArguments): TaskPipe {
 export function from(path: string): { read: typeof read } {
   return { read: (...args: ReadArguments) =>
     new TaskPipe({ run: (run) => {
-      const directory = resolvePath(run.project.directory, path as RelativeDirectoryPath)
+      const directory = createDirectoryPath(run.project.directory, path)
       return readDirectory(run, directory, ...args)
     } }),
   }

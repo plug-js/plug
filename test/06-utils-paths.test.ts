@@ -1,9 +1,8 @@
+import { AssertionError } from 'assert'
 import { expect } from 'chai'
 import {
   DirectoryPath,
   FilePath,
-  RelativeDirectoryPath,
-  RelativeFilePath,
   caseSensitivePaths,
   createDirectoryPath,
   createFilePath,
@@ -12,8 +11,7 @@ import {
   getRelativeFilePath,
   getRelativePath,
   isChild,
-  resolveFilePath,
-  resolvePath,
+  isChildOrSame,
 } from '../src/utils/paths'
 
 describe('Paths', () => {
@@ -23,38 +21,16 @@ describe('Paths', () => {
   const l_file = '/foo/bar/baz.txt' as FilePath
 
   it('should create paths', () => {
-    expect(createFilePath('foo', 'bar', 'baz')).to.equal('/foo/bar/baz')
-    expect(createFilePath('foo', 'bar', '/baz')).to.equal('/baz')
-    expect(createDirectoryPath('foo', 'bar', 'baz')).to.equal('/foo/bar/baz')
-    expect(createDirectoryPath('foo', 'bar', '/baz')).to.equal('/baz')
-  })
+    const dir = '/foo' as DirectoryPath
+    expect(createFilePath(dir, 'bar', 'baz')).to.equal('/foo/bar/baz')
+    expect(createFilePath(dir, 'bar', '/baz')).to.equal('/baz')
+    expect(createDirectoryPath(dir, 'bar', 'baz')).to.equal('/foo/bar/baz')
+    expect(createDirectoryPath(dir, 'bar', '/baz')).to.equal('/baz')
 
-  it('should resolve a path', () => {
-    expect(resolvePath(x_dir)).to.equal('/Foo/Bar')
-    expect(resolvePath(x_dir, '.' as RelativeDirectoryPath)).to.equal('/Foo/Bar')
-    expect(resolvePath(x_dir, 'Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(resolvePath(x_dir, './Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(resolvePath(x_dir, '../Baz' as RelativeDirectoryPath)).to.equal('/Foo/Baz')
-    expect(resolvePath(x_dir, '/Foo/Bar/Baz' as DirectoryPath)).to.equal('/Foo/Bar/Baz')
-
-    expect(resolvePath(x_dir, 'Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Bar/Baz.Txt')
-    expect(resolvePath(x_dir, './Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Bar/Baz.Txt')
-    expect(resolvePath(x_dir, '../Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Baz.Txt')
-    expect(resolvePath(x_dir, x_file)).to.equal(x_file)
-  })
-
-  it('should resolve a path', () => {
-    expect(resolveFilePath(x_file)).to.equal('/Foo/Bar')
-    expect(resolveFilePath(x_file, '.' as RelativeDirectoryPath)).to.equal('/Foo/Bar')
-    expect(resolveFilePath(x_file, 'Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(resolveFilePath(x_file, './Baz' as RelativeDirectoryPath)).to.equal('/Foo/Bar/Baz')
-    expect(resolveFilePath(x_file, '../Baz' as RelativeDirectoryPath)).to.equal('/Foo/Baz')
-    expect(resolveFilePath(x_file, '/Foo/Bar/Baz' as DirectoryPath)).to.equal('/Foo/Bar/Baz')
-
-    expect(resolveFilePath(x_file, 'Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Bar/Baz.Txt')
-    expect(resolveFilePath(x_file, './Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Bar/Baz.Txt')
-    expect(resolveFilePath(x_file, '../Baz.Txt' as RelativeFilePath)).to.equal('/Foo/Baz.Txt')
-    expect(resolveFilePath(x_file, x_file)).to.equal(x_file)
+    expect(() => createFilePath('foo' as DirectoryPath, 'bar', 'baz'))
+        .to.throw(AssertionError, 'Not an absolute path: foo')
+    expect(() => createDirectoryPath('foo' as DirectoryPath, 'bar', 'baz'))
+        .to.throw(AssertionError, 'Not an absolute path: foo')
   })
 
   it('should get a directory for a file', () => {
@@ -126,7 +102,7 @@ describe('Paths', () => {
     }
   })
 
-  it('should determine if an absolute path is child of a directory', () => {
+  it('should determine if a path is child of a directory', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
       expect(isChild(x_dir, x_file)).to.be.true
@@ -139,6 +115,24 @@ describe('Paths', () => {
       expect(isChild(x_dir, l_file)).to.be.true
       expect(isChild(x_dir, u_file)).to.be.true
       expect(isChild(x_dir, x_dir)).to.be.false
+    } finally {
+      delete (<any> globalThis).caseSensitivePaths
+    }
+  })
+
+  it('should determine if a directory is child or same of a directory', () => {
+    try {
+      (<any> globalThis).caseSensitivePaths = true
+      expect(isChildOrSame(x_dir, x_file as any)).to.be.true
+      expect(isChildOrSame(x_dir, l_file as any)).to.be.false
+      expect(isChildOrSame(x_dir, u_file as any)).to.be.false
+      expect(isChildOrSame(x_dir, x_dir)).to.be.true
+
+      ;(<any> globalThis).caseSensitivePaths = false
+      expect(isChildOrSame(x_dir, x_file as any)).to.be.true
+      expect(isChildOrSame(x_dir, l_file as any)).to.be.true
+      expect(isChildOrSame(x_dir, u_file as any)).to.be.true
+      expect(isChildOrSame(x_dir, x_dir)).to.be.true
     } finally {
       delete (<any> globalThis).caseSensitivePaths
     }

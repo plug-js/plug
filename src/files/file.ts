@@ -1,6 +1,6 @@
 import type { FileSourceMap } from '../source-maps'
 import type { Files } from './files'
-import type { CanonicalPath, FilePath, RelativeFilePath } from '../utils/paths'
+import type { CanonicalPath, FilePath } from '../utils/paths'
 
 import { getCanonicalPath, getRelativePath } from '../utils/paths'
 
@@ -12,7 +12,7 @@ export abstract class File {
   /** The _original_ path of this `File` from where this was generated from */
   readonly originalPath!: FilePath
   /** The path of this `File` relative to its `Files`'s `directory` */
-  readonly relativePath!: RelativeFilePath
+  readonly relativePath!: string
   /** The _canonical_ path of this `File` (dependant on filesystem case sensitivity) */
   readonly canonicalPath!: CanonicalPath
 

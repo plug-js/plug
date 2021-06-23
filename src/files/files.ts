@@ -1,14 +1,14 @@
 import assert from 'assert'
 
-import type { CanonicalPath, DirectoryPath, RelativeFilePath } from '../utils/paths'
-import type { FileOptions } from './index'
-import type { Project } from '../project'
-import type { Run } from '../run'
-
 import { File } from './file'
 import { FileImpl } from './impl'
 import { FileWrapper } from './wrapper'
-import { getCanonicalPath, isChild, resolvePath } from '../utils/paths'
+import { createFilePath, getCanonicalPath, isChild } from '../utils/paths'
+
+import type { CanonicalPath, DirectoryPath } from '../utils/paths'
+import type { FileOptions } from './index'
+import type { Project } from '../project'
+import type { Run } from '../run'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -50,7 +50,7 @@ export class Files {
 
   /** Return a `File` associated with this `Files` list */
   get(path: string): File | undefined {
-    const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
+    const absolutePath = createFilePath(this.directory, path)
     const canonicalPath = getCanonicalPath(absolutePath)
 
     const cached = this.#cache.get(canonicalPath)
@@ -97,8 +97,8 @@ export class Files {
     // Compute the target absolute path, this is either from the path specified
     // as an argument, or from the _relative_ path of the original file...
     const absolutePath =
-        path ? resolvePath(this.directory, path as RelativeFilePath) :
-        file ? resolvePath(this.directory, file.relativePath) :
+        path ? createFilePath(this.directory, path) :
+        file ? createFilePath(this.directory, file.relativePath) :
         undefined
     assert(absolutePath, 'No path for file to be added')
     assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)
@@ -181,7 +181,7 @@ export class Files {
 
   /** Checks whether this `Files` instance was added the given path */
   has(path: string): boolean {
-    const absolutePath = resolvePath(this.directory, path as RelativeFilePath)
+    const absolutePath = createFilePath(this.directory, path)
     const canonicalPath = getCanonicalPath(absolutePath)
     return this.#files.has(canonicalPath)
   }

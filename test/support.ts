@@ -6,10 +6,11 @@ import { Run } from '../src/run'
 import { Task } from '../src/task'
 import { dirname } from 'path'
 import { existsSync } from 'fs'
-import { resolve } from 'path'
+import { resolve, isAbsolute } from 'path'
 
 import { DirectoryPath, createFilePath } from '../src/utils/paths'
 import { PlugLog, RunLog, options } from '../src/utils/log'
+import assert from 'assert'
 
 function findDirectory(directory: string): string {
   if (existsSync(resolve(directory, 'package.json'))) return directory
@@ -48,7 +49,8 @@ export function mock(
     name: string = 'task',
     ...names: string[]
 ): MockProject {
-  const build = createFilePath(directory, 'build.ts')
+  assert(isAbsolute(directory), 'Not mocking a relative directory')
+  const build = createFilePath(directory as DirectoryPath, 'build.ts')
 
   const tasks: Record<string, Task> = {}
   for (const t of [ name, ...names ]) tasks[t] = { run: () => new Files(run) }

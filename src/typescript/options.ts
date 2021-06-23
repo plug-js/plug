@@ -1,9 +1,9 @@
 import type { CompilerOptions, Diagnostic } from 'typescript'
 import type { Files } from '../files'
 
-import { FilePath, RelativeDirectoryPath, RelativeFilePath } from '../utils/paths'
+import { createDirectoryPath, createFilePath, FilePath } from '../utils/paths'
 import { convertCompilerOptionsFromJson, DiagnosticCategory, getDefaultCompilerOptions, readConfigFile } from 'typescript'
-import { getParent, getRelativePath, resolveFilePath, resolvePath } from '../utils/paths'
+import { getParent, getRelativePath } from '../utils/paths'
 
 type CompilerOptionsAndDiagnostics = {
   options: CompilerOptions,
@@ -28,7 +28,7 @@ function loadOptions(
   const {
     config: {
       compilerOptions = {} as object, // not yet a "compilerOptions"
-      extends: extendsPath = undefined as string | undefined,
+      extends: extendsPath,
     } = {},
     error,
   } = readConfigFile(file, readFile)
@@ -46,7 +46,8 @@ function loadOptions(
   if (!extendsPath) return options
 
   // Check for circular extension errors
-  const extendedPath = resolveFilePath(file, extendsPath)
+  const directory = getParent(file)
+  const extendedPath = createFilePath(directory, extendsPath)
   if (resolutionStack.indexOf(extendedPath) >= 0) {
     const directory = files.directory
     const relativePath = getRelativePath(directory, extendedPath)
@@ -81,7 +82,7 @@ export function getCompilerOptions(
   // If there's no file, we load either "tsconfig.json" or the defaults
   let path
   if (fileName) {
-    path = resolvePath(files.directory, fileName as RelativeFilePath)
+    path = createFilePath(files.directory, fileName)
   } else {
     path = files.get('tsconfig.json')?.absolutePath
   }
@@ -100,11 +101,11 @@ export function getCompilerOptions(
   if (diagnostics.length) return { options: {}, diagnostics }
 
   // If we have some overrides with path, we must rewrite them
-  if (overrides.outDir) overrides.outDir = resolvePath(files.directory, overrides.outDir as RelativeDirectoryPath)
-  if (overrides.outFile) overrides.outFile = resolvePath(files.directory, overrides.outFile as RelativeFilePath)
-  if (overrides.rootDir) overrides.rootDir = resolvePath(files.directory, overrides.rootDir as RelativeDirectoryPath)
-  if (overrides.declarationDir) overrides.declarationDir = resolvePath(files.directory, overrides.declarationDir as RelativeDirectoryPath)
-  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => resolvePath(files.directory, d as RelativeDirectoryPath))
+  if (overrides.outDir) overrides.outDir = createDirectoryPath(files.directory, overrides.outDir)
+  if (overrides.outFile) overrides.outFile = createFilePath(files.directory, overrides.outFile)
+  if (overrides.rootDir) overrides.rootDir = createDirectoryPath(files.directory, overrides.rootDir)
+  if (overrides.declarationDir) overrides.declarationDir = createDirectoryPath(files.directory, overrides.declarationDir)
+  if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => createDirectoryPath(files.directory, d))
 
   // No issues, let's create our options...
   const options = Object.assign(defaults, loaded, overrides)

@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import fastGlob from 'fast-glob'
 import { load } from '../src/project'
 
-import { RelativeDirectoryPath, RelativeFilePath, getParent, resolvePath } from '../src/utils/paths'
+import { getParent, createFilePath, createDirectoryPath } from '../src/utils/paths'
 
 describe('Project Loading', function() {
   // compiling takes time...
@@ -12,7 +12,7 @@ describe('Project Loading', function() {
   this.slow(2000)
 
   it('should load a project', async () => {
-    const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
+    const file = createFilePath(directory, 'build.ts')
     const project = await load(file)
 
     expect(project.directory).to.equal(directory)
@@ -33,8 +33,8 @@ describe('Project Loading', function() {
   })
 
   it('should not load a project outside of its directory', async () => {
-    const file = resolvePath(directory, 'build.ts' as RelativeFilePath)
-    await expect(load(file, resolvePath(getParent(file), 'foo' as RelativeDirectoryPath)))
+    const file = createFilePath(directory, 'build.ts')
+    await expect(load(file, createDirectoryPath(getParent(file), 'foo')))
         .to.be.rejectedWith(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
   })
 })
