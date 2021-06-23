@@ -1,13 +1,15 @@
-import { Failure } from './failure'
-import { Files } from './files'
-import { Run } from './run'
+import type { DirectoryPath, FilePath } from './utils/paths'
+import type { Files } from './files'
+import type { Task, TaskCall } from './task'
+
 import assert from 'assert'
+
+import { Failure } from './failure'
+import { Run } from './run'
+import { getParent, isChild } from './utils/paths'
 import { isAbsolute } from 'path'
 import { loadBuildFile } from './typescript/loader'
 import { log } from './utils/log'
-
-import { DirectoryPath, FilePath, getParent, isChild } from './utils/paths'
-import { Task, TaskCall } from './task'
 
 // Never start with a non-absolute file / directory
 function checkPaths(file: FilePath, directory = getParent(file)): DirectoryPath {

@@ -1,11 +1,11 @@
 import type { Files } from './files'
+import type { Log, PlugLog, RunLog } from './utils/log'
 import type { Plug } from './pipe'
-import { Project } from './project'
 import type { Task } from './task'
+
+import { Project } from './project'
 import { makeLog } from './utils/log'
 import { randomBytes } from 'crypto'
-
-import type { Log, PlugLog, RunLog } from './utils/log'
 
 /**
  * The `Run` class describes a contract beteween `Plug`s and `Processor`s
