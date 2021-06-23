@@ -2,7 +2,7 @@ import { EOL } from 'os'
 import { ReportFailure } from '../src/failure'
 import { expect } from 'chai'
 import { Diagnostic, DiagnosticCategory, FormatDiagnosticsHost } from 'typescript'
-import { TypeScriptFailure, hasErrors, hasWarnings } from '../src/typescript/diagnostic'
+import { TypeScriptFailure, checkDiagnostics, hasErrors, hasWarnings } from '../src/typescript/diagnostic'
 
 describe('TypeScript Diagnostics', () => {
   const error = {
@@ -62,5 +62,17 @@ describe('TypeScript Diagnostics', () => {
 
     expect(failure2.report(false)).to.eql('')
     expect(failure2.report(true)).to.eql('')
+  })
+
+  it('should throw when checking diagnostics', () => {
+    const host = {
+      getCurrentDirectory: (): string => process.cwd(),
+      getCanonicalFileName: (f): string => f,
+      getNewLine: (): string => EOL,
+    } as FormatDiagnosticsHost
+
+    expect(() => checkDiagnostics([], host, 'A TypeScript failure')).not.to.throw()
+    expect(() => checkDiagnostics([ error ], host, 'A TypeScript failure'))
+        .to.throw(TypeScriptFailure, 'A TypeScript failure')
   })
 })

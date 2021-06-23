@@ -1,6 +1,5 @@
 import assert from 'assert'
 import { basename } from 'path'
-import { log } from '../utils/log'
 import { File, Files } from '../files'
 import { FilePath, createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
@@ -105,11 +104,6 @@ export class FileSourceMap {
       // populate it if source (above) is not null... so can't test
       if (! file) return null as any as string
       return file.contents()
-          .catch((error) => {
-            log.alert(`Error reading original source "${file.absolutePath}" for source map of "${this.file}"`)
-            log.debug(error)
-            return null as any as string
-          })
     }))
   }
 
@@ -134,12 +128,8 @@ export class FileSourceMap {
     if (! this.#attachedSources) return this.#produceSimpleSourceMap(attachSources)
 
     // Find all source maps associated with the attached sources...
-    const sourceMaps = (await Promise.all(this.#attachedSources.map((file) => {
-      return file?.sourceMap().catch((error) => {
-        log.alert(`Error reading "${file.absolutePath}" combining sourcemap for "${this.file}"`)
-        log.debug(error)
-      })
-    }))).filter((sourceMap) => sourceMap) as FileSourceMap[]
+    const sourceMaps = (await Promise.all(this.#attachedSources.map((file) => file?.sourceMap())))
+        .filter((sourceMap) => sourceMap) as FileSourceMap[]
 
     // If no sourcemap was found, then we can just produce a simple source map
     if (! sourceMaps.length) return this.#produceSimpleSourceMap(attachSources)
