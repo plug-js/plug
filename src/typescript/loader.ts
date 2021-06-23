@@ -22,6 +22,7 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   // Create our compiler
   const compiler = new CompilePlug({
     // Make sure we have our _own_ options enabled
+    passThrough: false, // we don't care about non JS/TS files
     allowJs: false, // we won't read JS files
     module: ModuleKind.CommonJS, // use commonJS for now
     declaration: false, // we don't care about build's .d.ts
