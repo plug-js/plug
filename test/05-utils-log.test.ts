@@ -32,11 +32,29 @@ describe('Log', () => {
     expect(log.logs).to.eql([])
   })
 
+  it('should log at "debug" level', () => {
+    const log = makeTestLog({ level: LogLevel.TRACE, times: false })
+
+    log('A simple message')
+    log.trace('A trace message')
+    log.debug('A debug message')
+    log.alert('An alert message')
+    log.error('An error message')
+
+    expect(log.logs).to.eql([
+      'A simple message',
+      '[TRACE] A trace message',
+      '[DEBUG] A debug message',
+      '[ALERT] An alert message',
+      '[ERROR] An error message',
+    ])
+  })
 
   it('should log at "debug" level', () => {
     const log = makeTestLog({ level: LogLevel.DEBUG, times: false })
 
     log('A simple message')
+    log.trace('A trace message')
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
@@ -53,6 +71,7 @@ describe('Log', () => {
     const log = makeTestLog({ level: LogLevel.BASIC, times: false })
 
     log('A simple message')
+    log.trace('A trace message')
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
@@ -68,6 +87,7 @@ describe('Log', () => {
     const log = makeTestLog({ level: LogLevel.ALERT, times: false })
 
     log('A simple message')
+    log.trace('A trace message')
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
@@ -82,6 +102,7 @@ describe('Log', () => {
     const log = makeTestLog({ level: LogLevel.ERROR, times: false })
 
     log('A simple message')
+    log.trace('A trace message')
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
@@ -93,6 +114,7 @@ describe('Log', () => {
     const log = makeTestLog({ level: LogLevel.QUIET, times: false })
 
     log('A simple message')
+    log.trace('A trace message')
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
@@ -138,7 +160,7 @@ describe('Log', () => {
 
   it('should log to the console', () => {
     const plug1: Plug = { process: (i) => i, name: 'myplug' }
-    options.level = LogLevel.DEBUG
+    options.level = LogLevel.TRACE
     options.times = true
 
     function test(level: LogLevel, colors: boolean): void {
@@ -150,6 +172,7 @@ describe('Log', () => {
           const log = makeLog(run, plug as Plug)
           switch (level) {
             case LogLevel.BASIC: log('A simple message', 1, true, { hello: 'world' }); break
+            case LogLevel.TRACE: log.trace('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.DEBUG: log.debug('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.ALERT: log.alert('An alert message', 1, true, { hello: 'world' }); break
             case LogLevel.ERROR: log.error('An error message', 1, true, { hello: 'world' }); break
@@ -158,6 +181,7 @@ describe('Log', () => {
       }
     }
     test(LogLevel.BASIC, true)
+    test(LogLevel.TRACE, true)
     test(LogLevel.DEBUG, true)
     test(LogLevel.ALERT, true)
     test(LogLevel.ERROR, true)

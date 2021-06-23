@@ -9,11 +9,12 @@ import { RGB, STYLE } from './colors'
 
 /** Our logging levels */
 export enum LogLevel {
-  DEBUG = 0,
-  BASIC = 1,
-  ALERT = 2,
-  ERROR = 3,
-  QUIET = 4,
+  TRACE = 0,
+  DEBUG = 1,
+  BASIC = 2,
+  ALERT = 3,
+  ERROR = 4,
+  QUIET = 5,
 }
 
 /** Options to customize logging */
@@ -30,6 +31,8 @@ export interface LogOptions {
 
 /** The main `Log` */
 export type Log = ((...args: [ any, ...any ]) => void) & {
+  /** Emit a _trace_ message */
+  trace(...args: [ any, ...any ]): void
   /** Emit a _debug_ message */
   debug(...args: [ any, ...any ]): void
   /** Emit an _alert_ message */
@@ -66,6 +69,7 @@ export const options: LogOptions = (() => {
   let level = LogLevel.BASIC
   // istanbul ignore next - processed at strtup...
   switch (process.env.LOG_LEVEL?.toUpperCase()) {
+    case 'TRACE': level = LogLevel.TRACE; break
     case 'DEBUG': level = LogLevel.DEBUG; break
     case 'INFO': // alias
     case 'BASIC': level = LogLevel.BASIC; break
@@ -118,8 +122,10 @@ function emit(
   }
 
   // A label unless this is a normal _log_ entry...
-  if (level <= LogLevel.DEBUG) {
-    push(RGB['#00005f'], '['); push(RGB['#5f5fff'], 'DEBUG'); push(RGB['#000087'], '] ')
+  if (level <= LogLevel.TRACE) {
+    push(RGB['#005f5f'], '['); push(RGB['#00afaf'], 'TRACE'); push(RGB['#005f5f'], '] ')
+  } else if (level <= LogLevel.DEBUG) {
+    push(RGB['#0000af'], '['); push(RGB['#5f5fff'], 'DEBUG'); push(RGB['#0000af'], '] ')
   } else if (level >= LogLevel.ERROR) {
     push(RGB['#5f0000'], '['); push(RGB['#ff0000'], 'ERROR'); push(RGB['#5f0000'], '] ')
   } else if (level >= LogLevel.ALERT) {
@@ -181,6 +187,7 @@ export function makeLog(run: Run, plug: Plug): PlugLog
 // overloaded function
 export function makeLog(run?: Run, plug?: Plug): Log {
   return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
+    'trace': { value: emit.bind(undefined, LogLevel.TRACE, run, plug) },
     'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
     'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
     'error': { value: emit.bind(undefined, LogLevel.ERROR, run, plug) },
