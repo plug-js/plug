@@ -95,7 +95,7 @@ export class Files {
             typeof extra === 'string' ?
               { path: first, file: undefined, options: { contents: extra } } :
             extra !== undefined ?
-                'files' in extra ? // TODO: instanceof File
+                extra instanceof File ?
                     { path: first, file: extra, options: undefined } :
                     { path: first, file: undefined, options: extra } :
                 { path: first, file: undefined, options: undefined } :
