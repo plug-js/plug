@@ -1,10 +1,13 @@
-import { Files } from '../files'
-import { Log } from '../utils/log'
-import { Run } from '../run'
+import type { FilePath } from '../utils/paths'
+import type { Files } from '../files'
+import type { Log } from '../utils/log'
+import type { Plug } from '../pipe'
+import type { Run } from '../run'
+import type { SourceMapsOptions } from './sourcemaps'
 
-import { FilePath, getParent } from '../utils/paths'
-import { Plug, install } from '../pipe'
-import { SourceMapsOptions, SourceMapsPlug } from './sourcemaps'
+import { SourceMapsPlug } from './sourcemaps'
+import { getParent } from '../utils/paths'
+import { install } from '../pipe'
 import { mkdir, writeFile } from 'fs/promises'
 
 declare module '../pipe' {

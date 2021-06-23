@@ -1,14 +1,17 @@
+import type { CompilerOptions } from 'typescript'
+import type { Log } from '../utils/log'
+import type { Plug } from '../pipe'
+import type { RelativeDirectoryPath } from '../utils/paths'
+import type { Run } from '../run'
+
 import { Files } from '../files'
-import { Log } from '../utils/log'
-import { Run } from '../run'
 import { TypeScriptHost } from '../typescript/host'
 import { checkDiagnostics } from '../typescript/diagnostic'
+import { createProgram, getPreEmitDiagnostics } from 'typescript'
 import { extname } from 'path'
 import { getCompilerOptions } from '../typescript/options'
-
-import { CompilerOptions, createProgram, getPreEmitDiagnostics } from 'typescript'
-import { Plug, install } from '../pipe'
-import { RelativeDirectoryPath, getRelativePath, isChild, resolvePath } from '../utils/paths'
+import { getRelativePath, isChild, resolvePath } from '../utils/paths'
+import { install } from '../pipe'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {

@@ -1,10 +1,12 @@
+import type { Log } from '../utils/log'
+import type { RawSourceMap } from 'source-map'
+import type { Run } from '../run'
+import type { SourceMapOptions } from '../source-maps/source-map'
+import type { Plug } from '../pipe'
+
 import { Files } from '../files'
-import { Log } from '../utils/log'
-import { RawSourceMap } from 'source-map'
-import { Run } from '../run'
-import { SourceMapOptions } from '../source-maps/source-map'
 import { basename } from 'path'
-import { Plug, install } from '../pipe'
+import { install } from '../pipe'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
