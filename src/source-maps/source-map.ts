@@ -4,7 +4,7 @@ import { File, Files } from '../files'
 import { FilePath, createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
 
-interface SourceMapOptions {
+export interface SourceMapOptions {
   /**
    * Whether to attach the original source code to this sitemam or not.
    *
@@ -17,7 +17,7 @@ interface SourceMapOptions {
    *
    * @default true
    */
-  combinedSourceMap?: boolean
+  combineSourceMaps?: boolean
 }
 
 export class FileSourceMap {
@@ -168,7 +168,7 @@ export class FileSourceMap {
   }
 
   produceSourceMap(options: SourceMapOptions): Promise<RawSourceMap> {
-    const { attachSources = false, combinedSourceMap = true } = options
+    const { attachSources = false, combineSourceMaps: combinedSourceMap = true } = options
     const promise = combinedSourceMap ?
         this.#produceCombinedSourceMap(attachSources) :
         this.#produceSimpleSourceMap(attachSources)

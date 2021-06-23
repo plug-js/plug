@@ -235,7 +235,7 @@ describe('Source Maps', () => {
       } as any)
 
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
-      expect(await sm?.produceSourceMap({ combinedSourceMap: false })).to.eql({
+      expect(await sm?.produceSourceMap({ combineSourceMaps: false })).to.eql({
         version: 3,
         file: 'bar.txt',
         mappings: 'mappings',
@@ -244,7 +244,7 @@ describe('Source Maps', () => {
       })
 
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
-      expect(await sm?.produceSourceMap({ combinedSourceMap: false, attachSources: true })).to.eql({
+      expect(await sm?.produceSourceMap({ combineSourceMaps: false, attachSources: true })).to.eql({
         version: 3,
         file: 'bar.txt',
         mappings: 'mappings',
@@ -260,7 +260,7 @@ describe('Source Maps', () => {
         originalPath: '/src/three.txt',
       } ])
 
-      expect(await sm?.produceSourceMap({ combinedSourceMap: false, attachSources: true })).to.eql({
+      expect(await sm?.produceSourceMap({ combineSourceMaps: false, attachSources: true })).to.eql({
         version: 3,
         file: 'bar.txt',
         mappings: 'mappings',
