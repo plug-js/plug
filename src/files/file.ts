@@ -111,23 +111,16 @@ export class FileImpl extends AbstractFile implements File {
 
     if (typeof data.sourceMap === 'string') {
       const sourceMapFile = this.files.get(data.sourceMap)
-      if (! sourceMapFile) {
-        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
-        return
-      }
-      // TODO: unwrap this try/catch
-      try {
+      if (sourceMapFile) {
         const sourceMapContents = sourceMapFile.contentsSync()
         const sourceMap = JSON.parse(sourceMapContents)
-        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
-      } catch (error) {
-        log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
-        log.debug(error)
-        delete data.sourceMap
+        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
+      } else {
+        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
       }
+    } else {
+      return data.sourceMap
     }
-
-    return data.sourceMap
   }
 
   /* ======================================================================== *
@@ -143,22 +136,15 @@ export class FileImpl extends AbstractFile implements File {
 
     if (typeof data.sourceMap === 'string') {
       const sourceMapFile = this.files.get(data.sourceMap)
-      if (! sourceMapFile) {
-        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
-        return
-      }
-      // TODO: unwrap this try/catch
-      try {
+      if (sourceMapFile) {
         const sourceMapContents = await sourceMapFile.contents()
         const sourceMap = JSON.parse(sourceMapContents)
-        data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
-      } catch (error) {
-        log.alert(`Error reading source map for "${this.absolutePath}" from "${sourceMapFile.absolutePath}"`)
-        log.debug(error)
-        delete data.sourceMap
+        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
+      } else {
+        log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
       }
+    } else {
+      return data.sourceMap
     }
-
-    return data.sourceMap
   }
 }

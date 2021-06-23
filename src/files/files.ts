@@ -77,7 +77,6 @@ export class Files implements Files {
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
 
-    // TODO cleanup this
     try {
       const file = new FileImpl(this, absolutePath)
       this.#cache.set(file.canonicalPath, file)
