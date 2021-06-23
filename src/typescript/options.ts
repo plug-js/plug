@@ -93,7 +93,7 @@ export function getCompilerOptions(
   const defaults = getDefaultCompilerOptions()
 
   // If there's no file, we load either "tsconfig.json" or the defaults
-  let path = undefined as FilePath | undefined
+  let path
   if (fileName) {
     path = resolvePath(files.directory, fileName as RelativeFilePath)
   } else {
