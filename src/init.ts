@@ -1,5 +1,5 @@
 import { Files } from './files'
-import { Project } from './project'
+import { Run } from './run'
 import { DirectoryPath, RelativeDirectoryPath, resolvePath } from './utils/paths'
 import { GlobOptions, glob } from './utils/globs'
 import { PlugPipe, TaskPipe } from './pipe'
@@ -8,7 +8,7 @@ import { PlugPipe, TaskPipe } from './pipe'
 type ReadArguments = [ string, ...string[], GlobOptions ] | [ string, ...string[] ]
 
 async function readDirectory(
-    project: Project,
+    run: Run,
     directory: DirectoryPath,
     ...args: ReadArguments
 ): Promise<Files> {
@@ -21,27 +21,30 @@ async function readDirectory(
     options: last,
   }
 
-  const files = new Files(project)
+  const log = run.log()
+  const now = Date.now()
+  const files = new Files(run)
   await glob(directory, globs, options, (path) => {
-    return files.add(path).contents().then(() => void 0)
+    const file = files.add(path)
+    log.trace(`Adding file "${file.absolutePath}"`)
   })
 
+  log.debug(`Directory "${directory}" scanned in`, Date.now() - now, 'ms')
   return files
 }
 
 export function read(...args: ReadArguments): TaskPipe {
   return new TaskPipe({ run: (run) => {
     const directory = run.project.directory
-    return readDirectory(run.project, directory, ...args)
+    return readDirectory(run, directory, ...args)
   } })
 }
 
 export function from(path: string): { read: typeof read } {
   return { read: (...args: ReadArguments) =>
     new TaskPipe({ run: (run) => {
-      const project = run.project
-      const directory = resolvePath(project.directory, path as RelativeDirectoryPath)
-      return readDirectory(run.project, directory, ...args)
+      const directory = resolvePath(run.project.directory, path as RelativeDirectoryPath)
+      return readDirectory(run, directory, ...args)
     } }),
   }
 }
