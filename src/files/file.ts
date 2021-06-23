@@ -67,7 +67,7 @@ export class FileImpl extends AbstractFile implements File {
       } catch (error) {
         throw new Failure(`File "${absolutePath}" not found`)
       }
-      if (! stat.isFile()) throw new Failure(`File "${absolutePath}" not found`)
+      if (! stat.isFile()) throw new Failure(`File "${absolutePath}" is not a file`)
     }
   }
 
