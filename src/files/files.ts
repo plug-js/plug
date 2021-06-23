@@ -1,17 +1,21 @@
-import { FileImpl } from './file'
+import { File } from './file'
+import { FileImpl } from './impl'
+import type { FileOptions } from './index'
 import { FileWrapper } from './wrapper'
-import { Project } from '../project'
-import { Run } from '../run'
+import type { Project } from '../project'
+import type { Run } from '../run'
 import assert from 'assert'
-import {
+import type {
   CanonicalPath,
   DirectoryPath,
   RelativeFilePath,
+} from '../utils/paths'
+
+import {
   getCanonicalPath,
   isChild,
   resolvePath,
 } from '../utils/paths'
-import { File, FileOptions } from './index'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -91,7 +95,7 @@ export class Files {
             typeof extra === 'string' ?
               { path: first, file: undefined, options: { contents: extra } } :
             extra !== undefined ?
-                'files' in extra ?
+                'files' in extra ? // TODO: instanceof File
                     { path: first, file: extra, options: undefined } :
                     { path: first, file: undefined, options: extra } :
                 { path: first, file: undefined, options: undefined } :

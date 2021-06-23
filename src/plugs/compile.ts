@@ -113,8 +113,9 @@ export class CompilePlug implements Plug {
     const result = program.emit(undefined, (fileName, contents, bom, oe, sources) => {
       // For JS files, figure out the _original_ path of the ".ts" file by looking
       // into the source files associated with this output
-      // istanbul ignore next - we only emit js, and always have source files
       let originalPath
+
+      // istanbul ignore next - we only emit js, and always have source files
       if (extname(fileName) === '.js') {
         sources?.forEach(({ fileName }) => originalPath = input.get(fileName)?.absolutePath)
       }

@@ -1,10 +1,10 @@
-import { AbstractFile } from './abstract'
-import { File } from './index'
-import { FilePath } from '../utils/paths'
-import { FileSourceMap } from '../source-maps'
-import { Files } from './files'
+import type { FilePath } from '../utils/paths'
+import type { FileSourceMap } from '../source-maps'
+import type { Files } from './files'
 
-export class FileWrapper extends AbstractFile implements File {
+import { File } from './file'
+
+export class FileWrapper extends File {
   #file: File
 
   constructor(files: Files, file: File, path: FilePath = file.absolutePath) {

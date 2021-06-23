@@ -1,5 +1,5 @@
 import { Failure } from '../src/failure'
-import { FileImpl } from '../src/files/file'
+import { FileImpl } from '../src/files/impl'
 import { Project } from '../src/project'
 import { basename } from 'path'
 import { disableLogs } from './support'

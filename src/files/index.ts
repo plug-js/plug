@@ -1,10 +1,7 @@
-import { FileSourceMap } from '../source-maps'
-import { Files } from './files'
-import { RawSourceMap } from 'source-map'
-import { CanonicalPath, FilePath, RelativeFilePath } from '../utils/paths'
-
-// Import and re-export our `Files` class
-export { Files } from './files'
+import type { FilePath } from '../utils/paths'
+import type { FileSourceMap } from '../source-maps'
+import type { Files } from './files'
+import type { RawSourceMap } from 'source-map'
 
 /** A type describing how to _add_ a virtual file to a list */
 export type FileOptions = {
@@ -15,42 +12,15 @@ export type FileOptions = {
    * map should be extracted from the file's contents themselves
    * @default true
    */
-  sourceMap?: boolean | RawSourceMap,
+  sourceMap?: boolean | FileSourceMap | RawSourceMap,
   /** A `Files` instance where source map source attachments can be read from */
   sourceMapSources?: Files,
   /** The original path of the file (if any) defaulting to its path */
   originalPath?: FilePath,
 }
 
-/**
- * The `File` interface represents a file in a `Files`.
- */
-export interface File {
-  /** The `Files` associated with this `File` */
-  readonly files: Files
-  /** The _absolute_ path of this `File` */
-  readonly absolutePath: FilePath
-  /** The path of this `File` relative to its `Files`'s `baseDir` */
-  readonly relativePath: RelativeFilePath
-  /** The _canonical_ path of this `File` (dependant on filesystem case sensitivity) */
-  readonly canonicalPath: CanonicalPath
-  /** An optional array of absolute paths indicating how this file can be `require(...)`d */
-  readonly originalPath: FilePath
+// Import and re-export our `File` interface
+export type { File } from './file'
 
-  /**
-   * Return the contents of this `File`
-   *
-   * _OCD Note_: `content` (without the S) implies there's some kind of meaning,
-   * and not just a string, or a sequence of bytes.
-   *
-   * @see https://english.stackexchange.com/questions/56831/file-content-vs-file-contents
-   */
-  contents(): Promise<string>
-  /** Return the contents of this `File` */
-  contentsSync(): string
-
-  /** Return a `FileSourceMap` associated with this `File` if any */
-  sourceMap(): Promise<FileSourceMap | undefined>
-  /** Return a `FileSourceMap` associated with this `File` if any */
-  sourceMapSync(): FileSourceMap | undefined
-}
+// Import and re-export our `Files` interface
+export { Files } from './files'
