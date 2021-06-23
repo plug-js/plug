@@ -4,7 +4,7 @@ import type { FileSourceMap } from './source-map'
 import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
-export type { FileSourceMap } from './source-map'
+export { FileSourceMap } from './source-map'
 
 interface ExtractedSourceMap {
   contents: string,
