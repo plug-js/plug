@@ -58,6 +58,7 @@ module.exports = {
     // Enforce sorted imports
     'sort-imports': [ 'error', {
       'memberSyntaxSortOrder': [ 'none', 'all', 'single', 'multiple' ],
+      'allowSeparatedGroups': true,
     } ],
 
     // No redeclare / unused vars for TypeScript
