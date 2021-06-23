@@ -1,32 +1,35 @@
+import { Failure } from '../src/failure'
+import { FileImpl } from '../src/files/file'
 import { Project } from '../src/project'
 import { basename } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
-import { readFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { DirectoryPath, createFilePath, getParent } from '../src/utils/paths'
 import { File, Files } from '../src/files'
+import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
 
-describe.skip('Files', () => {
+describe('Files', () => {
   function makeFiles(directory: string): Files {
     return new Files({ directory } as Project)
   }
 
   disableLogs()
 
+  it('should create missing or unreadable files', async () => {
+    const dir = __dirname as DirectoryPath
+    const files = makeFiles(getParent(dir))
+
+    expect(() => new FileImpl(files, createFilePath(dir, 'this does not exist')))
+        .to.throw(Failure, `File "${__dirname}/this does not exist" not found`)
+
+    expect(() => new FileImpl(files, createFilePath(dir)))
+        .to.throw(Failure, `File "${__dirname}" is not a file`)
+
+    expect(new FileImpl(files, createFilePath(__filename))).to.be.instanceof(FileImpl)
+  })
+
   describe('Asynchronous Virtual File Access', () => {
-    it('should not access missing or unreadable files', async () => {
-      const file1 = makeFiles(__dirname).get('this does not exist')!
-      await expect(file1.contents()).to.be.rejectedWith(Error)
-          .then((error) => expect(error.code).to.equal('ENOENT'))
-      await expect(file1.sourceMap()).to.be.rejectedWith(Error)
-          .then((error) => expect(error.code).to.equal('ENOENT'))
-
-      const file2 = makeFiles(__dirname).get(__dirname)!
-      await expect(file2.contents()).to.be.rejectedWith(Error)
-          .then((error) => expect(error.code).to.equal('EISDIR'))
-      await expect(file2.sourceMap()).to.be.rejectedWith(Error)
-          .then((error) => expect(error.code).to.equal('EISDIR'))
-    })
-
     it('should create a File', async () => {
       function create(contents: string): File {
         return makeFiles('/foo').add('bar.js', { contents })
@@ -134,19 +137,35 @@ describe.skip('Files', () => {
       expect(sourceMap).to.be.an('object')
       expect(sourceMap).to.eql({ file: __filename })
     })
+
+    it('should cache or fail when a file disappears', async () => {
+      const dir = mkdtempSync(tmpdir()) as DirectoryPath
+      try {
+        const path = createFilePath(dir, 'test.txt')
+        try {
+          writeFileSync(path, 'contents...')
+
+          const files = makeFiles(dir)
+          const file1 = new FileImpl(files, path)
+          const file2 = new FileImpl(files, path)
+
+          // read file1, _not_ file2, and unlink
+          expect(await file1.contents()).to.equal('contents...')
+          unlinkSync(path)
+
+          // file1 should have cached contents, file2 should fail
+          expect(await file1.contents()).to.equal('contents...')
+          await expect(file2.contents()).to.be.rejectedWith(Error)
+        } finally {
+          if (existsSync(path)) unlinkSync(path)
+        }
+      } finally {
+        if (existsSync(dir)) rmdirSync(dir)
+      }
+    })
   })
 
   describe('Synchronous Virtual File Access', () => {
-    it('should not access missing or unreadable files', () => {
-      const file1 = makeFiles(__dirname).get('this does not exist')!
-      expect(() => file1.contentsSync()).to.throw(Error).with.property('code', 'ENOENT')
-      expect(() => file1.sourceMapSync()).to.throw(Error).with.property('code', 'ENOENT')
-
-      const file2 = makeFiles(__dirname).get(__dirname)!
-      expect(() => file2.contentsSync()).to.throw(Error).with.property('code', 'EISDIR')
-      expect(() => file2.sourceMapSync()).to.throw(Error).with.property('code', 'EISDIR')
-    })
-
     it('should create a File', () => {
       function create(contents: string): File {
         return makeFiles('/foo').add('bar.js', { contents })
@@ -252,6 +271,32 @@ describe.skip('Files', () => {
 
       expect(sourceMap).to.be.an('object')
       expect(sourceMap).to.eql({ file: __filename })
+    })
+
+    it('should cache or fail when a file disappears', () => {
+      const dir = mkdtempSync(tmpdir()) as DirectoryPath
+      try {
+        const path = createFilePath(dir, 'test.txt')
+        try {
+          writeFileSync(path, 'contents...')
+
+          const files = makeFiles(dir)
+          const file1 = new FileImpl(files, path)
+          const file2 = new FileImpl(files, path)
+
+          // read file1, _not_ file2, and unlink
+          expect(file1.contentsSync()).to.equal('contents...')
+          unlinkSync(path)
+
+          // file1 should have cached contents, file2 should fail
+          expect(file1.contentsSync()).to.equal('contents...')
+          expect(() => file2.contentsSync()).to.throw(Error)
+        } finally {
+          if (existsSync(path)) unlinkSync(path)
+        }
+      } finally {
+        if (existsSync(dir)) rmdirSync(dir)
+      }
     })
   })
 })
