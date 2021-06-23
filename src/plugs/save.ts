@@ -1,8 +1,11 @@
-import { mkdir, writeFile } from 'fs/promises'
 import { Files } from '../files'
-import { Plug, install } from '../pipe'
+import { Log } from '../utils/log'
+import { Run } from '../run'
 import { SourceMapOptions } from '../source-maps/source-map'
+
 import { FilePath, getParent } from '../utils/paths'
+import { Plug, install } from '../pipe'
+import { mkdir, writeFile } from 'fs/promises'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -41,13 +44,19 @@ interface SaveOptions {
    */
    attachSources?: boolean
 
-
+  /**
+   * The encoding used to write files.
+   *
+   * @default 'utf8'
+   */
+  encoding?: BufferEncoding
 }
 
 export class SavePlug implements Plug {
+  #encoding: BufferEncoding
+  #sourceMapOptions: SourceMapOptions
   #sourceMaps: 'inline' | boolean
   #sourceRoot?: string
-  #sourceMapOptions: SourceMapOptions
 
   #directory?: string
 
@@ -70,8 +79,11 @@ export class SavePlug implements Plug {
       sourceRoot = undefined,
       combineSourceMaps = true,
       attachSources = false,
+      encoding = 'utf8',
     } = options
 
+    // Setup what we need
+    this.#encoding = encoding
     this.#sourceMaps = sourceMaps
     this.#sourceRoot = sourceRoot
     this.#sourceMapOptions = { attachSources, combineSourceMaps: combineSourceMaps }
@@ -84,8 +96,19 @@ export class SavePlug implements Plug {
     await writeFile(file, contents)
   }
 
-  async process(files: Files): Promise<Files> {
-    return files
+  async process(input: Files, run: Run, log: Log): Promise<Files> {
+    const output = new Files(run)
+
+    for (const file of input) {
+      if (this.#sourceMaps) {
+        const fileSourceMap = await file.sourceMap()
+        const sourceMap = fileSourceMap?.produceSourceMap(this.#sourceMapOptions)
+        void sourceMap
+      }
+    }
+
+    log.debug('Written a total of', output.length)
+    return output
   }
 }
 
