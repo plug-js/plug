@@ -122,7 +122,7 @@ export class CompilePlug implements Plug {
 
     // Ceck errors and log times after everything is emitted
     checkDiagnostics(result.diagnostics, host, 'Error emitting compilation')
-    log.debug('Compliled', paths.length, 'in', Date.now() - now, 'ms')
+    log.debug('Compliled', paths.length, 'files in', Date.now() - now, 'ms')
     return output
   }
 }
