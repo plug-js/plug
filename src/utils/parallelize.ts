@@ -18,8 +18,8 @@ export function parallelize<I, R>(
 
   // Allocate an array, reserve some space "reasonable" for a parallel
   // execution of a task... Let's say that (for example) 5000 files being
-  // written is "reasonable"
-  const promises = new Array<Promise<R>>('length' in items ? items.length : 5000)
+  // written is "reasonable".
+  const promises = new Array<Promise<R>>(Array.isArray(items) ? items.length : 5000)
   let i = 0
 
   // Shove all our promises in the array, do not bind the callback (it's slow)
