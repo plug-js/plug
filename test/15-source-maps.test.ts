@@ -1,9 +1,7 @@
 import { AssertionError } from 'assert'
 import { FilePath } from '../src/utils/paths'
 import { expect } from 'chai'
-import { extractSourceMappingURL } from '../src/source-maps/extract'
-import { parseSourceMappingURL } from '../src/source-maps/parse'
-import { FileSourceMap, extractSourceMap, SOURCE_MAPPING_URL } from '../src/source-maps'
+import { FileSourceMap, extractSourceMap, extractSourceMappingURL, parseSourceMappingURL, SOURCE_MAPPING_URL } from '../src/source-maps'
 import { MappingItem, RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { disableLogs, mock } from './support'
 
