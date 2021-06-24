@@ -19,5 +19,10 @@
     "target": "es2020",
     "declaration": true,
     "allowJs": false,
-  }
+  },
+  "exclude": [
+    "test/support",
+    "bootstrap",
+    "build/",
+  ],
 }

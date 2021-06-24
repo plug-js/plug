@@ -4,9 +4,6 @@
     "outDir": "build",
     "rootDir": "."
   },
-  "exclude": [
-    "test/support"
-  ],
   "include": [
     "src/**/*.ts",
     "src/**/.*.ts",
