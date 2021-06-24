@@ -4,10 +4,11 @@ import type { Run } from '../run'
 import type { SourceMapOptions } from '../source-maps/source-map'
 import type { Plug } from '../pipe'
 
-import { Files } from '../files'
+import { File, Files } from '../files'
 import { basename } from 'path'
 import { install } from '../pipe'
 import { SOURCE_MAPPING_URL } from '../source-maps'
+import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -93,58 +94,64 @@ export class SourceMapsPlug implements Plug {
     this.#sourceMapOptions = { attachSources, combineSourceMaps: combineSourceMaps }
   }
 
+  protected async processFile(file: File, log: Log, files: Files): Promise<File[]> {
+    const fileSourceMap = await file.sourceMap()
+    const added: File[] = []
+
+    let url // this will be the url to inject in the content, if any
+    if (this.sourceMaps && fileSourceMap) {
+      // produce the _real_ sourcemap, combining, attaching, ...
+      const sourceMap = await fileSourceMap.produceSourceMap(this.#sourceMapOptions)
+      const encodedSourceMap = encodeSourceMap(sourceMap) // JSON!
+
+      // attach any "sourceRoot" info to the real source map
+      if (this.#sourceRoot) sourceMap.sourceRoot = this.#sourceRoot
+
+      // if we need to inline the source map, we need to encode the JSON
+      if (this.sourceMaps === 'inline') {
+        log.trace(`Inlining source map to "${file.absolutePath}`)
+
+        // the spec says that data URIs use plain "base64", not "base64url"
+        const base64 = Buffer.from(encodedSourceMap, 'utf8').toString('base64')
+        url = `data:application/json;base64,${base64}`
+
+      // if we need to write an external source map, then we add a file...
+      } else if (this.sourceMaps === 'external') {
+        log.trace(`Adding external source map to "${file.absolutePath}`)
+
+        // add the file as "file.ext.map"
+        const path = file.absolutePath + '.map'
+        url = basename(path)
+        added.push(files.add(path, {
+          contents: encodedSourceMap, // the JSON
+          originalPath: file.absolutePath, // derived from our file
+          sourceMap: false, // definitely there is no sourcemap here
+        }))
+      }
+    }
+
+    // reading contents will strip the original source map (if any)
+    let contents = await file.contents()
+
+    // if we have a URL to our sourcemap we'll add it to the content
+    if (url) contents += `\n//# ${SOURCE_MAPPING_URL}=${url}`
+
+    // add our file with the modified source map
+    added.push(files.add(file.absolutePath, {
+      contents,
+      sourceMap: fileSourceMap || false,
+      originalPath: file.originalPath,
+    }))
+
+    // return what we added
+    return added
+  }
+
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const output = new Files(run)
     const now = Date.now()
 
-    for (const file of input) {
-      const fileSourceMap = await file.sourceMap()
-
-      let url // this will be the url to inject in the content, if any
-      if (this.sourceMaps && fileSourceMap) {
-        // produce the _real_ sourcemap, combining, attaching, ...
-        const sourceMap = await fileSourceMap.produceSourceMap(this.#sourceMapOptions)
-        const encodedSourceMap = encodeSourceMap(sourceMap) // JSON!
-
-        // attach any "sourceRoot" info to the real source map
-        if (this.#sourceRoot) sourceMap.sourceRoot = this.#sourceRoot
-
-        // if we need to inline the source map, we need to encode the JSON
-        if (this.sourceMaps === 'inline') {
-          log.trace(`Inlining source map to "${file.absolutePath}`)
-
-          // the spec says that data URIs use plain "base64", not "base64url"
-          const base64 = Buffer.from(encodedSourceMap, 'utf8').toString('base64')
-          url = `data:application/json;base64,${base64}`
-
-        // if we need to write an external source map, then we add a file...
-        } else if (this.sourceMaps === 'external') {
-          log.trace(`Adding external source map to "${file.absolutePath}`)
-
-          // add the file as "file.ext.map"
-          const path = file.absolutePath + '.map'
-          url = basename(path)
-          output.add(path, {
-            contents: encodedSourceMap, // the JSON
-            originalPath: file.absolutePath, // derived from our file
-            sourceMap: false, // definitely there is no sourcemap here
-          })
-        }
-      }
-
-      // reading contents will strip the original source map (if any)
-      let contents = await file.contents()
-
-      // if we have a URL to our sourcemap we'll add it to the content
-      if (url) contents += `\n//# ${SOURCE_MAPPING_URL}=${url}`
-
-      // add our file with the modified source map
-      output.add(file.absolutePath, {
-        contents,
-        sourceMap: fileSourceMap || false,
-        originalPath: file.originalPath,
-      })
-    }
+    await parallelize(input, (file) => this.processFile(file, log, output))
 
     log.debug('Processed source maps for', input.length, 'files in', Date.now() - now, 'ms')
     return output

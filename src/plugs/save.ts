@@ -1,17 +1,19 @@
 import assert from 'assert'
 
-import type { FilePath } from '../utils/paths'
-import type { Files } from '../files'
+import type { DirectoryPath } from '../utils/paths'
+import type { File } from '../files'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
 import type { SourceMapsOptions } from './sourcemaps'
 
+import { Files } from '../files'
 import { SourceMapsPlug } from './sourcemaps'
 import { createDirectoryPath, createFilePath, isChild } from '../utils/paths'
 import { getParent } from '../utils/paths'
 import { install } from '../pipe'
 import { mkdir, writeFile } from 'fs/promises'
+import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -61,33 +63,42 @@ export class SavePlug extends SourceMapsPlug implements Plug {
   }
 
   /** The function used for writing files (mainly for testing) */
-  async write(file: FilePath, contents: Buffer): Promise<void> {
-    const directory = getParent(file)
-    await mkdir(directory, { recursive: true })
-    await writeFile(file, contents)
+  async write(file: File, directory: DirectoryPath, log: Log): Promise<void> {
+    const path = createFilePath(directory, file.relativePath)
+    await mkdir(getParent(path), { recursive: true })
+    await writeFile(path, await file.contents(), this.#encoding)
+    log.trace(`Written "${path}"`)
   }
 
-  async process(files: Files, run: Run, log: Log): Promise<Files> {
-    // If we have to process source maps, let SourceMapsPlug do it
-    if (this.sourceMaps) files = await super.process(files, run, log)
+  async process(input: Files, run: Run, log: Log): Promise<Files> {
+    const now = Date.now()
 
     // Resolve our target directory, check it's a child of our input directory
     // (never write outside our designated area) and create it...
     const directory = this.#directory ?
-        createDirectoryPath(files.directory, this.#directory) : files.directory
-    assert(isChild(files.directory, directory) || (directory === files.directory),
-        `Refusing to write to "${directory}", not a child of "${files.directory}"`)
+        createDirectoryPath(input.directory, this.#directory) : input.directory
+    assert(isChild(input.directory, directory) || (directory === input.directory),
+        `Refusing to write to "${directory}", not a child of "${input.directory}"`)
     await mkdir(directory, { recursive: true })
 
-    // Process each file and actually write it out properly
-    for (const file of files) {
-      const targetPath = createFilePath(directory, file.relativePath)
-      const buffer = Buffer.from(await file.contents(), this.#encoding)
-      await this.write(targetPath, buffer)
+    // Slightly different process if we have source maps or not
+    if (this.sourceMaps) {
+      // If we have source maps to write the output will be different: we might
+      // have extra files (the external source maps) and the content will most
+      // likely change (the source mapping URL is added)
+      const output = new Files(input)
+      await parallelize(input, async (file) => {
+        const added = await this.processFile(file, log, output)
+        return parallelize(added, (file) => this.write(file, directory, log))
+      })
+      log.debug('Written', output.length, 'files in', Date.now() - now, 'ms')
+      return output
+    } else {
+      // When no source map processing is done, just write, nothing else...
+      await parallelize(input, (file) => this.write(file, directory, log))
+      log.debug('Written', input.length, 'files in', Date.now() - now, 'ms')
+      return input
     }
-
-    // All done!
-    return files
   }
 }
 
