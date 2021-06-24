@@ -149,11 +149,11 @@ export class SourceMapsPlug implements Plug {
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const output = new Files(run)
-    const now = Date.now()
+    const time = log.start()
 
     await parallelize(input, (file) => this.processFile(file, log, output))
 
-    log.debug('Processed source maps for', input.length, 'files in', Date.now() - now, 'ms')
+    log.debug('Processed source maps for', input.length, 'files in', time)
     return output
   }
 }

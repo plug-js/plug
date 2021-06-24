@@ -56,15 +56,13 @@ abstract class AbstractTask {
     const log = run.log()
 
     // Run this task and log
-    const start = Date.now()
+    const time = log.start()
     const result = this.runTask(run)
         .then((result) => {
-          const now = Date.now() - start
-          log('Task completed in', now, 'ms')
+          log('Task completed in', time)
           return result
         }, (error) => {
-          const now = Date.now() - start
-          log.error('Task failed in', now, 'ms', error)
+          log.error('Task failed in', time, error)
           throw error
         })
 

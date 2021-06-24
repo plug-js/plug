@@ -71,7 +71,7 @@ export class WritePlug extends SourceMapsPlug implements Plug {
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
-    const now = Date.now()
+    const time = log.start()
 
     // Resolve our target directory, check it's a child of our input directory
     // (never write outside our designated area) and create it...
@@ -91,12 +91,12 @@ export class WritePlug extends SourceMapsPlug implements Plug {
         const added = await this.processFile(file, log, output)
         return parallelize(added, (file) => this.write(file, directory, log))
       })
-      log.debug('Written', output.length, 'files in', Date.now() - now, 'ms')
+      log.debug('Written', output.length, 'files in', time)
       return output
     } else {
       // When no source map processing is done, just write, nothing else...
       await parallelize(input, (file) => this.write(file, directory, log))
-      log.debug('Written', input.length, 'files in', Date.now() - now, 'ms')
+      log.debug('Written', input.length, 'files in', time)
       return input
     }
   }

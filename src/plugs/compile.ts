@@ -65,7 +65,7 @@ export class CompilePlug implements Plug {
   }
 
   process(input: Files, run: Run, log: Log): Files {
-    const now = Date.now()
+    const time = log.start()
     const output = new Files(run)
 
     // Read our compiler options and fail on error
@@ -155,7 +155,7 @@ export class CompilePlug implements Plug {
     }
 
     // Log times after everything is emitted and return
-    log.debug('Compliled', paths.length, 'files in', Date.now() - now, 'ms')
+    log.debug('Compliled', paths.length, 'files in', time)
     return output
   }
 }

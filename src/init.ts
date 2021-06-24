@@ -25,14 +25,14 @@ async function readDirectory(
   }
 
   const log = run.log()
-  const now = Date.now()
+  const time = log.start()
   const files = new Files(run)
   await glob(directory, globs, options, (path) => {
     const file = files.add(path)
     log.trace(`Adding file "${file.absolutePath}"`)
   })
 
-  log.debug(`Directory "${directory}" scanned in`, Date.now() - now, 'ms')
+  log.debug(`Directory "${directory}" scanned in`, time)
   return files
 }
 
