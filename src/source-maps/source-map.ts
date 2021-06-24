@@ -145,13 +145,12 @@ export class FileSourceMap {
     const combined = await SourceMapConsumer.with(original, null, async (consumer) => {
       // Create a generator from this sourcemap
       const generator = SourceMapGenerator.fromSourceMap(consumer)
-      const applySourceMap = generator.applySourceMap.bind(generator)
 
       // Apply all other sourcemaps to this one... The original sources (if
       // any were found) will also be _applied_ to this sourcemap
       for (const fileSourceMap of sourceMaps) {
         const sourceMap = await fileSourceMap.#produceCombinedSourceMap(attachSources)
-        await SourceMapConsumer.with(sourceMap, null, applySourceMap)
+        await SourceMapConsumer.with(sourceMap, null, (c) => generator.applySourceMap(c))
       }
 
       // All merged and ready to go!
