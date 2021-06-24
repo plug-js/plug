@@ -5,8 +5,7 @@ import type { FilePath } from '../utils/paths'
 import type { RawSourceMap } from 'source-map'
 
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map'
-import { basename } from 'path'
-import { createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
+import { createFilePath, getParent } from '../utils/paths'
 import { parallelize } from '../utils/parallelize'
 
 export interface SourceMapOptions {
@@ -173,15 +172,8 @@ export class FileSourceMap {
 
   produceSourceMap(options: SourceMapOptions): Promise<RawSourceMap> {
     const { attachSources = false, combineSourceMaps: combinedSourceMap = true } = options
-    const promise = combinedSourceMap ?
+    return combinedSourceMap ?
         this.#produceCombinedSourceMap(attachSources) :
         this.#produceSimpleSourceMap(attachSources)
-    return promise.then((sourceMap) => {
-      sourceMap.file = basename(this.file)
-      sourceMap.sources = sourceMap.sources.map((source) => {
-        return getRelativeFilePath(this.file, source as FilePath)
-      })
-      return sourceMap
-    })
   }
 }

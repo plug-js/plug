@@ -235,18 +235,18 @@ describe('Source Maps', () => {
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
       expect(await sm?.produceSourceMap({ combineSourceMaps: false })).to.eql({
         version: 3,
-        file: 'bar.txt',
+        file: '/foo/bar.txt',
         mappings: 'mappings',
-        sources: [ '../baz/one.txt', 'two.txt', '../src/three.txt' ],
+        sources: [ '/baz/one.txt', '/foo/two.txt', '/src/three.txt' ],
         names: [],
       })
 
       expect(sm?.sourcesContent).to.eql([ null, 'content for two', null ])
       expect(await sm?.produceSourceMap({ combineSourceMaps: false, attachSources: true })).to.eql({
         version: 3,
-        file: 'bar.txt',
+        file: '/foo/bar.txt',
         mappings: 'mappings',
-        sources: [ '../baz/one.txt', 'two.txt', '../src/three.txt' ],
+        sources: [ '/baz/one.txt', '/foo/two.txt', '/src/three.txt' ],
         sourcesContent: [ null, 'content for two', null ],
         names: [],
       })
@@ -260,9 +260,9 @@ describe('Source Maps', () => {
 
       expect(await sm?.produceSourceMap({ combineSourceMaps: false, attachSources: true })).to.eql({
         version: 3,
-        file: 'bar.txt',
+        file: '/foo/bar.txt',
         mappings: 'mappings',
-        sources: [ '../baz/one.txt', 'two.txt', '../src/three.txt' ],
+        sources: [ '/baz/one.txt', '/foo/two.txt', '/src/three.txt' ],
         sourcesContent: [ null, 'content for two', 'content for three' ],
         names: [],
       })
@@ -374,20 +374,20 @@ describe('Source Maps', () => {
       }
 
       expect(await mappings(result1)).to.eql({
-        '1': { generatedLine: 1, generatedColumn: 1, lastGeneratedColumn: null, source: '../sources/result1.txt', originalLine: 11, originalColumn: 11, name: 'translatedName1' },
-        '2': { generatedLine: 2, generatedColumn: 2, lastGeneratedColumn: null, source: '../sources/result2.txt', originalLine: 22, originalColumn: 22, name: 'translatedName2' },
-        '3': { generatedLine: 3, generatedColumn: 3, lastGeneratedColumn: null, source: '../sources/result3.txt', originalLine: 33, originalColumn: 33, name: 'translatedName3' },
-        '4': { generatedLine: 4, generatedColumn: 4, lastGeneratedColumn: null, source: '../sources/missing.txt', originalLine: 44, originalColumn: 44, name: 'missingName' },
-        '5': { generatedLine: 5, generatedColumn: 5, lastGeneratedColumn: null, source: '../sources/supplied.txt', originalLine: 55, originalColumn: 55, name: 'suppliedName' },
+        '1': { generatedLine: 1, generatedColumn: 1, lastGeneratedColumn: null, source: '/sources/result1.txt', originalLine: 11, originalColumn: 11, name: 'translatedName1' },
+        '2': { generatedLine: 2, generatedColumn: 2, lastGeneratedColumn: null, source: '/sources/result2.txt', originalLine: 22, originalColumn: 22, name: 'translatedName2' },
+        '3': { generatedLine: 3, generatedColumn: 3, lastGeneratedColumn: null, source: '/sources/result3.txt', originalLine: 33, originalColumn: 33, name: 'translatedName3' },
+        '4': { generatedLine: 4, generatedColumn: 4, lastGeneratedColumn: null, source: '/sources/missing.txt', originalLine: 44, originalColumn: 44, name: 'missingName' },
+        '5': { generatedLine: 5, generatedColumn: 5, lastGeneratedColumn: null, source: '/sources/supplied.txt', originalLine: 55, originalColumn: 55, name: 'suppliedName' },
       }).to.eql(await mappings(result2))
 
       // // after attaching sources they become
       expect(await mappings(result3)).to.eql({
-        '1': { generatedLine: 1, generatedColumn: 1, lastGeneratedColumn: null, source: '../sources/source1.txt', originalLine: 111, originalColumn: 111, name: 'originalName1' },
-        '2': { generatedLine: 2, generatedColumn: 2, lastGeneratedColumn: null, source: '../sources/source2.txt', originalLine: 222, originalColumn: 222, name: 'originalName2' },
-        '3': { generatedLine: 3, generatedColumn: 3, lastGeneratedColumn: null, source: '../sources/source3.txt', originalLine: 333, originalColumn: 333, name: 'originalName3' },
-        '4': { generatedLine: 4, generatedColumn: 4, lastGeneratedColumn: null, source: '../sources/missing.txt', originalLine: 44, originalColumn: 44, name: 'missingName' },
-        '5': { generatedLine: 5, generatedColumn: 5, lastGeneratedColumn: null, source: '../sources/supplied.txt', originalLine: 55, originalColumn: 55, name: 'suppliedName' },
+        '1': { generatedLine: 1, generatedColumn: 1, lastGeneratedColumn: null, source: '/sources/source1.txt', originalLine: 111, originalColumn: 111, name: 'originalName1' },
+        '2': { generatedLine: 2, generatedColumn: 2, lastGeneratedColumn: null, source: '/sources/source2.txt', originalLine: 222, originalColumn: 222, name: 'originalName2' },
+        '3': { generatedLine: 3, generatedColumn: 3, lastGeneratedColumn: null, source: '/sources/source3.txt', originalLine: 333, originalColumn: 333, name: 'originalName3' },
+        '4': { generatedLine: 4, generatedColumn: 4, lastGeneratedColumn: null, source: '/sources/missing.txt', originalLine: 44, originalColumn: 44, name: 'missingName' },
+        '5': { generatedLine: 5, generatedColumn: 5, lastGeneratedColumn: null, source: '/sources/supplied.txt', originalLine: 55, originalColumn: 55, name: 'suppliedName' },
       }).to.eql(await mappings(result4))
 
       // ---------------------------------------------------------------
@@ -398,10 +398,10 @@ describe('Source Maps', () => {
       expect(result3.version).to.equal(3)
       expect(result4.version).to.equal(3)
 
-      expect(result1.file).to.equal('result.txt')
-      expect(result2.file).to.equal('result.txt')
-      expect(result3.file).to.equal('result.txt')
-      expect(result4.file).to.equal('result.txt')
+      expect(result1.file).to.equal('/result/result.txt')
+      expect(result2.file).to.equal('/result/result.txt')
+      expect(result3.file).to.equal('/result/result.txt')
+      expect(result4.file).to.equal('/result/result.txt')
 
       // ---------------------------------------------------------------
       // NAME TRANSLATION
@@ -427,20 +427,20 @@ describe('Source Maps', () => {
       // SOURCES TRANSLATION
 
       expect(result1.sources.sort()).to.eql([
-        '../sources/result1.txt',
-        '../sources/result2.txt',
-        '../sources/result3.txt',
-        '../sources/missing.txt',
-        '../sources/supplied.txt',
+        '/sources/result1.txt',
+        '/sources/result2.txt',
+        '/sources/result3.txt',
+        '/sources/missing.txt',
+        '/sources/supplied.txt',
       ].sort()).to.eql(result2.sources.sort())
 
       // after attaching sources they become
       expect(result3.sources.sort()).to.eql([
-        '../sources/source1.txt',
-        '../sources/source2.txt',
-        '../sources/source3.txt',
-        '../sources/missing.txt',
-        '../sources/supplied.txt',
+        '/sources/source1.txt',
+        '/sources/source2.txt',
+        '/sources/source3.txt',
+        '/sources/missing.txt',
+        '/sources/supplied.txt',
       ].sort()).to.eql(result4.sources.sort())
 
       // ---------------------------------------------------------------
