@@ -5,6 +5,7 @@ import assert from 'assert'
 
 import { Files } from './files'
 import { TaskPipe } from './pipe'
+import { parallelize } from './utils/parallelize'
 
 /**
  * A `TaskCall` describes a function returning a `TaskPipe`, as a way to
@@ -138,10 +139,8 @@ class ParallelTask extends AbstractTask {
   }
 
   async runTask(run: Run, log: RunLog = run.log()): Promise<Files> {
-    // Start each of our taks, processing the same file list, our input
-    const promises = this.#tasks.map((task) => task.run(run, log))
-    // Make sure all tasks run correctly and get all output file lists
-    const outputs = await Promise.all(promises)
+    // Parallelize the run of each task, get all output filesystems
+    const outputs = await parallelize(this.#tasks, (task) => task.run(run, log))
 
     // Create a new file list cloning our input
     const result = new Files(run)
