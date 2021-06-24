@@ -8,6 +8,7 @@ import { DirectoryPath, createFilePath, getParent, FilePath } from '../src/utils
 import { File, Files } from '../src/files'
 import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
 import { FileSourceMap, SOURCE_MAPPING_URL } from '../src/source-maps'
+import { RawSourceMap } from 'source-map'
 
 describe('Files', () => {
   function makeFiles(directory: string): Files {
@@ -123,6 +124,40 @@ describe('Files', () => {
       expect(await file4.sourceMap()).to.eql({ file: file4.absolutePath })
     })
 
+    it('should attach a the sourcemap sources', async () => {
+      const sourceFiles = makeFiles('/bar')
+      const sourceFile = sourceFiles.add('src.txt', 'source')
+
+      const rawSourceMap = { version: 3, sources: [ '/bar/src.txt' ] } as RawSourceMap
+      const jsonSourceMap = JSON.stringify(rawSourceMap)
+      const base64SourceMap = Buffer.from(jsonSourceMap, 'utf8').toString('base64')
+
+      const targetFiles = makeFiles('/foo')
+      targetFiles.add('test.map', { contents: jsonSourceMap })
+
+      const external = targetFiles.add('external.txt', {
+        contents: `//# ${SOURCE_MAPPING_URL}=test.map`,
+        sourceMapSources: sourceFiles,
+      })
+      const inline = targetFiles.add('inline.txt', {
+        contents: `//# ${SOURCE_MAPPING_URL}=data:application/json;base64,${base64SourceMap}`,
+        sourceMapSources: sourceFiles,
+      })
+      const withRaw = targetFiles.add('withRaw.txt', {
+        contents: '',
+        sourceMap: rawSourceMap,
+        sourceMapSources: sourceFiles,
+      })
+
+      expect((await external.sourceMap())?.attachedSources).to.eql([ sourceFile ])
+      expect((await inline.sourceMap())?.attachedSources).to.eql([ sourceFile ])
+      expect((await withRaw.sourceMap())?.attachedSources).to.eql([ sourceFile ])
+
+      expect((await external.sourceMap())?.attachedSources[0]).to.equal(sourceFile)
+      expect((await inline.sourceMap())?.attachedSources[0]).to.equal(sourceFile)
+      expect((await withRaw.sourceMap())?.attachedSources[0]).to.equal(sourceFile)
+    })
+
     it('should read a File from disk', async () => {
       const files = makeFiles(__dirname)
       const file = files.get(__filename)!
@@ -190,7 +225,7 @@ describe('Files', () => {
       expect(file3.sourceMapSync()).to.equal(sourceMap)
     })
 
-    it('should create a File with an inline source map', async () => {
+    it('should create a File with an inline source map', () => {
       const contents = `//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo`
 
       function create(sourceMap?: any): File {
@@ -214,7 +249,7 @@ describe('Files', () => {
       expect(file4.sourceMapSync()).to.eql({ file: file4.absolutePath })
     })
 
-    it('should create a File with an external source map', async () => {
+    it('should create a File with an external source map', () => {
       const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
@@ -240,7 +275,7 @@ describe('Files', () => {
       expect(file4.sourceMapSync()).to.eql({ file: file4.absolutePath })
     })
 
-    it('should create a File with a missing external source map', async () => {
+    it('should create a File with a missing external source map', () => {
       const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
@@ -262,6 +297,40 @@ describe('Files', () => {
       const file4 = create({ version: 3 }) // supplied source map
       expect(file4.contentsSync()).to.equal(contents)
       expect(file4.sourceMapSync()).to.eql({ file: file4.absolutePath })
+    })
+
+    it('should attach a the sourcemap sources', () => {
+      const sourceFiles = makeFiles('/bar')
+      const sourceFile = sourceFiles.add('src.txt', 'source')
+
+      const rawSourceMap = { version: 3, sources: [ '/bar/src.txt' ] } as RawSourceMap
+      const jsonSourceMap = JSON.stringify(rawSourceMap)
+      const base64SourceMap = Buffer.from(jsonSourceMap, 'utf8').toString('base64')
+
+      const targetFiles = makeFiles('/foo')
+      targetFiles.add('test.map', { contents: jsonSourceMap })
+
+      const external = targetFiles.add('external.txt', {
+        contents: `//# ${SOURCE_MAPPING_URL}=test.map`,
+        sourceMapSources: sourceFiles,
+      })
+      const inline = targetFiles.add('inline.txt', {
+        contents: `//# ${SOURCE_MAPPING_URL}=data:application/json;base64,${base64SourceMap}`,
+        sourceMapSources: sourceFiles,
+      })
+      const withRaw = targetFiles.add('withRaw.txt', {
+        contents: '',
+        sourceMap: rawSourceMap,
+        sourceMapSources: sourceFiles,
+      })
+
+      expect(external.sourceMapSync()?.attachedSources).to.eql([ sourceFile ])
+      expect(inline.sourceMapSync()?.attachedSources).to.eql([ sourceFile ])
+      expect(withRaw.sourceMapSync()?.attachedSources).to.eql([ sourceFile ])
+
+      expect(external.sourceMapSync()?.attachedSources[0]).to.equal(sourceFile)
+      expect(inline.sourceMapSync()?.attachedSources[0]).to.equal(sourceFile)
+      expect(withRaw.sourceMapSync()?.attachedSources[0]).to.equal(sourceFile)
     })
 
     it('should read a File from disk', () => {
