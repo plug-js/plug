@@ -1,4 +1,5 @@
 .*
+bootstrap/
 build/
 coverage/
 node_modules/
