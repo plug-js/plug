@@ -1,3 +1,3 @@
 export { compile } from './compile'
-export { save } from './save'
+export { write } from './write'
 export { sourcemaps } from './sourcemaps'

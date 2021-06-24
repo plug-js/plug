@@ -17,11 +17,11 @@ import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
-    save: PlugExtension<P, typeof SavePlug>
+    write: PlugExtension<P, typeof WritePlug>
   }
 }
 
-export interface SaveOptions extends SourceMapsOptions {
+export interface WriteOptions extends SourceMapsOptions {
   /**
    * How to write source maps, whether they need to be `inline`, saved as an
    * external file (`external`), not processed at all (`none`)
@@ -41,14 +41,14 @@ export interface SaveOptions extends SourceMapsOptions {
    encoding?: BufferEncoding
 }
 
-export class SavePlug extends SourceMapsPlug implements Plug {
+export class WritePlug extends SourceMapsPlug implements Plug {
   #encoding: BufferEncoding
   #directory?: string
 
   constructor(directory?: string)
-  constructor(options?: SaveOptions)
-  constructor(directory: string, options?: SaveOptions)
-  constructor(first?: string | SaveOptions, extra?: SaveOptions) {
+  constructor(options?: WriteOptions)
+  constructor(directory: string, options?: WriteOptions)
+  constructor(first?: string | WriteOptions, extra?: WriteOptions) {
     super(typeof first === 'string' ? extra : first)
 
     // Destructure our arguments
@@ -102,4 +102,4 @@ export class SavePlug extends SourceMapsPlug implements Plug {
   }
 }
 
-export const save = install('save', SavePlug)
+export const write = install('write', WritePlug)
