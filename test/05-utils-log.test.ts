@@ -1,11 +1,11 @@
 import { Plug } from '../src/pipe'
 import { expect } from 'chai'
 import { mock } from './support'
-import { LogLevel, LogOptions, RunLog, makeLog, options } from '../src/utils/log'
+import { LogLevel, LogOptions, Log, makeLog, options, log } from '../src/utils/log'
 
-type TestLog = RunLog & { logs: string[] }
+type TestLog = Log & { logs: string[] }
 
-function makeTestLog(opts: Partial<Omit<LogOptions, 'colors'>>): TestLog {
+function makeTestLog(opts?: Partial<Omit<LogOptions, 'colors'>>): TestLog {
   const lines: string[] = []
 
   Object.assign(options, opts, {
@@ -158,10 +158,20 @@ describe('Log', () => {
     expect(logs[3]).to.match(/^\d{2}:\d{2}:\d{2}.\d{3} \[ERROR\] An error message$/)
   })
 
+  it('should generate and log a time difference', () => {
+    const log = makeTestLog({ level: LogLevel.BASIC, times: false })
+    const start = log.start()
+    log('Before', start, 'After')
+    const logs = log.logs
+    expect(logs).to.have.length(1)
+    expect(logs[0]).to.match(/^Before \d+(\.\d+)? ms After$/)
+  })
+
   it('should log to the console', () => {
     const plug1: Plug = { process: (i) => i, name: 'myplug' }
     options.level = LogLevel.TRACE
     options.times = true
+    const start = log.start()
 
     function test(level: LogLevel, colors: boolean): void {
       options.colors = colors
@@ -171,7 +181,7 @@ describe('Log', () => {
         for (const plug of [ undefined, plug1 ]) {
           const log = makeLog(run, plug as Plug)
           switch (level) {
-            case LogLevel.BASIC: log('A simple message', 1, true, { hello: 'world' }); break
+            case LogLevel.BASIC: log('A simple message logged after', start); break
             case LogLevel.TRACE: log.trace('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.DEBUG: log.debug('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.ALERT: log.alert('An alert message', 1, true, { hello: 'world' }); break
