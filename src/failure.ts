@@ -1,8 +1,7 @@
 import { EOL } from 'os'
 
-// istanbul ignore next - we always have stacks...
 function split(message: string, stack?: string): string[] {
-  return stack?.split(EOL) || [ `Failure: ${message}` ]
+  return stack?.split(EOL) /* istanbul ignore next */ || [ `Failure: ${message}` ]
 }
 
 /** An `Error` representing a build failure */
