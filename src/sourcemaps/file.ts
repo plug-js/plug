@@ -170,7 +170,7 @@ export class FileSourceMap {
     })
   }
 
-  produceSourceMap(options: SourceMapOptions): Promise<RawSourceMap> {
+  produceSourceMap(options: SourceMapOptions = {}): Promise<RawSourceMap> {
     const { attachSources = false, combineSourceMaps: combinedSourceMap = true } = options
     return combinedSourceMap ?
         this.#produceCombinedSourceMap(attachSources) :
