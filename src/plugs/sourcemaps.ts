@@ -1,13 +1,15 @@
+import type { File } from '../files'
 import type { Log } from '../utils/log'
+import type { Plug } from '../pipe'
 import type { RawSourceMap } from 'source-map'
 import type { Run } from '../run'
 import type { SourceMapOptions } from '../sourcemaps'
-import type { Plug } from '../pipe'
 
-import { File, Files } from '../files'
-import { basename } from 'path'
-import { install } from '../pipe'
+import { Files } from '../files'
 import { SOURCE_MAPPING_URL } from '../sourcemaps'
+import { basename } from 'path'
+import { createFilePath, FilePath, getParent, getRelativeFilePath } from '../utils/paths'
+import { install } from '../pipe'
 import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {
@@ -53,19 +55,19 @@ export interface SourceMapsOptions {
 // https://sourcemaps.info/spec.html
 function encodeSourceMap(sourceMap: RawSourceMap): string {
   // Version always comes first
-  const array = [ `{"version":${JSON.stringify(sourceMap.version || 3)}` ]
-  // Spec says "name" is optional
+  const array = [ `{"version":${JSON.stringify(sourceMap.version /* istanbul ignore next */ || 3)}` ]
+  // istanbul ignore else - the spec says "name" is optional, but we always have it
   if (sourceMap.file) array.push(`,"file":${JSON.stringify(sourceMap.file)}`)
   // Spec says "sourceRoot" is optional
   if (sourceMap.sourceRoot) array.push(`,"sourceRoot":${JSON.stringify(sourceMap.sourceRoot)}`)
   // Spec says "sources" must be there
-  array.push(`,"sources":${JSON.stringify(sourceMap.sources || [])}`)
+  array.push(`,"sources":${JSON.stringify(sourceMap.sources /* istanbul ignore next */ || [])}`)
   // Spec says "sourcesContent" is optional
   if (sourceMap.sourcesContent) array.push(`,"sourcesContent":${JSON.stringify(sourceMap.sourcesContent)}`)
   // Spec says "names" must be there
-  array.push(`,"names":${JSON.stringify(sourceMap.names || [])}`)
+  array.push(`,"names":${JSON.stringify(sourceMap.names /* istanbul ignore next */ || [])}`)
   // Spec says "mappings" must be there
-  array.push(`,"mappings":${JSON.stringify(sourceMap.mappings || [])}`)
+  array.push(`,"mappings":${JSON.stringify(sourceMap.mappings || '')}`)
   // Done with the fields in the correct order
   array.push('}')
 
@@ -94,53 +96,63 @@ export class SourceMapsPlug implements Plug {
     this.#sourceMapOptions = { attachSources, combineSourceMaps: combineSourceMaps }
   }
 
-  protected async processFile(file: File, log: Log, files: Files): Promise<File[]> {
-    const fileSourceMap = await file.sourceMap()
+  protected async processFile(from: File, to: FilePath, files: Files, log: Log): Promise<File[]> {
+    const fileSourceMap = await from.sourceMap()
     const added: File[] = []
 
     let url // this will be the url to inject in the content, if any
     if (this.sourceMaps && fileSourceMap) {
       // produce the _real_ sourcemap, combining, attaching, ...
       const sourceMap = await fileSourceMap.produceSourceMap(this.#sourceMapOptions)
-      const encodedSourceMap = encodeSourceMap(sourceMap) // JSON!
 
-      // attach any "sourceRoot" info to the real source map
+      // re-relativize all our paths before writing: "sources" is relative to
+      // the _source_ file, and we remap them relative to the _target_ file...
+      const sourceDirectory = getParent(from.absolutePath)
+      sourceMap.sources = sourceMap.sources.map((source) => {
+        const absoluteSource = createFilePath(sourceDirectory, source)
+        return getRelativeFilePath(to, absoluteSource)
+      })
+
+      // then replace the file and inject any source root
+      sourceMap.file = basename(to)
       if (this.#sourceRoot) sourceMap.sourceRoot = this.#sourceRoot
+
+      // we can finally get the JSON out of this sourcemap
+      const encodedSourceMap = encodeSourceMap(sourceMap)
 
       // if we need to inline the source map, we need to encode the JSON
       if (this.sourceMaps === 'inline') {
-        log.trace(`Inlining source map to "${file.absolutePath}`)
+        log.trace(`Inlining source map into "${to}`)
 
         // the spec says that data URIs use plain "base64", not "base64url"
         const base64 = Buffer.from(encodedSourceMap, 'utf8').toString('base64')
         url = `data:application/json;base64,${base64}`
-
-      // if we need to write an external source map, then we add a file...
-      } else if (this.sourceMaps === 'external') {
-        log.trace(`Adding external source map to "${file.absolutePath}`)
+      } else {
+        // if we need to write an external source map, then we add a file...
+        log.trace(`Adding external source map to "${to}`)
 
         // add the file as "file.ext.map"
-        const path = file.absolutePath + '.map'
+        const path = to + '.map'
         url = basename(path)
         added.push(files.add(path, {
           contents: encodedSourceMap, // the JSON
-          originalPath: file.absolutePath, // derived from our file
+          originalPath: from.absolutePath, // derived from our file
           sourceMap: false, // definitely there is no sourcemap here
         }))
       }
     }
 
     // reading contents will strip the original source map (if any)
-    let contents = await file.contents()
+    let contents = await from.contents()
 
     // if we have a URL to our sourcemap we'll add it to the content
     if (url) contents += `\n//# ${SOURCE_MAPPING_URL}=${url}`
 
     // add our file with the modified source map
-    added.push(files.add(file.absolutePath, {
+    added.push(files.add(to, {
       contents,
       sourceMap: fileSourceMap || false,
-      originalPath: file.originalPath,
+      originalPath: from.originalPath,
     }))
 
     // return what we added
@@ -151,7 +163,8 @@ export class SourceMapsPlug implements Plug {
     const output = new Files(run)
     const time = log.start()
 
-    await parallelize(input, (file) => this.processFile(file, log, output))
+    await parallelize(input, (file) =>
+      this.processFile(file, file.absolutePath, output, log))
 
     log.debug('Processed source maps for', input.length, 'files in', time)
     return output
