@@ -5,6 +5,8 @@ import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
 export { FileSourceMap } from './source-map'
+export { extractSourceMappingURL } from './extract'
+export { parseSourceMappingURL } from './parse'
 
 interface ExtractedSourceMap {
   contents: string,
