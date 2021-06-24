@@ -7,6 +7,7 @@ import type { RawSourceMap } from 'source-map'
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { basename } from 'path'
 import { createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
+import { parallelize } from '../utils/parallelize'
 
 export interface SourceMapOptions {
   /**
@@ -132,7 +133,7 @@ export class FileSourceMap {
     if (! this.#attachedSources) return this.#produceSimpleSourceMap(attachSources)
 
     // Find all source maps associated with the attached sources...
-    const sourceMaps = (await Promise.all(this.#attachedSources.map((file) => file?.sourceMap())))
+    const sourceMaps = (await parallelize(this.#attachedSources, (file) => file?.sourceMap()))
         .filter((sourceMap) => sourceMap) as FileSourceMap[]
 
     // If no sourcemap was found, then we can just produce a simple source map
