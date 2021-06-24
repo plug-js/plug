@@ -7,7 +7,7 @@ import { tmpdir } from 'os'
 import { DirectoryPath, createFilePath, getParent, FilePath } from '../src/utils/paths'
 import { File, Files } from '../src/files'
 import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
-import { FileSourceMap, SOURCE_MAPPING_URL } from '../src/source-maps'
+import { FileSourceMap, SOURCE_MAPPING_URL } from '../src/sourcemaps'
 import { RawSourceMap } from 'source-map'
 
 describe('Files', () => {

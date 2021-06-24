@@ -3,8 +3,8 @@ import type { Files } from './files'
 import type { FilePath } from '../utils/paths'
 
 import { File } from './file'
-import { FileSourceMap } from '../source-maps'
-import { extractSourceMap } from '../source-maps'
+import { FileSourceMap } from '../sourcemaps'
+import { extractSourceMap } from '../sourcemaps'
 import { log } from '../utils/log'
 import { promises as fs, readFileSync, statSync } from 'fs'
 

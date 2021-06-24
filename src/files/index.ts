@@ -1,5 +1,5 @@
 import type { FilePath } from '../utils/paths'
-import type { FileSourceMap } from '../source-maps'
+import type { FileSourceMap } from '../sourcemaps'
 import type { Files } from './files'
 import type { RawSourceMap } from 'source-map'
 

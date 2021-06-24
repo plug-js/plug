@@ -1,13 +1,13 @@
 import type { Log } from '../utils/log'
 import type { RawSourceMap } from 'source-map'
 import type { Run } from '../run'
-import type { SourceMapOptions } from '../source-maps/source-map'
+import type { SourceMapOptions } from '../sourcemaps'
 import type { Plug } from '../pipe'
 
 import { File, Files } from '../files'
 import { basename } from 'path'
 import { install } from '../pipe'
-import { SOURCE_MAPPING_URL } from '../source-maps'
+import { SOURCE_MAPPING_URL } from '../sourcemaps'
 import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {

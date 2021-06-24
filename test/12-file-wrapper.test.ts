@@ -1,4 +1,4 @@
-import { FileSourceMap } from '../src/source-maps'
+import { FileSourceMap } from '../src/sourcemaps'
 import { FileWrapper } from '../src/files/wrapper'
 import { Project } from '../src/project'
 import { expect } from 'chai'
