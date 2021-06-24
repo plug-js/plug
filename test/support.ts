@@ -9,7 +9,7 @@ import { existsSync } from 'fs'
 import { resolve, isAbsolute } from 'path'
 
 import { DirectoryPath, createFilePath } from '../src/utils/paths'
-import { PlugLog, RunLog, options } from '../src/utils/log'
+import { Log, options } from '../src/utils/log'
 import assert from 'assert'
 
 function findDirectory(directory: string): string {
@@ -39,7 +39,7 @@ export function disableLogs(): void {
 type MockProject = {
   files: Files,
   run: Run,
-  log: PlugLog & RunLog,
+  log: Log,
   project: Project,
   tasks: Record<string, Task>,
 }
@@ -58,7 +58,7 @@ export function mock(
   const project = new Project(tasks, build)
   const files = new Files(project)
   const run = new Run(project)
-  const log = run.log() as PlugLog & RunLog
+  const log = run.log()
 
   return { files, run, log, project, tasks }
 }

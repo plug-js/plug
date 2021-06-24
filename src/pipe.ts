@@ -1,6 +1,6 @@
 import type { ConstructorOverloads } from './types/overloads'
 import type { Files } from './files'
-import type { PlugLog } from './utils/log'
+import type { Log } from './utils/log'
 import type { Run, Runnable } from './run'
 
 /* ========================================================================== *
@@ -15,7 +15,7 @@ export interface Plug {
   /** An (optional) name for this `Plug` (mainly for logging) */
   readonly name?: string
   /** Process a `Files` instance in the context of a `Run` */
-  process(input: Files, run: Run, log: PlugLog): Files | Promise<Files>
+  process(input: Files, run: Run, log: Log): Files | Promise<Files>
 }
 
 /** A `Processor` is a simple functional version of the `Plug` interface. */

@@ -55,7 +55,6 @@ describe('Run', () => {
     const runLog2 = run.log()
     expect(runLog1).to.equal(runLog2)
     expect(runLog1).to.be.a('function')
-    expect(runLog1.run).to.equal(run)
 
     const plug1: Plug = { process: (i) => i }
     const plug2: Plug = { process: (i) => i }
@@ -68,9 +67,5 @@ describe('Run', () => {
     expect(plugLog1A).not.to.equal(plugLog2B)
     expect(plugLog1A).to.be.a('function')
     expect(plugLog2A).to.be.a('function')
-    expect(plugLog1A.plug).to.equal(plug1)
-    expect(plugLog2A.plug).to.equal(plug2)
-    expect(plugLog1A).to.have.property('run', run)
-    expect(plugLog2A).to.have.property('run', run)
   })
 })

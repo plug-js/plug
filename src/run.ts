@@ -1,5 +1,5 @@
 import type { Files } from './files'
-import type { Log, PlugLog, RunLog } from './utils/log'
+import type { Log } from './utils/log'
 import type { Plug } from './pipe'
 import type { Task } from './task'
 
@@ -12,8 +12,8 @@ import { randomBytes } from 'crypto'
  * and the underlying subsystem actually calling them.
  */
 export class Run {
-  #log?: RunLog
-  #plugLogs = new WeakMap<Plug, PlugLog>()
+  #logs = new WeakMap<Plug, Log>()
+  #log?: Log
 
   readonly id!: RunId
   readonly tasks!: readonly Task[]
@@ -48,17 +48,13 @@ export class Run {
     Object.freeze(this)
   }
 
-  log(): RunLog
-  log(plug: Plug): PlugLog
+  log(): Log
+  log(plug: Plug): Log
   log(plug?: Plug): Log {
-    if (plug) {
-      let log = this.#plugLogs.get(plug)
-      if (! log) this.#plugLogs.set(plug, log = makeLog(this, plug))
-      return log
-    } else {
-      if (this.#log) return this.#log
-      return this.#log = makeLog(this)
-    }
+    if (! plug) return this.#log || (this.#log = makeLog(this))
+    let log = this.#logs.get(plug)
+    if (! log) this.#logs.set(plug, log = makeLog(this, plug))
+    return log
   }
 
   for(task: Task): Run {

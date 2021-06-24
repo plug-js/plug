@@ -1,5 +1,5 @@
 import type { Run, Runnable } from './run'
-import type { RunLog } from './utils/log'
+import type { Log } from './utils/log'
 
 import assert from 'assert'
 
@@ -24,7 +24,7 @@ export type TaskCall = (() => TaskPipe) & {
 export interface Task extends Runnable {
   /** The (optional) description of this task */
   readonly description?: string
-  run(run: Run, log?: RunLog): Files | Promise<Files>
+  run(run: Run, log?: Log): Files | Promise<Files>
 }
 
 /* ========================================================================== *
@@ -138,7 +138,7 @@ class ParallelTask extends AbstractTask {
     this.#tasks = tasks
   }
 
-  async runTask(run: Run, log: RunLog = run.log()): Promise<Files> {
+  async runTask(run: Run, log: Log = run.log()): Promise<Files> {
     // Parallelize the run of each task, get all output filesystems
     const outputs = await parallelize(this.#tasks, (task) => task.run(run, log))
 
