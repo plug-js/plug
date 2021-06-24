@@ -7,6 +7,7 @@ import type { Plug } from '../pipe'
 import { Files } from '../files'
 import { basename } from 'path'
 import { install } from '../pipe'
+import { SOURCE_MAPPING_URL } from '../source-maps'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -135,7 +136,7 @@ export class SourceMapsPlug implements Plug {
       let contents = await file.contents()
 
       // if we have a URL to our sourcemap we'll add it to the content
-      if (url) contents += `\n//# ${'sourceMappingURL'}=${url}`
+      if (url) contents += `\n//# ${SOURCE_MAPPING_URL}=${url}`
 
       // add our file with the modified source map
       output.add(file.absolutePath, {

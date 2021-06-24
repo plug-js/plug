@@ -13,6 +13,13 @@ interface ExtractedSourceMap {
 }
 
 /**
+ * The `sourceMappingURL` constant (without any leading comment marker or
+ * trailing equal sign) exposed here so that we don't end up with false
+ * positives when compiling our own code
+ */
+export const SOURCE_MAPPING_URL = 'sourceMappingURL'
+
+/**
  * Extracts, optionally wiping, a source mapping url from some code at the
  * specified path, returning either the source map or the location of the
  * external file containing it
@@ -24,6 +31,5 @@ interface ExtractedSourceMap {
 export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap {
   const { contents, url } = extractSourceMappingURL(code, wipe)
   const { sourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
-
   return { contents, sourceMap, sourceMapFile }
 }

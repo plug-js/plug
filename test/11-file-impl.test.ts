@@ -7,7 +7,7 @@ import { tmpdir } from 'os'
 import { DirectoryPath, createFilePath, getParent, FilePath } from '../src/utils/paths'
 import { File, Files } from '../src/files'
 import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
-import { FileSourceMap } from '../src/source-maps'
+import { FileSourceMap, SOURCE_MAPPING_URL } from '../src/source-maps'
 
 describe('Files', () => {
   function makeFiles(directory: string): Files {
@@ -50,7 +50,7 @@ describe('Files', () => {
     })
 
     it('should create a File with an inline source map', async () => {
-      const contents = '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo`
 
       function create(sourceMap?: any): File {
         return makeFiles('/foo').add('bar.js', { contents, sourceMap })
@@ -74,7 +74,7 @@ describe('Files', () => {
     })
 
     it('should create a File with an external source map', async () => {
-      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
         const list = makeFiles('/foo')
@@ -100,7 +100,7 @@ describe('Files', () => {
     })
 
     it('should create a File with a missing external source map', async () => {
-      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
         return makeFiles('/foo').add('bar.js', { contents, sourceMap })
@@ -191,7 +191,7 @@ describe('Files', () => {
     })
 
     it('should create a File with an inline source map', async () => {
-      const contents = '//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ\n// foo`
 
       function create(sourceMap?: any): File {
         return makeFiles('/foo').add('bar.js', { contents, sourceMap })
@@ -215,7 +215,7 @@ describe('Files', () => {
     })
 
     it('should create a File with an external source map', async () => {
-      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
         const list = makeFiles('/foo')
@@ -241,7 +241,7 @@ describe('Files', () => {
     })
 
     it('should create a File with a missing external source map', async () => {
-      const contents = '//# sourceMappingURL=bar.js.map\n// foo'
+      const contents = `//# ${SOURCE_MAPPING_URL}=bar.js.map\n// foo`
 
       function create(sourceMap?: any): File {
         return makeFiles('/foo').add('bar.js', { contents, sourceMap })
