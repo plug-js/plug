@@ -141,14 +141,14 @@ export class CompilePlug implements Plug {
     // Process each file we emitted and add it to the output
     for (const [ path, code ] of emittedFiles.entries()) {
       const { contents, url } = extractSourceMappingURL(code, true)
-      const sourceMapFile = url ? createFilePath(getParent(path), url) : undefined
-      const sourceMap = sourceMapFile ? sourceMaps.get(sourceMapFile) : undefined
+      const sourceMapFile = url ? createFilePath(getParent(path), url) /* istanbul ignore next */ : undefined
+      const sourceMap = sourceMapFile ? sourceMaps.get(sourceMapFile) /* istanbul ignore next */ : undefined
       const originalPath = originalPaths.get(path)
 
       log.trace(`Emitting "${path}" (sourceMap=${!!sourceMap})`)
       output.add(path, {
         contents,
-        sourceMap: sourceMap || false,
+        sourceMap: sourceMap /* istanbul ignore next */ || false,
         sourceMapSources: input,
         originalPath: originalPath,
       })
