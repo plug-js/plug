@@ -7,6 +7,10 @@ import { isatty } from 'tty'
 
 /* ========================================================================== */
 
+/* Our type to process time markers */
+const start = Symbol()
+type Marker = { [start]: bigint }
+
 /** Our logging levels */
 export enum LogLevel {
   TRACE = 0,
@@ -39,23 +43,9 @@ export type Log = ((...args: [ any, ...any ]) => void) & {
   alert(...args: [ any, ...any ]): void
   /** Emit an _error_ message */
   error(...args: [ any, ...any ]): void
+  /** Obtain a marker for logging times */
+  start(): Marker
 } & Readonly<Omit<LogOptions, 'write'>>
-
-/**
- * A `Log` configured for a `Run`.
- *
- * This is really just a marker type, to fail compilation when passing around
- * the wrong kind of `Log` between the various components.
- */
-export type RunLog = Log & { readonly run: Run }
-
-/**
- * A `Log` configured for `Plug` instances.
- *
- * This is really just a marker type, to fail compilation when passing around
- * the wrong kind of `Log` between the various components.
- */
-export type PlugLog = Log & { readonly plug: Plug }
 
 /* ========================================================================== */
 
@@ -87,7 +77,7 @@ export const options: LogOptions = (() => {
 function emit(
     level: LogLevel,
     run: Run | undefined,
-    plug: Plug | undefined,
+    plug: string | undefined,
     ...args: any[]
 ): void {
   // First check if we _really_ have to log this message
@@ -139,14 +129,14 @@ function emit(
       push(RGB['#00ff00'], run.project.getTaskName(run.tasks[i]))
     }
     // w(RGB['#00ff00'], taskName)
-    if (plug?.name) {
+    if (plug) {
       push(RGB['#005f00'], '|')
-      push(RGB['#00af00'], plug.name)
+      push(RGB['#00af00'], plug)
     }
     push(RGB['#005f00'], '} ')
-  } else if (plug?.name) {
+  } else if (plug) {
     push(RGB['#005f00'], '{')
-    push(RGB['#00af00'], plug.name)
+    push(RGB['#00af00'], plug)
     push(RGB['#005f00'], '} ')
   }
 
@@ -170,8 +160,16 @@ function emit(
     }
 
     // Not an error, add a space and continue...
-    if (i) push(null, ' ')
-    push(null, typeof arg === 'string' ? arg : inspect(arg, { colors }))
+    if (i) strings.push(' ')
+    if (arg && (typeof arg === 'object') && (start in arg)) {
+      const nanos = process.hrtime.bigint() - arg[start]
+      const millis = Number(nanos / 1000n) / 1000
+      strings.push(inspect(millis, { colors }), ' ms')
+    } else if (typeof arg === 'string') {
+      strings.push(arg)
+    } else {
+      strings.push(inspect(arg, { colors }))
+    }
   }
 
   // Close up (always reset, convert to string, write)
@@ -181,22 +179,21 @@ function emit(
 /* ========================================================================== */
 
 /* Create a `Log` for the given `Run` */
-export function makeLog(run: Run): RunLog
+export function makeLog(run: Run): Log
 /* Create a `Log` for the given `Run` and `Plug` instance */
-export function makeLog(run: Run, plug: Plug): PlugLog
+export function makeLog(run: Run, plug: Plug): Log
 // overloaded function
-export function makeLog(run?: Run, plug?: Plug): Log {
-  return Object.defineProperties(emit.bind(undefined, LogLevel.BASIC, run, plug), {
-    'trace': { value: emit.bind(undefined, LogLevel.TRACE, run, plug) },
-    'debug': { value: emit.bind(undefined, LogLevel.DEBUG, run, plug) },
-    'alert': { value: emit.bind(undefined, LogLevel.ALERT, run, plug) },
-    'error': { value: emit.bind(undefined, LogLevel.ERROR, run, plug) },
-    'colors': { value: options.colors },
-    'level': { value: options.level },
-    'times': { value: options.times },
-    'plug': { value: plug },
-    'run': { value: run },
-  }) as Log
+export function makeLog(run?: Run, { name: plug } = {} as Plug): Log {
+  const log = (...args: any[]): void => emit(LogLevel.BASIC, run, plug, ...args)
+  log.trace = (...args: any[]): void => emit(LogLevel.TRACE, run, plug, ...args)
+  log.debug = (...args: any[]): void => emit(LogLevel.DEBUG, run, plug, ...args)
+  log.alert = (...args: any[]): void => emit(LogLevel.ALERT, run, plug, ...args)
+  log.error = (...args: any[]): void => emit(LogLevel.ERROR, run, plug, ...args)
+  log.start = () => ({ [start]: process.hrtime.bigint() })
+  log.colors = options.colors
+  log.level = options.level
+  log.times = options.times
+  return log
 }
 
 /* A shared log instance not associated with a particular `Run` or `Plug` */
