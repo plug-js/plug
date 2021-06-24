@@ -1,6 +1,6 @@
 import type { FilePath } from '../utils/paths'
 
-import { FileSourceMap } from './source-map'
+import { FileSourceMap } from './file'
 import { URL, fileURLToPath, pathToFileURL } from 'url'
 
 // Lifted from "source-map-support"

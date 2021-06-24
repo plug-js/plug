@@ -1,10 +1,11 @@
 import type { FilePath } from '../utils/paths'
-import type { FileSourceMap } from './source-map'
+import type { FileSourceMap } from './file'
 
 import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
-export { FileSourceMap } from './source-map'
+export type { SourceMapOptions } from './file'
+export { FileSourceMap } from './file'
 export { extractSourceMappingURL } from './extract'
 export { parseSourceMappingURL } from './parse'
 
