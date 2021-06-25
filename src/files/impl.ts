@@ -6,7 +6,8 @@ import { File } from './file'
 import { FileSourceMap } from '../sourcemaps'
 import { extractSourceMap } from '../sourcemaps'
 import { log } from '../utils/log'
-import { promises as fs, readFileSync, statSync } from 'fs'
+import { readFileSync, statSync } from 'fs'
+import { readFile } from '../utils/asyncfs'
 
 /* ========================================================================== *
  * VIRTUAL FILE IMPLEMENTATION                                                *
@@ -89,15 +90,8 @@ export class FileImpl extends File {
     if (this.#data) return this.#promise = Promise.resolve(this.#data)
 
     return this.#promise = Promise.resolve()
-        .then(() => fs.readFile(this.originalPath, 'utf8'))
+        .then(() => readFile(this.originalPath, 'utf8'))
         .then((content) => this.#data = parseContentsForSourceMap(this, content, this.#sourceMapSources))
-        .catch((error) => {
-          // No idea why sometimes stacks don't have a trace when coming out of
-          // the "fs.promises" api... There is a _stack_ property on the object
-          // but it simply includes the first line, no whatsoever trace???
-          Error.captureStackTrace(error)
-          throw error
-        })
   }
 
   /* ======================================================================== *

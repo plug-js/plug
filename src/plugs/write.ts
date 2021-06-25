@@ -12,7 +12,7 @@ import { SourceMapsPlug } from './sourcemaps'
 import { createDirectoryPath, createFilePath, isChild } from '../utils/paths'
 import { getParent } from '../utils/paths'
 import { install } from '../pipe'
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, writeFile } from '../utils/asyncfs'
 import { parallelize } from '../utils/parallelize'
 
 declare module '../pipe' {
@@ -72,13 +72,12 @@ export class WritePlug extends SourceMapsPlug implements Plug {
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const time = log.start()
 
-    // Resolve our target directory, check it's a child of our input directory
-    // (never write outside our designated area) and create it...
+    // Resolve our target directory and check it's a child of our input
+    // directory (never write outside our designated area)
     const directory = this.#directory ?
         createDirectoryPath(input.directory, this.#directory) : input.directory
     assert(isChild(input.directory, directory) || (directory === input.directory),
         `Refusing to write to "${directory}", not a child of "${input.directory}"`)
-    await mkdir(directory, { recursive: true })
 
     // Slightly different process if we have source maps or not
     let output: Files
