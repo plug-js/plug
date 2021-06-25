@@ -1,6 +1,6 @@
 import assert from 'assert'
 
-import type { DirectoryPath } from '../utils/paths'
+import type { FilePath } from '../utils/paths'
 import type { File } from '../files'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
@@ -27,7 +27,7 @@ export interface WriteOptions extends SourceMapsOptions {
    * external file (`external`), not processed at all (`none`)
    *
    * This alters the behavior of `SourceMapsPlug`, because when `none` is
-   * specified, rather than _stripping_ we do no processin at all.
+   * specified, rather than _stripping_ source maps we do no processing at all.
    *
    * @default 'inline'
    */
@@ -63,11 +63,10 @@ export class WritePlug extends SourceMapsPlug implements Plug {
   }
 
   /** The function used for writing files (mainly for testing) */
-  async write(file: File, directory: DirectoryPath, log: Log): Promise<void> {
-    const path = createFilePath(directory, file.relativePath)
-    await mkdir(getParent(path), { recursive: true })
-    await writeFile(path, await file.contents(), this.#encoding)
-    log.trace(`Written "${path}"`)
+  protected async write(from: File, to: FilePath, log: Log): Promise<void> {
+    await mkdir(getParent(to), { recursive: true })
+    await writeFile(to, await from.contents(), this.#encoding)
+    log.trace(`Written "${to}"`)
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
@@ -82,23 +81,34 @@ export class WritePlug extends SourceMapsPlug implements Plug {
     await mkdir(directory, { recursive: true })
 
     // Slightly different process if we have source maps or not
+    let output: Files
     if (this.sourceMaps) {
       // If we have source maps to write the output will be different: we might
       // have extra files (the external source maps) and the content will most
       // likely change (the source mapping URL is added)
-      const output = new Files(input)
-      await parallelize(input, async (file) => {
-        const added = await this.processFile(file, log, output)
-        return parallelize(added, (file) => this.write(file, directory, log))
+      output = new Files(input)
+      await parallelize(input, async (originalFile) => {
+        const to = createFilePath(directory, originalFile.relativePath)
+        const added = await this.processFile(originalFile, to, output, log)
+        return parallelize(added, (file) => this.write(file, file.absolutePath, log))
       })
-      log.debug('Written', output.length, 'files in', time)
-      return output
+    } else if (directory != input.directory) {
+      // If the target directory is not the same as the input one, we "move"
+      // the files, so, we have to pass new files through to the next stage
+      output = new Files(input)
+      await parallelize(input, async (file) => {
+        const to = createFilePath(directory, file.relativePath)
+        return this.write(file, to, log)
+      })
     } else {
-      // When no source map processing is done, just write, nothing else...
-      await parallelize(input, (file) => this.write(file, directory, log))
-      log.debug('Written', input.length, 'files in', time)
-      return input
+      // No sourcemaps, no relocation to another directory... Just WRITE!
+      await parallelize(input, (file) => this.write(file, file.absolutePath, log))
+      output = input
     }
+
+    // Log what we wrote and be done with it
+    log.debug('Written', output.length, 'files in', time)
+    return output
   }
 }
 
