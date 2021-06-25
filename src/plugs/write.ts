@@ -1,6 +1,5 @@
 import assert from 'assert'
 
-import type { FilePath } from '../utils/paths'
 import type { File } from '../files'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
@@ -63,10 +62,11 @@ export class WritePlug extends SourceMapsPlug implements Plug {
   }
 
   /** The function used for writing files (mainly for testing) */
-  protected async write(from: File, to: FilePath, log: Log): Promise<void> {
-    await mkdir(getParent(to), { recursive: true })
-    await writeFile(to, await from.contents(), this.#encoding)
-    log.trace(`Written "${to}"`)
+  protected async write(file: File, log: Log): Promise<void> {
+    const path = file.absolutePath
+    await mkdir(getParent(path), { recursive: true })
+    await writeFile(path, await file.contents(), this.#encoding)
+    log.trace(`Written "${path}"`)
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
@@ -89,7 +89,7 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       await parallelize(input, async (originalFile) => {
         const to = createFilePath(directory, originalFile.relativePath)
         const added = await this.processFile(originalFile, to, output, log)
-        return parallelize(added, (file) => this.write(file, file.absolutePath, log))
+        return parallelize(added, (file) => this.write(file, log))
       })
     } else if (directory != input.directory) {
       // If the target directory is not the same as the input one, we "move"
@@ -97,11 +97,12 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       output = new Files(input)
       await parallelize(input, async (file) => {
         const to = createFilePath(directory, file.relativePath)
-        return this.write(file, to, log)
+        const added = output.add(to, file)
+        return this.write(added, log)
       })
     } else {
       // No sourcemaps, no relocation to another directory... Just WRITE!
-      await parallelize(input, (file) => this.write(file, file.absolutePath, log))
+      await parallelize(input, (file) => this.write(file, log))
       output = input
     }
 
