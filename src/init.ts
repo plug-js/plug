@@ -4,7 +4,7 @@ import { glob } from './utils/globs'
 import { createDirectoryPath } from './utils/paths'
 
 import type { DirectoryPath } from './utils/paths'
-import type { GlobOptions } from './utils/globs'
+import type { GlobOptions } from './types/globs'
 import type { Run } from './run'
 
 // At least one glob, and optional options at the end

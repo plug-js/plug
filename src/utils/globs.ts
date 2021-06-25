@@ -1,24 +1,13 @@
 import type { DirectoryPath } from './paths'
 import type { Options } from 'fast-glob'
+import type { GlobOptions } from '../types/globs'
 
+import { GLOB_OPTIONS_DEFAULTS } from '../types/globs'
 import { stream } from 'fast-glob'
 
-/**
- * A subset of `fast-glob`'s own `Options`, only exposing those options which
- * are relevant to us, and forcedly removing our forced defaults
- */
-export type GlobOptions = Pick<Options, 'baseNameMatch'
-  | 'braceExpansion' | 'caseSensitiveMatch' | 'concurrency' | 'deep'
-  | 'dot' | 'extglob' | 'followSymbolicLinks' | 'globstar' | 'ignore'
-  | 'throwErrorOnBrokenSymbolicLink'> & {
-  /**
-   * Include `node_modules` in glob matching
-   * @default false
-   */
-  includeNodeModules?: boolean
-}
-
-const defaults: Options = {
+// Our defaults for "fast-glob"
+const FAST_GLOB_DEFAULTS: Readonly<Required<Omit<Options, 'cwd' | 'fs'>>> = Object.freeze({
+  ...GLOB_OPTIONS_DEFAULTS,
   absolute: false, // VFS always does the resolution
   markDirectories: false, // do not mark directories
   onlyDirectories: false, // no directories
@@ -26,10 +15,11 @@ const defaults: Options = {
   stats: false, // no stats
   suppressErrors: false, // report errors
   unique: false, // VFS already dedupes files
-}
+  objectMode: false, // Always paths, never objects
+})
 
 /**
- * Process globs .
+ * Process globs.
  */
 export async function glob(
     directory: DirectoryPath,
@@ -38,7 +28,11 @@ export async function glob(
     callback: (entry: string) => void | Promise<void>,
 ): Promise<void> {
   // Prepare the glob options, assigning our defaults and current directory
-  const opts: Options = Object.assign({}, options, defaults, { cwd: directory })
+  const opts: Options = { // Object.assign({}, options, defaults, { cwd: directory })
+    ...options,
+    ...FAST_GLOB_DEFAULTS,
+    cwd: directory,
+  }
 
   // istanbul ignore else - Ignore node modules by default
   if (! options.includeNodeModules) {
