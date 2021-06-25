@@ -44,10 +44,10 @@ describe('Files', () => {
       expect(await file2.contents()).to.equal('// foobar')
       expect(await file2.sourceMap()).to.be.undefined
 
-      const sourceMap = FileSourceMap.for('/foo' as any, { version: 3 } as any)
+      const sourceMap = FileSourceMap.for('/foo/wrong.js' as any, { version: 3 } as any)
       const file3 = makeFiles('/foo').add('bar.js', { contents: 'any', sourceMap })
       expect(await file3.contents()).to.equal('any')
-      expect(await file3.sourceMap()).to.equal(sourceMap)
+      expect((await file3.sourceMap())?.file).to.equal('/foo/bar.js')
     })
 
     it('should create a File with an inline source map', async () => {
@@ -219,10 +219,10 @@ describe('Files', () => {
       expect(file2.contentsSync()).to.equal('// foobar')
       expect(file2.sourceMapSync()).to.be.undefined
 
-      const sourceMap = FileSourceMap.for('/foo' as any, { version: 3 } as any)
+      const sourceMap = FileSourceMap.for('/foo/wrong.js' as any, { version: 3 } as any)
       const file3 = makeFiles('/foo').add('bar.js', { contents: 'any', sourceMap })
       expect(file3.contentsSync()).to.equal('any')
-      expect(file3.sourceMapSync()).to.equal(sourceMap)
+      expect(file3.sourceMapSync()?.file).to.eql('/foo/bar.js')
     })
 
     it('should create a File with an inline source map', () => {
