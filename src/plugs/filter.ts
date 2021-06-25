@@ -11,6 +11,7 @@ import { FILTER_OPTIONS_DEFAULTS } from '../types/globs'
 import { Files } from '../files'
 import { install } from '../pipe'
 import { parseGlobOptions, GlobParameters } from '../utils/globs'
+import { getRelativePath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -49,16 +50,22 @@ export class FilterPlug<Options extends FilterOptions = FilterOptions> implement
     return this.#options
   }
 
-  protected filter(input: Files): File[] {
-    const paths = input.map((file) => file.relativePath)
-    const matches = micromatch(paths, this.#globs, this.#matchOptions)
-    const output: File[] = []
-    for (const match of matches) {
-      const file = input.get(match)
-      // istanbul ignore else - file always exists
-      if (file) output.push(file)
+  protected filter(input: Files, matchOriginalPaths?: boolean): File[] {
+    // Prepare a map of relativePath => file
+    const files: Record<string, File> = {}
+    for (const file of input) {
+      const relative = matchOriginalPaths ?
+          getRelativePath(input.directory, file.originalPath) :
+          file.relativePath
+      files[relative] = file
     }
-    return output
+
+    // Match against our relative paths
+    const paths = Object.keys(files)
+    const matches = micromatch(paths, this.#globs, this.#matchOptions)
+
+    // Map back the matched paths to our files...
+    return matches.map((path) => files[path])
   }
 
   process(input: Files, run: Run, log: Log): Files | Promise<Files> {

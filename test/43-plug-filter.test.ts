@@ -1,4 +1,6 @@
 import { expect } from 'chai'
+import { FilePath } from '../src/utils/paths'
+import { File, Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { FilterPlug } from '../src/plugs/filter'
 import { mock } from './support'
@@ -44,6 +46,28 @@ describe('Plug Filter Processor', () => {
     const output2 = await filter2.process(files, run, log)
 
     expect(output2.list().sort()).to.eql([ file2, file1 ])
+  })
+
+  it('should filter some files matching original paths', () => {
+    const { files } = mock('/foo')
+
+    const file1 = files.add('foo.js', { contents: 'contents', originalPath: '/foo/foo.ts' as FilePath })
+    /* file2   */ files.add('bar.js', { contents: 'contents' })
+
+    const filter = new class extends FilterPlug {
+      constructor() {
+        super('**/*.ts')
+      }
+
+      filter(input: Files, matchOriginals?: boolean): File[] {
+        return super.filter(input, matchOriginals)
+      }
+    }
+
+
+    expect(filter.filter(files)).to.eql([]) // not matching originals
+    expect(filter.filter(files, false)).to.eql([]) // not matching originals
+    expect(filter.filter(files, true)).to.eql([ file1 ]) // match originals
   })
 
   it('should not filter an empty file list', () => {
