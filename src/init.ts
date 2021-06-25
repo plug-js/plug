@@ -1,6 +1,6 @@
 import { Files } from './files'
 import { PlugPipe, TaskPipe } from './pipe'
-import { glob } from './utils/globs'
+import { parseGlobOptions, glob } from './utils/globs'
 import { createDirectoryPath } from './utils/paths'
 
 import type { DirectoryPath } from './utils/paths'
@@ -15,14 +15,7 @@ async function readDirectory(
     directory: DirectoryPath,
     ...args: ReadArguments
 ): Promise<Files> {
-  const last = args.splice(-1)[0]
-  const { globs, options } = typeof last === 'string' ? {
-    globs: [ ...args as string[], last ],
-    options: {},
-  } : {
-    globs: [ ...args as string[] ],
-    options: last,
-  }
+  const { globs, options = {} } = parseGlobOptions(args)
 
   const log = run.log()
   const time = log.start()

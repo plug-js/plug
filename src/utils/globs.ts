@@ -1,6 +1,8 @@
 import type { DirectoryPath } from './paths'
 import type { Options } from 'fast-glob'
-import type { GlobOptions } from '../types/globs'
+import type { FilterOptions, GlobOptions } from '../types/globs'
+
+import assert from 'assert'
 
 import { GLOB_OPTIONS_DEFAULTS } from '../types/globs'
 import { stream } from 'fast-glob'
@@ -17,6 +19,32 @@ const FAST_GLOB_DEFAULTS: Readonly<Required<Omit<Options, 'cwd' | 'fs'>>> = Obje
   unique: false, // VFS already dedupes files
   objectMode: false, // Always paths, never objects
 })
+
+
+type GlobsAndOptions<O> = { globs: [ string, ...string[] ], options?: O }
+export type GlobParameters<O> = [ string, ...string[] ] | [ string, ...string[], O ]
+
+/**
+ * Parse an array of at least one string, followed by an optional `Options`
+ * argument.
+ */
+export function parseGlobOptions<Options extends FilterOptions>(
+    args: GlobParameters<Options>,
+): GlobsAndOptions<Options> {
+  const last = args.splice(-1)[0]
+
+  const { patterns: globs, options } = typeof last === 'string' ? {
+    patterns: [ ...args as string[], last ],
+    options: undefined,
+  } : {
+    patterns: [ ...args as string[] ],
+    options: last,
+  }
+
+  assert(globs.length > 0, 'No glob patterns specified')
+
+  return { globs: globs as [ string, ...string[] ], options }
+}
 
 /**
  * Process globs.

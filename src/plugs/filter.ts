@@ -1,15 +1,16 @@
 import type { File } from '../files'
 import type { FilterOptions } from '../types/globs'
 import type { Log } from '../utils/log'
+import type { Options as MicroMatchOptions } from 'micromatch'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-import type { Options } from 'micromatch'
 
 import micromatch from 'micromatch'
 
 import { FILTER_OPTIONS_DEFAULTS } from '../types/globs'
 import { Files } from '../files'
 import { install } from '../pipe'
+import { parseGlobOptions, GlobParameters } from '../utils/globs'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -17,39 +18,34 @@ declare module '../pipe' {
   }
 }
 
-type FilterArguments = [ string, ...string[], FilterOptions ] | [ string, ...string[] ]
-
-export class FilterPlug implements Plug {
-  #options: Options
+export class FilterPlug<Options extends FilterOptions = FilterOptions> implements Plug {
+  #options: MicroMatchOptions
+  #opts: Options
   #globs: string[]
 
-  constructor(...args: FilterArguments) {
-    const last = args.splice(-1)[0]
-
-    const { globs, options } = typeof last === 'string' ? {
-      globs: [ ...args as string[], last ],
-      options: {} as FilterOptions,
-    } : {
-      globs: [ ...args as string[] ],
-      options: last,
-    }
+  constructor(...args: GlobParameters<Options>) {
+    const { globs, options = {} as Options } = parseGlobOptions(args)
 
     this.#globs = globs
 
-    const optionsWithDefaults = {
+    this.#opts = {
       ...FILTER_OPTIONS_DEFAULTS,
       ...options,
-    }
+    } as Options
 
     this.#options = {
-      basename: optionsWithDefaults.baseNameMatch,
-      nobrace: !optionsWithDefaults.braceExpansion,
-      nocase: !optionsWithDefaults.caseSensitiveMatch,
-      dot: optionsWithDefaults.dot,
-      noextglob: !optionsWithDefaults.extglob,
-      noglobstar: !optionsWithDefaults.globstar,
-      ignore: optionsWithDefaults.ignore,
+      basename: this.#opts.baseNameMatch,
+      nobrace: !this.#opts.braceExpansion,
+      nocase: !this.#opts.caseSensitiveMatch,
+      dot: this.#opts.dot,
+      noextglob: !this.#opts.extglob,
+      noglobstar: !this.#opts.globstar,
+      ignore: this.#opts.ignore,
     }
+  }
+
+  protected get options(): Options {
+    return this.#opts
   }
 
   protected filter(input: Files): File[] {
