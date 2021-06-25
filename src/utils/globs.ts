@@ -28,7 +28,7 @@ export async function glob(
     callback: (entry: string) => void | Promise<void>,
 ): Promise<void> {
   // Prepare the glob options, assigning our defaults and current directory
-  const opts: Options = { // Object.assign({}, options, defaults, { cwd: directory })
+  const opts: Options = {
     ...options,
     ...FAST_GLOB_DEFAULTS,
     cwd: directory,

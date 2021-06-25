@@ -66,7 +66,7 @@ function loadOptions(
   resolutionStack.push(extendedPath)
   const extendsOptions = loadOptions(extendedPath, files, diagnostics, resolutionStack)
   resolutionStack.pop()
-  return Object.assign({}, extendsOptions, options)
+  return { ...extendsOptions, ...options }
 }
 
 
@@ -89,7 +89,7 @@ export function getCompilerOptions(
 
   // If we have no path, return the defaults
   if (! path) {
-    const options = Object.assign(defaults, overrides)
+    const options = { ...defaults, ...overrides }
     return { options, diagnostics: [] }
   }
 
@@ -108,6 +108,6 @@ export function getCompilerOptions(
   if (overrides.rootDirs) overrides.rootDirs = overrides.rootDirs.map((d) => createDirectoryPath(files.directory, d))
 
   // No issues, let's create our options...
-  const options = Object.assign(defaults, loaded, overrides)
+  const options = { ...defaults, ...loaded, ...overrides }
   return { options, diagnostics, filePath: path }
 }
