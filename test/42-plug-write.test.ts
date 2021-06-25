@@ -12,7 +12,6 @@ import { mock } from './support'
 
 describe('Plug Write Processor', () => {
   it('should be installed', () => {
-    new WritePlug()
     expect(new PlugPipe().write).to.be.a('function')
   })
 
