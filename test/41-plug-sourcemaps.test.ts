@@ -9,7 +9,7 @@ import { Log } from '../src/utils/log'
 import { mock } from './support'
 import { createFilePath, FilePath } from '../src/utils/paths'
 
-describe('Plug SurceMaps Processor', () => {
+describe('Plug Surcemaps Processor', () => {
   it('should be installed', () => {
     expect(new PlugPipe().sourcemaps).to.be.a('function')
   })
