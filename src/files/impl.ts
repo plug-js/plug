@@ -56,7 +56,7 @@ export class FileImpl extends File {
       if (sourceMap === true) { // parse the source map
         this.#data = parseContentsForSourceMap(this, contents, sourceMapSources)
       } else if (sourceMap instanceof FileSourceMap) {
-        this.#data = { contents, sourceMap }
+        this.#data = { contents, sourceMap: sourceMap.with(this.absolutePath) }
       } else if (sourceMap !== false) {
         const fileSourceMap = FileSourceMap.for(absolutePath, sourceMap, sourceMapSources)
         this.#data = { contents, sourceMap: fileSourceMap }
