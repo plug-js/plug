@@ -1,9 +1,13 @@
 import { expect } from 'chai'
+import { PlugPipe } from '../src/pipe'
 import { FilterPlug } from '../src/plugs/filter'
-import { FilterOptions } from '../src/types/globs'
 import { mock } from './support'
 
 describe('Plug Filter Processor', () => {
+  it('should be installed', () => {
+    expect(new PlugPipe().filter).to.be.a('function')
+  })
+
   it('should filter some files', async () => {
     const { files, run, log } = mock('/foo')
 
@@ -11,16 +15,9 @@ describe('Plug Filter Processor', () => {
     /* file2   */ files.add('Bar.Ts', 'contents')
     /* file3   */ files.add('baz.txt', 'contents')
 
-    const filter = new class extends FilterPlug {
-      constructor() {
-        super('**/*.ts')
-      }
-      getOptions(): FilterOptions | undefined {
-        return this.options
-      }
-    }
+    const filter = new FilterPlug('**/*.ts')
     const output = await filter.process(files, run, log)
-    expect(filter.getOptions()).to.be.undefined
+    expect(filter).to.have.property('options').undefined
 
     expect(output.list()).to.eql([ file1 ])
   })
@@ -33,21 +30,17 @@ describe('Plug Filter Processor', () => {
     /* file3   */ files.add('baz.txt', 'contents')
 
     const options1 = { caseSensitiveMatch: true }
-    const filter1 = new class extends FilterPlug {
-      constructor() {
-        super('**/*.ts', options1)
-      }
-      getOptions(): FilterOptions | undefined {
-        return this.options
-      }
-    }
-    expect(filter1.getOptions()).to.equal(options1)
+    const filter1 = new FilterPlug('**/*.ts', options1)
+    expect(filter1).to.have.property('options').equal(options1)
 
     const output1 = await filter1.process(files, run, log)
 
     expect(output1.list()).to.eql([ file1 ])
 
-    const filter2 = new FilterPlug('**/*.ts', { caseSensitiveMatch: false })
+    const options2 = { caseSensitiveMatch: false }
+    const filter2 = new FilterPlug('**/*.ts', options2)
+    expect(filter2).to.have.property('options').equal(options2)
+
     const output2 = await filter2.process(files, run, log)
 
     expect(output2.list().sort()).to.eql([ file2, file1 ])
