@@ -9,7 +9,7 @@ import { Log } from '../src/utils/log'
 import { mock } from './support'
 import { createFilePath, FilePath } from '../src/utils/paths'
 
-describe('Plug Surcemaps Processor', () => {
+describe.only('Plug Surcemaps Processor', () => {
   it('should be installed', () => {
     expect(new PlugPipe().sourcemaps).to.be.a('function')
   })
@@ -59,7 +59,7 @@ describe('Plug Surcemaps Processor', () => {
       constructor() {
         super({ // test other non-default stuff!
           sourceMaps: 'external',
-          sourceRoot: 'https://example.org/bar',
+          sourceRoot: 'https://example.org/bar/',
           attachSources: true,
         })
       }
@@ -68,15 +68,15 @@ describe('Plug Surcemaps Processor', () => {
       }
     }
 
-    const { files: input, log } = mock('/foo/source')
+    const { files: input, log } = mock('/foo')
     const { files: output } = mock('/foo')
 
-    input.add('original.txt', { contents: 'original', sourceMap: false })
+    input.add('target/original.txt', { contents: 'original', sourceMap: false })
     const file = input.add('generated.txt', {
       contents: 'source',
       sourceMap: {
         version: 3,
-        sources: [ 'original.txt' ],
+        sources: [ 'target/original.txt' ], // check normalization of paths
       } as RawSourceMap,
       sourceMapSources: input,
     })
@@ -94,8 +94,8 @@ describe('Plug Surcemaps Processor', () => {
     expect(JSON.parse(mapFile.contentsSync())).to.eql({
       version: 3,
       file: 'output.txt',
-      sources: [ '../source/original.txt' ],
-      sourceRoot: 'https://example.org/bar',
+      sources: [ './original.txt' ],
+      sourceRoot: 'https://example.org/bar/',
       sourcesContent: [ 'original' ],
       mappings: '',
       names: [],

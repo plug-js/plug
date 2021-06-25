@@ -7,7 +7,7 @@ import type { SourceMapOptions } from '../sourcemaps'
 
 import { Files } from '../files'
 import { SOURCE_MAPPING_URL } from '../sourcemaps'
-import { basename } from 'path'
+import { basename, sep } from 'path'
 import { createFilePath, FilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { install } from '../pipe'
 import { parallelize } from '../utils/parallelize'
@@ -110,7 +110,9 @@ export class SourceMapsPlug implements Plug {
       const sourceDirectory = getParent(from.absolutePath)
       sourceMap.sources = sourceMap.sources.map((source) => {
         const absoluteSource = createFilePath(sourceDirectory, source)
-        return getRelativeFilePath(to, absoluteSource)
+        const relativeSource = getRelativeFilePath(to, absoluteSource)
+        if (relativeSource.startsWith('..' + sep)) return relativeSource
+        return `.${sep}${relativeSource}`
       })
 
       // then replace the file and inject any source root
