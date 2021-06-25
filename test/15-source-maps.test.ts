@@ -465,5 +465,33 @@ describe('Source Maps', () => {
         '5 supplied contents',
       ].sort())
     })
+
+    it('should change paths when a file changes', async () => {
+      const { files } = mock('/foo')
+
+      const original = files.add('from/original.txt', {
+        contents: 'contents...',
+        sourceMap: { version: 3, sources: [ '../source/source.txt' ] } as RawSourceMap,
+        sourceMapSources: files,
+      })
+
+      const relocated = files.add('to/relocated.txt', original)
+
+      expect(await original.sourceMapSync()?.produceSourceMap()).to.eql({
+        version: 3,
+        file: '/foo/from/original.txt',
+        mappings: '',
+        names: [],
+        sources: [ '/foo/source/source.txt' ],
+      })
+
+      expect(await relocated.sourceMapSync()?.produceSourceMap()).to.eql({
+        version: 3,
+        file: '/foo/to/relocated.txt',
+        mappings: '',
+        names: [],
+        sources: [ '/foo/source/source.txt' ],
+      })
+    })
   })
 })
