@@ -3,7 +3,7 @@
 
 process.env.LOG_LEVEL = 'trace'
 
-const { load } = require('./build/src/project')
+const { load } = require('./bootstrap/src/project')
 load(process.cwd() + '/plugfile.ts')
     .then((project) => {
       console.log(project, project.getTaskNames())

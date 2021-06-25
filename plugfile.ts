@@ -1,6 +1,6 @@
-import { read, task } from './build/src'
+import { read, task } from './bootstrap/src'
 
 export const compile = task('Compile source code', () =>
   read('src/**/*.ts', 'test/**/*.ts', '!test/support/**.*')
       .compile('tsconfig.json')
-      .write('bootstrap', { sourceMaps: 'external' }))
+      .write('build', { sourceMaps: 'external' }))
