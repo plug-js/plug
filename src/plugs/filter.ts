@@ -1,3 +1,4 @@
+import type { File } from '../files'
 import type { FilterOptions } from '../types/globs'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
@@ -51,22 +52,28 @@ export class FilterPlug implements Plug {
     }
   }
 
-  protected filter(input: Files): Files {
+  protected filter(input: Files): File[] {
     const paths = input.map((file) => file.relativePath)
     const matches = micromatch(paths, this.#globs, this.#options)
-    const output = new Files(input)
+    const output: File[] = []
     for (const match of matches) {
       const file = input.get(match)
       // istanbul ignore else - file always exists
-      if (file) output.add(file)
+      if (file) output.push(file)
     }
     return output
   }
 
   process(input: Files, run: Run, log: Log): Files {
-    const output = this.filter(input)
+    if (! input.length) return input
+
+    const files = this.filter(input)
+    const output = new Files(input)
+    files.forEach((file) => output.add(file))
+
     log.debug('Forwarding', output.length, 'files out of', input.length,
         '(total of', input.length - output.length, 'files removed)')
+
     return output
   }
 }

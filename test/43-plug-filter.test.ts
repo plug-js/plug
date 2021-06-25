@@ -33,4 +33,11 @@ describe('Plug Filter Processor', () => {
 
     expect(output2.list().sort()).to.eql([ file2, file1 ])
   })
+
+  it('should not filter an empty file list', () => {
+    const { files, run, log } = mock('/foo')
+    const filter = new FilterPlug('**/*.ts', { caseSensitiveMatch: true })
+    const output = filter.process(files, run, log)
+    expect(output).to.equal(files)
+  })
 })
