@@ -19,38 +19,39 @@ declare module '../pipe' {
 }
 
 export class FilterPlug<Options extends FilterOptions = FilterOptions> implements Plug {
-  #options: MicroMatchOptions
-  #opts: Options
+  #matchOptions: MicroMatchOptions
+  #options?: Options
   #globs: string[]
 
   constructor(...args: GlobParameters<Options>) {
-    const { globs, options = {} as Options } = parseGlobOptions(args)
+    const { globs, options } = parseGlobOptions(args)
 
     this.#globs = globs
+    this.#options = options
 
-    this.#opts = {
+    const filterOptions = {
       ...FILTER_OPTIONS_DEFAULTS,
       ...options,
-    } as Options
+    }
 
-    this.#options = {
-      basename: this.#opts.baseNameMatch,
-      nobrace: !this.#opts.braceExpansion,
-      nocase: !this.#opts.caseSensitiveMatch,
-      dot: this.#opts.dot,
-      noextglob: !this.#opts.extglob,
-      noglobstar: !this.#opts.globstar,
-      ignore: this.#opts.ignore,
+    this.#matchOptions = {
+      basename: filterOptions.baseNameMatch,
+      nobrace: !filterOptions.braceExpansion,
+      nocase: !filterOptions.caseSensitiveMatch,
+      dot: filterOptions.dot,
+      noextglob: !filterOptions.extglob,
+      noglobstar: !filterOptions.globstar,
+      ignore: filterOptions.ignore,
     }
   }
 
-  protected get options(): Options {
-    return this.#opts
+  protected get options(): Options | undefined {
+    return this.#options
   }
 
   protected filter(input: Files): File[] {
     const paths = input.map((file) => file.relativePath)
-    const matches = micromatch(paths, this.#globs, this.#options)
+    const matches = micromatch(paths, this.#globs, this.#matchOptions)
     const output: File[] = []
     for (const match of matches) {
       const file = input.get(match)
@@ -60,7 +61,7 @@ export class FilterPlug<Options extends FilterOptions = FilterOptions> implement
     return output
   }
 
-  process(input: Files, run: Run, log: Log): Files {
+  process(input: Files, run: Run, log: Log): Files | Promise<Files> {
     if (! input.length) return input
 
     const files = this.filter(input)
