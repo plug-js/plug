@@ -26,29 +26,37 @@ export interface SourceMapOptions {
 
 export class FileSourceMap {
   readonly file!: FilePath
-
   readonly #mappings: string
   readonly #names: readonly string[]
   readonly #sources: readonly FilePath[]
   readonly #sourcesContent: (string | null)[]
   #attachedSources?: readonly (File | undefined)[]
 
-  private constructor(file: FilePath, data: RawSourceMap) {
-    Object.defineProperty(this, 'file', { enumerable: true, value: file })
+  private constructor(path: FilePath, data: FileSourceMap | RawSourceMap) {
+    Object.defineProperty(this, 'file', { enumerable: true, value: path })
+
+    if (data instanceof FileSourceMap) {
+      this.#mappings = data.#mappings
+      this.#names = data.#names
+      this.#sources = data.#sources
+      this.#sourcesContent = data.#sourcesContent
+      this.#attachedSources = data.#attachedSources
+      return
+    }
 
     const root = data.sourceRoot ? data.sourceRoot.toString() : ''
 
     this.#mappings = typeof data.mappings === 'string' ? data.mappings : ''
     this.#names = Array.isArray(data.names) ?
         data.names.map((name) => {
-          assert(name && (typeof name === 'string'), `Invalid name "${name}" in source map for "${file}"`)
+          assert(name && (typeof name === 'string'), `Invalid name "${name}" in source map for "${path}"`)
           return name
         }) : []
 
     this.#sources = Array.isArray(data.sources) ?
         data.sources.map((source) => {
-          assert(source && (typeof source === 'string'), `Invalid source "${source}" in source map for "${file}"`)
-          return createFilePath(getParent(file), root, source)
+          assert(source && (typeof source === 'string'), `Invalid source "${source}" in source map for "${path}"`)
+          return createFilePath(getParent(path), root, source)
         }) : []
 
     const sourcesContent = Array.isArray(data.sourcesContent) ?
@@ -79,11 +87,15 @@ export class FileSourceMap {
     return this.#attachedSources ? [ ...this.#attachedSources ] : []
   }
 
-  static for(file: FilePath, data: RawSourceMap, sourceMapSources?: Files): FileSourceMap | undefined {
+  with(path: FilePath): FileSourceMap {
+    return new FileSourceMap(path, this)
+  }
+
+  static for(path: FilePath, data: RawSourceMap, sourceMapSources?: Files): FileSourceMap | undefined {
     if (data && (typeof data === 'object') && data.version) {
       // sometimes version is a string, and only accept version 3
       if (data.version.toString() === '3') {
-        const sourceMap = new FileSourceMap(file, data)
+        const sourceMap = new FileSourceMap(path, data)
         if (sourceMapSources) sourceMap.attachSources(sourceMapSources)
         return sourceMap
       }
