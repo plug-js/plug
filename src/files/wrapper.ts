@@ -6,6 +6,7 @@ import { File } from './file'
 
 export class FileWrapper extends File {
   #file: File
+  #sourceMap?: FileSourceMap
 
   constructor(files: Files, file: File, path: FilePath = file.absolutePath) {
     super(files, path, file.originalPath)
@@ -20,11 +21,23 @@ export class FileWrapper extends File {
     return this.#file.contentsSync()
   }
 
-  sourceMap(): Promise<FileSourceMap | undefined> {
-    return this.#file.sourceMap()
+  async sourceMap(): Promise<FileSourceMap | undefined> {
+    if (this.#sourceMap) return this.#sourceMap
+    if (this.absolutePath === this.#file.absolutePath) {
+      return this.#sourceMap = await this.#file.sourceMap()
+    } else {
+      const sourceMap = await this.#file.sourceMap()
+      return this.#sourceMap = sourceMap?.with(this.absolutePath)
+    }
   }
 
   sourceMapSync(): FileSourceMap | undefined {
-    return this.#file.sourceMapSync()
+    if (this.#sourceMap) return this.#sourceMap
+    if (this.absolutePath === this.#file.absolutePath) {
+      return this.#sourceMap = this.#file.sourceMapSync()
+    } else {
+      const sourceMap = this.#file.sourceMapSync()
+      return this.#sourceMap = sourceMap?.with(this.absolutePath)
+    }
   }
 }
