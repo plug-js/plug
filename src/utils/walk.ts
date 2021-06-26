@@ -1,9 +1,8 @@
 import * as fs from './asyncfs'
 import { join } from 'path'
 import type { DirectoryPath, FilePath } from './paths'
-import picomatch from 'picomatch'
-import { MatchOptions } from '../types/match'
 import { parseOptions, ParseOptions } from './options'
+import { match, MatchOptions } from './match'
 
 // Convenience type for an async generator over `FilePath`s
 type WalkGenerator = AsyncGenerator<FilePath, void, void>
@@ -70,10 +69,12 @@ export interface WalkOptions extends MatchOptions {
  * the `FilePath`s found matching the specified globs and matching options
  */
 export function walk(directory: DirectoryPath, ...args: ParseOptions<WalkOptions>): WalkGenerator {
-  const { strings, options = {} } = parseOptions(args)
+  const { globs, options: { followSymlinks, maxDepth, ...options } } =
+      parseOptions(args, {
+        followSymlinks: true,
+        maxDepth: Infinity,
+      })
 
-  const { followSymlinks = true, maxDepth = Infinity } = options
 
-  const matcher = picomatch(strings, options as any) // Picomatch type is wrong!
-  return walker(directory, matcher, followSymlinks, maxDepth, 0)
+  return walker(directory, match({ globs, options }), followSymlinks, maxDepth, 0)
 }
