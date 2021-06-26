@@ -14,8 +14,7 @@ describe('Plug Filter Processor', () => {
     const { files, run, log } = mock('/foo')
 
     const file1 = files.add('foo.ts', 'contents')
-    /* file2   */ files.add('Bar.Ts', 'contents')
-    /* file3   */ files.add('baz.txt', 'contents')
+    /* file2   */ files.add('bar.txt', 'contents')
 
     const filter = new FilterPlug('**/*.ts')
     const output = await filter.process(files, run, log)
