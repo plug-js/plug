@@ -19,7 +19,6 @@ describe('Plug Filter Processor', () => {
 
     const filter = new FilterPlug('**/*.ts')
     const output = await filter.process(files, run, log)
-    expect(filter).to.have.property('options').undefined
 
     expect(output.list()).to.eql([ file1 ])
   })
@@ -31,17 +30,15 @@ describe('Plug Filter Processor', () => {
     const file2 = files.add('Bar.Ts', 'contents')
     /* file3   */ files.add('baz.txt', 'contents')
 
-    const options1 = { nocase: true }
+    const options1 = { nocase: false }
     const filter1 = new FilterPlug('**/*.ts', options1)
-    expect(filter1).to.have.property('options').equal(options1)
 
     const output1 = await filter1.process(files, run, log)
 
     expect(output1.list()).to.eql([ file1 ])
 
-    const options2 = { nocase: false }
+    const options2 = { nocase: true }
     const filter2 = new FilterPlug('**/*.ts', options2)
-    expect(filter2).to.have.property('options').equal(options2)
 
     const output2 = await filter2.process(files, run, log)
 
@@ -63,7 +60,6 @@ describe('Plug Filter Processor', () => {
         return super.filter(input, matchOriginals)
       }
     }
-
 
     expect(filter.filter(files)).to.eql([]) // not matching originals
     expect(filter.filter(files, false)).to.eql([]) // not matching originals
