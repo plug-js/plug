@@ -1,8 +1,12 @@
 import * as fs from './asyncfs'
+
 import { join } from 'path'
+import { match } from './match'
+import { parseOptions } from './options'
+
 import type { DirectoryPath, FilePath } from './paths'
-import { parseOptions, ParseOptions } from './options'
-import { match, MatchOptions } from './match'
+import type { MatchOptions } from './match'
+import type { ParseOptions } from './options'
 
 // Convenience type for an async generator over `FilePath`s
 type WalkGenerator = AsyncGenerator<FilePath, void, void>

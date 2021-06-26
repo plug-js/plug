@@ -1,9 +1,10 @@
-import type { CompilerOptions, Diagnostic } from 'typescript'
-import type { Files } from '../files'
-
-import { createDirectoryPath, createFilePath, FilePath } from '../utils/paths'
+import { createDirectoryPath, createFilePath } from '../utils/paths'
 import { convertCompilerOptionsFromJson, DiagnosticCategory, getDefaultCompilerOptions, readConfigFile } from 'typescript'
 import { getParent, getRelativePath } from '../utils/paths'
+
+import type { FilePath } from '../utils/paths'
+import type { CompilerOptions, Diagnostic } from 'typescript'
+import type { Files } from '../files'
 
 type CompilerOptionsAndDiagnostics = {
   options: CompilerOptions,

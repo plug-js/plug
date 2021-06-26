@@ -1,7 +1,8 @@
 import picomatch from 'picomatch'
 
-import { ParsedOptionalOptions } from './options'
 import { caseSensitivePaths } from './paths'
+
+import type { ParsedOptionalOptions } from './options'
 
 export interface MatchResult {
   /** The glob that matched this `MatchResult` */

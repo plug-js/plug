@@ -1,3 +1,11 @@
+import {
+  mkdir as asyncMkdir,
+  readFile as asyncReadFile,
+  readdir as asyncReaddir,
+  stat as asyncStat,
+  writeFile as asyncWriteFile,
+} from 'fs/promises'
+
 import type { Abortable } from 'events'
 import type { FileHandle } from 'fs/promises'
 
@@ -12,14 +20,6 @@ import type {
   StatOptions,
   Stats,
 } from 'fs'
-
-import {
-  mkdir as asyncMkdir,
-  readFile as asyncReadFile,
-  readdir as asyncReaddir,
-  stat as asyncStat,
-  writeFile as asyncWriteFile,
-} from 'fs/promises'
 
 // No idea why sometimes stacks don't have a trace when coming out of
 // the "fs.promises" api... There is a _stack_ property on the object

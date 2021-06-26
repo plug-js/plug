@@ -1,11 +1,12 @@
 import { Files } from './files'
 import { PlugPipe, TaskPipe } from './pipe'
 import { createDirectoryPath } from './utils/paths'
+import { walk } from './utils/walk'
 
 import type { DirectoryPath } from './utils/paths'
+import type { ParseOptions } from './utils/options'
 import type { Run } from './run'
-import { walk, WalkOptions } from './utils/walk'
-import { ParseOptions } from './utils/options'
+import type { WalkOptions } from './utils/walk'
 
 async function readDirectory(run: Run, directory: DirectoryPath, ...args: ParseOptions<WalkOptions>) : Promise<Files> {
   const log = run.log()

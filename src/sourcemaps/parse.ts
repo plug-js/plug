@@ -1,7 +1,7 @@
-import type { FilePath } from '../utils/paths'
-
 import { FileSourceMap } from './file'
 import { URL, fileURLToPath, pathToFileURL } from 'url'
+
+import type { FilePath } from '../utils/paths'
 
 // Lifted from "source-map-support"
 const innlineSourceMapRegExp = /^data:application\/json[^,]+base64,/

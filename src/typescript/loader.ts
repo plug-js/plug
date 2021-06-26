@@ -1,8 +1,5 @@
 import assert from 'assert'
 
-import type { DirectoryPath, FilePath } from '../utils/paths'
-import type { Task } from '../task'
-
 import { CompilePlug } from '../plugs/compile'
 import { Files } from '../files'
 import { ModuleKind, ScriptTarget } from 'typescript'
@@ -10,6 +7,9 @@ import { Project } from '../project'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
 import { SourceMapsPlug } from '../plugs/sourcemaps'
+
+import type { DirectoryPath, FilePath } from '../utils/paths'
+import type { Task } from '../task'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *

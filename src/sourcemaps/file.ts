@@ -1,12 +1,12 @@
 import assert from 'assert'
 
-import type { File, Files } from '../files'
-import type { FilePath } from '../utils/paths'
-import type { RawSourceMap } from 'source-map'
-
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { createFilePath, getParent } from '../utils/paths'
 import { parallelize } from '../utils/parallelize'
+
+import type { File, Files } from '../files'
+import type { FilePath } from '../utils/paths'
+import type { RawSourceMap } from 'source-map'
 
 export interface SourceMapOptions {
   /**

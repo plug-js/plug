@@ -1,13 +1,15 @@
+import { Files } from '../files'
+import { getRelativePath } from '../utils/paths'
+import { install } from '../pipe'
+import { match } from '../utils/match'
+import { parseOptions } from '../utils/options'
+
 import type { File } from '../files'
 import type { Log } from '../utils/log'
-import { parseOptions, ParseOptions } from '../utils/options'
+import type { MatchOptions } from '../utils/match'
+import type { ParseOptions } from '../utils/options'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-
-import { Files } from '../files'
-import { install } from '../pipe'
-import { getRelativePath } from '../utils/paths'
-import { match, MatchOptions } from '../utils/match'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
