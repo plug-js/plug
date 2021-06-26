@@ -9,7 +9,6 @@
   "author": "Pier Fumagalli <pier@usrz.com>",
   "license": "MIT",
   "dependencies": {
-    "fast-glob": "^3.2.5",
     "picomatch": "^2.3.0",
     "source-map": "^0.7.3",
     "source-map-support": "^0.5.19",
