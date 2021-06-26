@@ -9,6 +9,7 @@ import { ModuleKind, ScriptTarget } from 'typescript'
 import { Project } from '../project'
 import { extname } from 'path'
 import { setupLoader } from '../utils/loader'
+import { SourceMapsPlug } from '../plugs/sourcemaps'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
@@ -33,13 +34,16 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
     noEmit: false, // we always want our output to be gnerated
   })
 
+  // Inject our source maps
+  const sourcemaps = new SourceMapsPlug({ sourceMaps: 'inline' })
+
   // Create a project
   const init: Task = {
     run(run) {
       const files = new Files(run)
       files.add(buildFile)
-      const log = run.log(compiler)
-      return compiler.process(files, run, log)
+      return sourcemaps.process(files, run, run.log(sourcemaps))
+          .then((files) => compiler.process(files, run, run.log(compiler)))
     },
   }
 
