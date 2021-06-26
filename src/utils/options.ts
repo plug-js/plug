@@ -1,5 +1,5 @@
 export type ParsedOptions<Options> = { globs: string[], options: Options }
-export type ParsedOptionalOptions<Options> = ParsedOptions<Options | undefined>
+export type ParsedOptionalOptions<Options> = { globs: string[], options?: Options | undefined }
 export type ParseOptions<Options> = [ string, ...string[] ] | [ string, ...string[], Options ]
 
 /** Parse an array of at least one string, followed by an optional `Options` argument. */
