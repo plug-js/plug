@@ -1,6 +1,7 @@
 import picomatch from 'picomatch'
 
 import { ParsedOptionalOptions } from './options'
+import { caseSensitivePaths } from './paths'
 
 export interface MatchResult {
   /** The glob that matched this `MatchResult` */
@@ -256,6 +257,7 @@ export interface MatchOptions {
 
 export type Matcher = (string: string) => boolean
 
-export function match({ globs, options }: ParsedOptionalOptions<MatchOptions>): Matcher {
+export function match({ globs, options = {} }: ParsedOptionalOptions<MatchOptions>): Matcher {
+  if (options.nocase === undefined) options.nocase = !caseSensitivePaths()
   return picomatch(globs, options as any) // Picomatch type is wrong!
 }
