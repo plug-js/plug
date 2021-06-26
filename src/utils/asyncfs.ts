@@ -1,4 +1,3 @@
-// istanbul ignore file - will eventually get sorted by Node's team!
 import type { Abortable } from 'events'
 import type { FileHandle } from 'fs/promises'
 
@@ -38,7 +37,7 @@ export function mkdir(path: PathLike, options?: Mode | (MakeDirectoryOptions & {
 export function mkdir(path: PathLike, options?: Mode | MakeDirectoryOptions | null): Promise<string | undefined>
 // implementation
 export function mkdir(...args: Parameters<typeof asyncMkdir>): ReturnType<typeof asyncMkdir> {
-  return asyncMkdir(...args).catch((error) => {
+  return asyncMkdir(...args).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
@@ -50,7 +49,7 @@ export function readFile(path: PathLike | FileHandle, options: { encoding: Buffe
 export function readFile(path: PathLike | FileHandle, options?: BaseEncodingOptions & Abortable & { flag?: OpenMode } | BufferEncoding | null): Promise<string | Buffer>
 // implementation
 export function readFile(...args: Parameters<typeof asyncReadFile>): ReturnType<typeof asyncReadFile> {
-  return asyncReadFile(...args).catch((error) => {
+  return asyncReadFile(...args).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
@@ -63,7 +62,7 @@ export function readdir(path: PathLike, options?: BaseEncodingOptions & { withFi
 export function readdir(path: PathLike, options: BaseEncodingOptions & { withFileTypes: true }): Promise<Dirent[]>;
 // implementation
 export function readdir(path: PathLike, options?: any): Promise<any> {
-  return asyncReaddir(path, options).catch((error) => {
+  return asyncReaddir(path, options).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
@@ -75,7 +74,7 @@ export function stat(path: PathLike, opts: StatOptions & { bigint: true }): Prom
 export function stat(path: PathLike, opts?: StatOptions): Promise<Stats | BigIntStats>
 // implementation
 export function stat(...args: Parameters<typeof asyncStat>): ReturnType<typeof asyncStat> {
-  return asyncStat(...args).catch((error) => {
+  return asyncStat(...args).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
@@ -85,7 +84,7 @@ export function stat(...args: Parameters<typeof asyncStat>): ReturnType<typeof a
 export function writeFile(path: PathLike | FileHandle, data: string | Uint8Array, options?: BaseEncodingOptions & { mode?: Mode, flag?: OpenMode } & Abortable | BufferEncoding | null): Promise<void>
 // implementation
 export function writeFile(...args: Parameters<typeof asyncWriteFile>): ReturnType<typeof asyncWriteFile> {
-  return asyncWriteFile(...args).catch((error) => {
+  return asyncWriteFile(...args).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
