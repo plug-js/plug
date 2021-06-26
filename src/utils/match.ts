@@ -1,3 +1,7 @@
+import picomatch from 'picomatch'
+
+import { ParsedOptionalOptions } from './options'
+
 export interface MatchResult {
   /** The glob that matched this `MatchResult` */
   glob: string;
@@ -248,4 +252,10 @@ export interface MatchOptions {
    * @default false
    */
   unescape?: boolean,
+}
+
+export type Matcher = (string: string) => boolean
+
+export function match({ globs, options }: ParsedOptionalOptions<MatchOptions>): Matcher {
+  return picomatch(globs, options as any) // Picomatch type is wrong!
 }
