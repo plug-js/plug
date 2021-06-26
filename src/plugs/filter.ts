@@ -82,4 +82,4 @@ export class FilterPlug<Options extends FilterOptions = FilterOptions> implement
   }
 }
 
-export const compile = install('filter', FilterPlug)
+export const filter = install('filter', FilterPlug)
