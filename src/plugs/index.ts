@@ -1,5 +1,5 @@
 export { compile } from './compile'
 export { write } from './write'
 export { sourcemaps } from './sourcemaps'
-export { filter } from './filter'
-export { mocha } from './mocha'
+// export { filter } from './filter'
+// export { mocha } from './mocha'

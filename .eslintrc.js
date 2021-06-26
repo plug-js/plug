@@ -102,6 +102,7 @@ module.exports = {
       '@typescript-eslint/no-dupe-class-members': [ 'off' ],
       '@typescript-eslint/no-invalid-this': [ 'off' ],
       '@typescript-eslint/no-floating-promises': [ 'off' ],
+      '@typescript-eslint/explicit-function-return-type': [ 'off' ],
     },
   } ],
 }

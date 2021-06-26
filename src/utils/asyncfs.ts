@@ -1,19 +1,24 @@
 // istanbul ignore file - will eventually get sorted by Node's team!
-
 import type { Abortable } from 'events'
 import type { FileHandle } from 'fs/promises'
 
 import type {
   BaseEncodingOptions,
+  BigIntStats,
+  Dirent,
   MakeDirectoryOptions,
   Mode,
   OpenMode,
   PathLike,
+  StatOptions,
+  Stats,
 } from 'fs'
 
 import {
   mkdir as asyncMkdir,
   readFile as asyncReadFile,
+  readdir as asyncReaddir,
+  stat as asyncStat,
   writeFile as asyncWriteFile,
 } from 'fs/promises'
 
@@ -40,22 +45,47 @@ export function mkdir(...args: Parameters<typeof asyncMkdir>): ReturnType<typeof
 }
 
 // definitions
-export function writeFile(path: PathLike | FileHandle, data: string | Uint8Array, options?: BaseEncodingOptions & { mode?: Mode, flag?: OpenMode } & Abortable | BufferEncoding | null): Promise<void>
+export function readFile(path: PathLike | FileHandle, options?: { encoding?: null, flag?: OpenMode } & Abortable | null): Promise<Buffer>
+export function readFile(path: PathLike | FileHandle, options: { encoding: BufferEncoding, flag?: OpenMode } & Abortable | BufferEncoding): Promise<string>
+export function readFile(path: PathLike | FileHandle, options?: BaseEncodingOptions & Abortable & { flag?: OpenMode } | BufferEncoding | null): Promise<string | Buffer>
 // implementation
-export function writeFile(...args: Parameters<typeof asyncWriteFile>): ReturnType<typeof asyncWriteFile> {
-  return asyncWriteFile(...args).catch((error) => {
+export function readFile(...args: Parameters<typeof asyncReadFile>): ReturnType<typeof asyncReadFile> {
+  return asyncReadFile(...args).catch((error) => {
     Error.captureStackTrace(error)
     throw error
   })
 }
 
 // definitions
-export function readFile(path: PathLike | FileHandle, options?: { encoding?: null, flag?: OpenMode } & Abortable | null): Promise<Buffer>;
-export function readFile(path: PathLike | FileHandle, options: { encoding: BufferEncoding, flag?: OpenMode } & Abortable | BufferEncoding): Promise<string>;
-export function readFile(path: PathLike | FileHandle, options?: BaseEncodingOptions & Abortable & { flag?: OpenMode } | BufferEncoding | null): Promise<string | Buffer>;
+export function readdir(path: PathLike, options: { encoding: 'buffer'; withFileTypes?: false } | 'buffer'): Promise<Buffer[]>
+export function readdir(path: PathLike, options?: BaseEncodingOptions & { withFileTypes?: false } | BufferEncoding | null): Promise<string[]>
+export function readdir(path: PathLike, options?: BaseEncodingOptions & { withFileTypes?: false } | BufferEncoding | null): Promise<string[] | Buffer[]>
+export function readdir(path: PathLike, options: BaseEncodingOptions & { withFileTypes: true }): Promise<Dirent[]>;
 // implementation
-export function readFile(...args: Parameters<typeof asyncReadFile>): ReturnType<typeof asyncReadFile> {
-  return asyncReadFile(...args).catch((error) => {
+export function readdir(path: PathLike, options?: any): Promise<any> {
+  return asyncReaddir(path, options).catch((error) => {
+    Error.captureStackTrace(error)
+    throw error
+  })
+}
+
+// definitions
+export function stat(path: PathLike, opts?: StatOptions & { bigint?: false }): Promise<Stats>
+export function stat(path: PathLike, opts: StatOptions & { bigint: true }): Promise<BigIntStats>
+export function stat(path: PathLike, opts?: StatOptions): Promise<Stats | BigIntStats>
+// implementation
+export function stat(...args: Parameters<typeof asyncStat>): ReturnType<typeof asyncStat> {
+  return asyncStat(...args).catch((error) => {
+    Error.captureStackTrace(error)
+    throw error
+  })
+}
+
+// definitions
+export function writeFile(path: PathLike | FileHandle, data: string | Uint8Array, options?: BaseEncodingOptions & { mode?: Mode, flag?: OpenMode } & Abortable | BufferEncoding | null): Promise<void>
+// implementation
+export function writeFile(...args: Parameters<typeof asyncWriteFile>): ReturnType<typeof asyncWriteFile> {
+  return asyncWriteFile(...args).catch((error) => {
     Error.captureStackTrace(error)
     throw error
   })
