@@ -4,7 +4,7 @@ import { walk } from '../src/utils/walk'
 import { FilePath } from '../src/utils/paths'
 import { extname } from 'path/posix'
 
-describe.only('Directory Walking', () => {
+describe('Directory Walking', () => {
   it('should walk a directory', async () => {
     const generator = walk(directory, '**/*.*')
 
