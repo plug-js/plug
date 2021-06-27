@@ -1,16 +1,17 @@
 import { AssertionError } from 'assert'
-import { directory } from './support'
+import { directory, disableLogs } from './support'
 import { expect } from 'chai'
 import fastGlob from 'fast-glob'
 import { loadBuildFile, loadProject } from '../src/loader'
 
 import { getParent, createFilePath, createDirectoryPath } from '../src/utils/paths'
-import { ReportFailure } from '../src/failure'
 
 describe('Project Loader', function() {
   // compiling takes time...
   this.timeout(5000)
   this.slow(2000)
+
+  disableLogs()
 
   it('should load some basic build files', async () => {
     const javascript = createFilePath(directory, 'javascript.js')
@@ -26,7 +27,7 @@ describe('Project Loader', function() {
   it('should fail when compilation fails', async () => {
     const file = createFilePath(directory, 'bad-typescript.ts')
     await expect(loadBuildFile(file))
-        .to.be.rejectedWith(ReportFailure, 'Error compiling')
+        .to.be.rejectedWith('Error compiling')
   })
 
   it('should load a project', async () => {
