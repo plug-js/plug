@@ -1,6 +1,6 @@
 import { FileImpl } from '../src/files/impl'
 import { Project } from '../src/project'
-import { basename } from 'path'
+import { basename, join } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
 import { tmpdir } from 'os'
@@ -10,6 +10,9 @@ import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFile
 import { FileSourceMap, SOURCE_MAPPING_URL } from '../src/sourcemaps'
 import { RawSourceMap } from 'source-map'
 
+import { directory as directory } from './support'
+const filename = join(directory, 'build.ts')
+
 describe('Files', () => {
   function makeFiles(directory: string): Files {
     return new Files({ directory } as Project)
@@ -18,16 +21,16 @@ describe('Files', () => {
   disableLogs()
 
   it('should create missing or unreadable files', async () => {
-    const dir = __dirname as DirectoryPath
+    const dir = directory as DirectoryPath
     const files = makeFiles(getParent(dir))
 
     expect(() => new FileImpl(files, createFilePath(dir, 'this does not exist')))
-        .to.throw(Error, `File "${__dirname}/this does not exist" not found`)
+        .to.throw(Error, `File "${directory}/this does not exist" not found`)
 
-    expect(() => new FileImpl(files, __dirname as FilePath))
-        .to.throw(Error, `File "${__dirname}" is not a file`)
+    expect(() => new FileImpl(files, directory as any as FilePath))
+        .to.throw(Error, `File "${directory}" is not a file`)
 
-    expect(new FileImpl(files, __filename as FilePath)).to.be.instanceof(FileImpl)
+    expect(new FileImpl(files, filename as FilePath)).to.be.instanceof(FileImpl)
   })
 
   describe('Asynchronous Virtual File Access', () => {
@@ -159,14 +162,16 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', async () => {
-      const files = makeFiles(__dirname)
-      const file = files.get(__filename)!
-      const relative = basename(__filename)
+      const filename = join(directory, 'withsourcemap.js')
 
-      expect(file.absolutePath).to.equal(__filename)
+      const files = makeFiles(directory)
+      const file = files.get(filename)!
+      const relative = basename(filename)
+
+      expect(file.absolutePath).to.equal(filename)
       expect(file.relativePath).to.equal(relative)
 
-      const data = readFileSync(__filename, 'utf8')
+      const data = readFileSync(filename, 'utf8')
 
       const contents = await file.contents()
       const sourceMap = await file.sourceMap()
@@ -175,7 +180,7 @@ describe('Files', () => {
       expect(contents).to.equal(data.substr(0, contents.length))
 
       expect(sourceMap).to.be.an('object')
-      expect(sourceMap).to.eql({ file: __filename })
+      expect(sourceMap).to.eql({ file: filename })
     })
 
     it('should cache or fail when a file disappears', async () => {
@@ -334,14 +339,16 @@ describe('Files', () => {
     })
 
     it('should read a File from disk', () => {
-      const files = makeFiles(__dirname)
-      const file = files.get(__filename)!
-      const relative = basename(__filename)
+      const filename = join(directory, 'withsourcemap.js')
 
-      expect(file.absolutePath).to.equal(__filename)
+      const files = makeFiles(directory)
+      const file = files.get(filename)!
+      const relative = basename(filename)
+
+      expect(file.absolutePath).to.equal(filename)
       expect(file.relativePath).to.equal(relative)
 
-      const data = readFileSync(__filename, 'utf8')
+      const data = readFileSync(filename, 'utf8')
       const contents = file.contentsSync()
       const sourceMap = file.sourceMapSync()
 
@@ -349,7 +356,7 @@ describe('Files', () => {
       expect(contents).to.equal(data.substr(0, contents.length))
 
       expect(sourceMap).to.be.an('object')
-      expect(sourceMap).to.eql({ file: __filename })
+      expect(sourceMap).to.eql({ file: filename })
     })
 
     it('should cache or fail when a file disappears', () => {

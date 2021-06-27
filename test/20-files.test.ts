@@ -2,9 +2,12 @@ import { AssertionError } from 'assert'
 import { Files } from '../src/files'
 import { Project } from '../src/project'
 import { Run } from '../src/run'
-import { basename } from 'path'
+import { basename, join } from 'path'
 import { expect } from 'chai'
 import { FilePath, getCanonicalPath } from '../src/utils/paths'
+
+import { directory } from './support'
+const testfile = join(directory, 'build.ts')
 
 describe('File lists', () => {
   function makeFiles(directory: string): Files {
@@ -31,24 +34,24 @@ describe('File lists', () => {
 
   describe('Getting files', () => {
     it('should get a file', () => {
-      const files = makeFiles(__dirname)
-      const file = files.get(__filename)!
+      const files = makeFiles(directory)
+      const file = files.get(testfile)!
 
       expect(file).to.not.be.undefined
-      expect(file.absolutePath).to.equal(__filename)
-      expect(file.originalPath).to.equal(__filename)
-      expect(file.canonicalPath).to.equal(getCanonicalPath(__filename as any))
-      expect(file.relativePath).to.equal(basename(__filename))
+      expect(file.absolutePath).to.equal(testfile)
+      expect(file.originalPath).to.equal(testfile)
+      expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
+      expect(file.relativePath).to.equal(basename(testfile))
 
-      expect(files.get(__filename)).to.equal(file)
-      expect(files.get(basename(__filename))).to.equal(file)
-      expect(files.get(`../${basename(__dirname)}/${basename(__filename)}`)).to.equal(file)
+      expect(files.get(testfile)).to.equal(file)
+      expect(files.get(basename(testfile))).to.equal(file)
+      expect(files.get(`../${basename(directory)}/${basename(testfile)}`)).to.equal(file)
 
       expect(files.list()).to.eql([])
     })
 
     it('should not get a non-existant file', () => {
-      const files = makeFiles(__dirname)
+      const files = makeFiles(directory)
       const file = files.get('this does not exist for sure')
       expect(file).to.be.undefined
     })
@@ -118,27 +121,27 @@ describe('File lists', () => {
 
   describe('Adding files', () => {
     it('should add a file', () => {
-      const files = makeFiles(__dirname)
-      const file = files.add(__filename)
+      const files = makeFiles(directory)
+      const file = files.add(testfile)
 
       expect(file).to.not.be.undefined
-      expect(file.absolutePath).to.equal(__filename)
-      expect(file.originalPath).to.equal(__filename)
-      expect(file.canonicalPath).to.equal(getCanonicalPath(__filename as any))
-      expect(file.relativePath).to.equal(basename(__filename))
+      expect(file.absolutePath).to.equal(testfile)
+      expect(file.originalPath).to.equal(testfile)
+      expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
+      expect(file.relativePath).to.equal(basename(testfile))
 
-      expect(files.get(__filename)).to.equal(file)
-      expect(files.get(basename(__filename))).to.equal(file)
-      expect(files.get(`../${basename(__dirname)}/${basename(__filename)}`)).to.equal(file)
+      expect(files.get(testfile)).to.equal(file)
+      expect(files.get(basename(testfile))).to.equal(file)
+      expect(files.get(`../${basename(directory)}/${basename(testfile)}`)).to.equal(file)
 
       expect(files.list()).to.eql([ file ])
       expect(files.list()[0]).to.equal(file)
     })
 
     it('should not add a non-existant file', () => {
-      const files = makeFiles(__dirname)
+      const files = makeFiles(directory)
       expect(() => files.add('this does not exist for sure'))
-          .to.throw(Error, `File "${__dirname}/this does not exist for sure" not found`)
+          .to.throw(Error, `File "${directory}/this does not exist for sure" not found`)
     })
 
     it('should add a simple file with case sensitive paths', () => {
