@@ -92,6 +92,7 @@ export class MochaPlug implements Plug {
 
     const failures = await new Promise<number>((resolve, reject) => {
       try {
+        log('Running tests from', files.length, 'files')
         mocha.run((failures) => resolve(failures))
       } catch (error) {
         reject(error)

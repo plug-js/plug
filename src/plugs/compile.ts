@@ -108,6 +108,7 @@ export class CompilePlug implements Plug {
     for (const file of output) log.trace(`File "${file.absolutePath}" passed through`)
 
     // Get our build file and create the master program
+    log('Compiling', paths.length, 'files')
     const program = createProgram(paths, options, host, undefined, diagnostics)
     checkDiagnostics(getPreEmitDiagnostics(program), host, run, 'Error compiling')
 
