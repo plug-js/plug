@@ -1,14 +1,14 @@
 import { Plug } from '../src/pipe'
 import { expect } from 'chai'
 import { mock } from './support'
-import { LogLevel, LogOptions, Log, makeLog, options, log } from '../src/utils/log'
+import { LogLevel, LogOptions, Log, makeLog, logOptions, log } from '../src/utils/log'
 
 type TestLog = Log & { logs: string[] }
 
 function makeTestLog(opts?: Partial<Omit<LogOptions, 'colors'>>): TestLog {
   const lines: string[] = []
 
-  Object.assign(options, opts, {
+  Object.assign(logOptions, opts, {
     write: lines.push.bind(lines),
     colors: false,
   })
@@ -20,10 +20,10 @@ function makeTestLog(opts?: Partial<Omit<LogOptions, 'colors'>>): TestLog {
 
 describe('Log', () => {
   // Default log options to restore after each test
-  const defaults = Object.assign({}, options)
+  const defaults = Object.assign({}, logOptions)
 
   afterEach(() => {
-    Object.assign(options, defaults)
+    Object.assign(logOptions, defaults)
   })
 
   it('should not log when nothing is specified', () => {
@@ -182,12 +182,12 @@ describe('Log', () => {
 
   it('should log to the console', () => {
     const plug1: Plug = { process: (i) => i, name: 'myplug' }
-    options.level = LogLevel.TRACE
-    options.times = true
+    logOptions.level = LogLevel.TRACE
+    logOptions.times = true
     const start = log.start()
 
     function test(level: LogLevel, colors: boolean): void {
-      options.colors = colors
+      logOptions.colors = colors
       let { run, tasks: { task1, task2 } } = mock('/foo', 'task1', 'task2')
       for (const task of [ undefined, task1, task2 ]) {
         if (task) run = run.for(task)
