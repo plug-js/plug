@@ -1,12 +1,14 @@
 import { CompilePlug } from '../src/plugs/compile'
 import { PlugPipe } from '../src/pipe'
 import { expect } from 'chai'
-import { mock } from './support'
+import { disableLogs, mock } from './support'
 
 describe('Plug TypeScript Compiler', function() {
   // compiling takes time...
   this.timeout(5000)
   this.slow(2000)
+
+  disableLogs()
 
   it('should be installed', () => {
     expect(new PlugPipe().compile).to.be.a('function')
