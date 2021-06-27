@@ -4,20 +4,11 @@ import { Failure } from './failure'
 import { Run } from './run'
 import { getParent, isChild } from './utils/paths'
 import { isAbsolute } from 'path'
-import { loadBuildFile } from './loader'
 import { log } from './utils/log'
 
 import type { DirectoryPath, FilePath } from './utils/paths'
 import type { Files } from './files'
 import type { Task, TaskCall } from './task'
-
-// Never start with a non-absolute file / directory
-function checkPaths(file: FilePath, directory = getParent(file)): DirectoryPath {
-  assert(isAbsolute(file), `Not an absolute build file: "${file}"`)
-  assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
-  assert(isChild(directory, file), `Build file "${file}" not under "${directory}"`)
-  return directory
-}
 
 export class Project {
   #taskNames = new Map<Task, string>()
@@ -31,9 +22,8 @@ export class Project {
       buildFile: FilePath,
       directory?: DirectoryPath,
   ) {
-    directory = checkPaths(buildFile, directory)
-
     // Never start with a non-absolute file / directory
+    if (! directory) directory = getParent(buildFile)
     assert(isAbsolute(buildFile), `Not an absolute build file: "${buildFile}"`)
     assert(isAbsolute(directory), `Not an absolute directory: "${directory}"`)
     assert(isChild(directory, buildFile), `Build file "${buildFile}" not under "${directory}"`)
@@ -91,10 +81,4 @@ export class Project {
     if (! task) throw new Failure(`No such task "${name}"`)
     return task.run(new Run(this))
   }
-}
-
-export async function load(buildFile: FilePath, directory?: DirectoryPath): Promise<Project> {
-  directory = checkPaths(buildFile, directory)
-  const build = await loadBuildFile(buildFile, directory)
-  return new Project(build, buildFile, directory)
 }

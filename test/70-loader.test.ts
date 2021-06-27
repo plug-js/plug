@@ -2,18 +2,36 @@ import { AssertionError } from 'assert'
 import { directory } from './support'
 import { expect } from 'chai'
 import fastGlob from 'fast-glob'
-import { load } from '../src/project'
+import { loadBuildFile, loadProject } from '../src/loader'
 
 import { getParent, createFilePath, createDirectoryPath } from '../src/utils/paths'
+import { ReportFailure } from '../src/failure'
 
-describe('Project Loading', function() {
+describe('Project Loader', function() {
   // compiling takes time...
   this.timeout(5000)
   this.slow(2000)
 
+  it('should load some basic build files', async () => {
+    const javascript = createFilePath(directory, 'javascript.js')
+    expect(await loadBuildFile(javascript)).to.equal('from javascript')
+
+    const typescript = createFilePath(directory, 'typescript.ts')
+    expect(await loadBuildFile(typescript)).to.eql({
+      foo: 'from included typescript',
+      bar: 'from typescript',
+    })
+  })
+
+  it('should fail when compilation fails', async () => {
+    const file = createFilePath(directory, 'bad-typescript.ts')
+    await expect(loadBuildFile(file))
+        .to.be.rejectedWith(ReportFailure, 'Error compiling')
+  })
+
   it('should load a project', async () => {
     const file = createFilePath(directory, 'build.ts')
-    const project = await load(file)
+    const project = await loadProject(file)
 
     expect(project.directory).to.equal(directory)
     expect(project.buildFile).to.equal(file)
@@ -34,7 +52,7 @@ describe('Project Loading', function() {
 
   it('should not load a project outside of its directory', async () => {
     const file = createFilePath(directory, 'build.ts')
-    await expect(load(file, createDirectoryPath(getParent(file), 'foo')))
+    await expect(loadProject(file, createDirectoryPath(getParent(file), 'foo')))
         .to.be.rejectedWith(AssertionError, `Build file "${directory}/build.ts" not under "${directory}/foo"`)
   })
 })

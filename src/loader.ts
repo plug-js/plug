@@ -8,8 +8,10 @@ import { extname } from 'path'
 import { setupLoader } from './utils/loader'
 import { SourceMapsPlug } from './plugs/sourcemaps'
 
-import type { DirectoryPath, FilePath } from './utils/paths'
-import type { Task } from './task'
+import { DirectoryPath, FilePath } from './utils/paths'
+import { getParent } from './utils/paths'
+import { PlugPipe } from './pipe'
+import { Run } from './run'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
@@ -18,7 +20,7 @@ import type { Task } from './task'
 /**
  * Load our build file from TypeScript (or JavaScript)
  */
-export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPath): Promise<any> {
+export async function loadBuildFile(buildFile: FilePath): Promise<any> {
   if (extname(buildFile) === '.js') return require(buildFile)
 
   // Create our compiler
@@ -37,17 +39,14 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   // Inject our source maps
   const sourcemaps = new SourceMapsPlug({ sourceMaps: 'inline' })
 
-  // Create a project
-  const init: Task = {
-    run(run) {
-      const files = new Files(run)
-      files.add(buildFile)
-      return sourcemaps.process(files, run, run.log(sourcemaps))
-          .then((files) => compiler.process(files, run, run.log(compiler)))
-    },
-  }
+  // Create a pipe to compile our build file with source maps
+  const pipe = new PlugPipe().plug(compiler).plug(sourcemaps)
 
-  const output = await new Project({ init }, buildFile, directory).runTask('init')
+  // Run our pipe with the build file to compile all our code
+  const project = new Project({}, buildFile, getParent(buildFile))
+  const files = new Files(project)
+  files.add(buildFile)
+  const output = await pipe.process(files, new Run(project))
 
   // Build our output file list, and figure out where the original
   // typescript ended up in our compilation results
@@ -66,4 +65,9 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
   } finally {
     setupLoader() // reset!
   }
+}
+
+export async function loadProject(buildFile: FilePath, directory?: DirectoryPath): Promise<Project> {
+  const build = await loadBuildFile(buildFile)
+  return new Project(build, buildFile, directory)
 }
