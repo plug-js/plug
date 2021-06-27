@@ -1,37 +1,26 @@
+import {
+  DiagnosticCategory,
+  formatDiagnostics,
+  formatDiagnosticsWithColorAndContext,
+} from 'typescript'
+
 import type { Diagnostic, FormatDiagnosticsHost } from 'typescript'
-
-import { ReportFailure } from '../failure'
-import { DiagnosticCategory, formatDiagnostics, formatDiagnosticsWithColorAndContext } from 'typescript'
-
-export class TypeScriptFailure extends ReportFailure {
-  private _host!: FormatDiagnosticsHost
-
-  diagnostics!: readonly Diagnostic[]
-
-  constructor(diagnostics: readonly Diagnostic[], host: FormatDiagnosticsHost, message?: string) {
-    super(message || 'TypeScript Error')
-
-    Object.defineProperties(this, {
-      diagnostics: { value: diagnostics },
-      _host: { value: host },
-    })
-  }
-
-  report(colors: boolean): string {
-    if (! colors) return formatDiagnostics(this.diagnostics, this._host)
-    return formatDiagnosticsWithColorAndContext(this.diagnostics, this._host)
-  }
-}
+import type { Run } from '../run'
 
 // Check for failures and throw a TypeScript failure
 export function checkDiagnostics(
     diagnostics: readonly Diagnostic[],
     host: FormatDiagnosticsHost,
-    message: string,
+    run: Run,
+    message?: string,
 ): void {
-  if (diagnostics.length) throw new TypeScriptFailure(diagnostics, host, message)
-}
+  if (! diagnostics.length) return
 
+  const log = run.log()
+  log.write((!log.colors) ? formatDiagnostics(diagnostics, host) :
+      formatDiagnosticsWithColorAndContext(diagnostics, host))
+  run.fail(message)
+}
 
 export function hasErrors(diagnostics: readonly Diagnostic[]): boolean {
   for (const diagnostic of diagnostics) {

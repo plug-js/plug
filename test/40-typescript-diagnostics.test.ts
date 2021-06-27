@@ -1,8 +1,7 @@
 import { EOL } from 'os'
-import { ReportFailure } from '../src/failure'
 import { expect } from 'chai'
 import { Diagnostic, DiagnosticCategory, FormatDiagnosticsHost } from 'typescript'
-import { TypeScriptFailure, checkDiagnostics, hasErrors, hasWarnings } from '../src/typescript/diagnostic'
+import { checkDiagnostics, hasErrors, hasWarnings } from '../src/typescript/diagnostic'
 
 describe('TypeScript Diagnostics', () => {
   const error = {
@@ -29,50 +28,37 @@ describe('TypeScript Diagnostics', () => {
     expect(hasErrors([])).to.be.false
   })
 
-  it('should wrap diagnostics into a failure', () => {
-    const host = {
-      getCurrentDirectory: (): string => process.cwd(),
-      getCanonicalFileName: (f): string => f,
-      getNewLine: (): string => EOL,
-    } as FormatDiagnosticsHost
-
-    // with message and diagnostics
-    const failure1 = new TypeScriptFailure([ error, warning ], host, 'A TypeScript failure')
-
-    expect(failure1).to.be.instanceOf(ReportFailure)
-    expect(failure1.message).to.eql('Build Failed: A TypeScript failure')
-
-    expect(failure1.report(false)).to.eql(
-        'error TS0: An error diagnostic\n' +
-        'warning TS0: A warning diagnostic\n')
-    // only check some ansi code in color mode...
-    expect(failure1.report(true).indexOf('\x1b')).to.be.greaterThanOrEqual(0)
-
-    expect(failure1.stack).to.match(new RegExp('^' +
-      'Failure: Build Failed: A TypeScript failure\n' +
-      '  error TS0: An error diagnostic\n' +
-      '  warning TS0: A warning diagnostic\n' +
-      '    at'))
-
-    // without message and empty diagnostics
-    const failure2 = new TypeScriptFailure([], host)
-
-    expect(failure2).to.be.instanceOf(ReportFailure)
-    expect(failure2.message).to.eql('Build Failed: TypeScript Error')
-
-    expect(failure2.report(false)).to.eql('')
-    expect(failure2.report(true)).to.eql('')
-  })
-
   it('should throw when checking diagnostics', () => {
+    let colors = false
+    let report = ''
+    const run = {
+      log: () => ({
+        write: (r: string) => void (report = r),
+        colors,
+      }),
+      fail(message: string) {
+        throw new Error(message)
+      },
+    } as any
+
     const host = {
       getCurrentDirectory: (): string => process.cwd(),
       getCanonicalFileName: (f): string => f,
       getNewLine: (): string => EOL,
     } as FormatDiagnosticsHost
 
-    expect(() => checkDiagnostics([], host, 'A TypeScript failure')).not.to.throw()
-    expect(() => checkDiagnostics([ error ], host, 'A TypeScript failure'))
-        .to.throw(TypeScriptFailure, 'A TypeScript failure')
+    expect(() => checkDiagnostics([], host, run, 'A TypeScript failure')).not.to.throw()
+
+    colors = true
+    expect(() => checkDiagnostics([ error ], host, run, 'A TypeScript failure'))
+        .to.throw('A TypeScript failure')
+    expect(report).to.match(/TS0.*An error diagnostic/)
+    expect(report.indexOf('\x1b')).to.be.greaterThanOrEqual(0)
+
+    colors = false
+    expect(() => checkDiagnostics([ error ], host, run, 'A TypeScript failure'))
+        .to.throw('A TypeScript failure')
+    expect(report).to.match(/TS0.*An error diagnostic/)
+    expect(report.indexOf('\x1b')).to.be.lessThan(0)
   })
 })
