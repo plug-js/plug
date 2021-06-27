@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict'
 
-const { load } = require('./bootstrap/src/project')
-load(process.cwd() + '/plugfile.ts')
+const { loadProject } = require('./bootstrap/src/loader')
+loadProject(process.cwd() + '/plugfile.ts')
     .then((project) => {
       console.log(project, project.getTaskNames())
       return project.runTask('compile')
