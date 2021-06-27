@@ -3,15 +3,15 @@ import assert from 'assert'
 import { CompilePlug } from './plugs/compile'
 import { Files } from './files'
 import { ModuleKind, ScriptTarget } from 'typescript'
-import { Project } from './project'
-import { extname } from 'path'
-import { setupLoader } from './utils/loader'
-import { SourceMapsPlug } from './plugs/sourcemaps'
-
-import { DirectoryPath, FilePath } from './utils/paths'
-import { getParent } from './utils/paths'
 import { PlugPipe } from './pipe'
+import { Project } from './project'
 import { Run } from './run'
+import { SourceMapsPlug } from './plugs/sourcemaps'
+import { extname } from 'path'
+import { getParent } from './utils/paths'
+import { setupLoader } from './utils/loader'
+
+import type { DirectoryPath, FilePath } from './utils/paths'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
