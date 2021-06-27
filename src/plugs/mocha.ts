@@ -1,18 +1,24 @@
-import { Log, LogLevel } from '../utils/log'
+import type { Log } from '../utils/log'
 import type { MochaOptions as Options } from 'mocha'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
 
-import type { File, Files } from '../files'
+import type { Files } from '../files'
 import { install } from '../pipe'
 
-import Mocha from 'mocha'
 import { SourceMapsPlug } from './sourcemaps'
-import { FilePath, getRelativePath } from '../utils/paths'
-import { setupLoader } from '../utils/loader'
+import { FilePath } from '../utils/paths'
+import { getRelativePath } from '../utils/paths'
 import { parseOptions } from '../utils/options'
-import { match, Matcher, MatchOptions } from '../utils/match'
+import type { Matcher, MatchOptions } from '../utils/match'
+import { match } from '../utils/match'
 import { extname } from 'path'
+import { parallelize } from '../utils/parallelize'
+import { runMocha } from '../utils/mocha'
+
+/* ========================================================================== *
+ * MOCHA PLUG                                                                 *
+ * ========================================================================== */
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -26,12 +32,6 @@ interface MochaOptions extends MatchOptions, Options {
 }
 
 type MochaArguments = [ string, ...string[], MochaOptions ] | [ string, ...string[] ]
-
-class NullReporter extends Mocha.reporters.Base {
-  constructor(runner: Mocha.Runner, options?: Options) {
-    super(runner, options)
-  }
-}
 
 export class MochaPlug implements Plug {
   #matchOriginalPaths: boolean
@@ -53,54 +53,28 @@ export class MochaPlug implements Plug {
     const time = log.start()
 
     // We can only run ".js" files, so let's start filtering stuff out...
-    const files: File[] = []
+    const tests = new Set<FilePath>()
     for (const file of input) {
       if (extname(file.absolutePath) !== '.js') continue
       const path = this.#matchOriginalPaths ? file.originalPath : file.absolutePath
       const relativePath = getRelativePath(input.directory, path)
-      if (this.#matcher(relativePath)) files.push(file)
+      if (this.#matcher(relativePath)) tests.add(file.absolutePath)
     }
 
     // Fail if we can't find any test file...
-    if (! files.length) run.fail('No test files found')
+    if (! tests.size) run.fail('No test files found')
 
-    // Sort our matching test files before sending them off to Mocha
-    files.sort((a, b): number => {
-      return this.#matchOriginalPaths ?
-        a.originalPath.localeCompare(b.originalPath) :
-        a.absolutePath.localeCompare(b.absolutePath)
-    })
+    // Prepare our files with source maps
+    const files = new Map<FilePath, string>()
+    const sources = await new SourceMapsPlug({ sourceMaps: 'inline' }).process(input, run, log)
+    await parallelize(sources, async (f) => files.set(f.absolutePath, await f.contents()))
 
-    // Clone our options and see if we have to report...
-    const options = { ...this.#options }
-    if (log.level >= LogLevel.QUIET) options.reporter = NullReporter
+    // Let's prep our mocha run
+    const failures = await runMocha({ files: files, tests, options: this.#options })
 
-    // Create Mocha and add all our test files...
-    const mocha = new Mocha(options)
-    for (const file of files) {
-      log.trace(`Mocha testing with "${file.absolutePath}"`)
-      mocha.addFile(file.absolutePath)
-    }
-
-    const loadables = await new SourceMapsPlug({ sourceMaps: 'inline' }).process(input, run, log)
-    const sources = loadables.list().reduce((map, file) =>
-      map.set(file.absolutePath, file.contentsSync()), new Map<FilePath, string>())
-    setupLoader(sources)
-
-    await mocha.loadFilesAsync()
-    setupLoader()
-
-    const failures = await new Promise<number>((resolve, reject) => {
-      try {
-        log('Running tests from', files.length, 'files')
-        mocha.run((failures) => resolve(failures))
-      } catch (error) {
-        reject(error)
-      }
-    })
-
+    // Check for failures
     if (failures) run.fail(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)
-    log.debug('Mocha processed', files.length, 'test files in', time)
+    log.debug('Mocha processed', tests.size, 'test files in', time)
     return input
   }
 }
