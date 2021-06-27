@@ -12,6 +12,7 @@ import {
   getRelativePath,
   isChild,
   isChildOrSame,
+  getCurrentDirectory,
 } from '../src/utils/paths'
 
 describe('Paths', () => {
@@ -31,6 +32,10 @@ describe('Paths', () => {
         .to.throw(AssertionError, 'Not an absolute path: foo')
     expect(() => createDirectoryPath('foo' as DirectoryPath, 'bar', 'baz'))
         .to.throw(AssertionError, 'Not an absolute path: foo')
+  })
+
+  it('should get the current directory', () => {
+    expect(getCurrentDirectory()).to.equal(process.cwd())
   })
 
   it('should get a directory for a file', () => {
