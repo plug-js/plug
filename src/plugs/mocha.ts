@@ -1,4 +1,4 @@
-import type { Log } from '../utils/log'
+import { Log, LogLevel } from '../utils/log'
 import type { MochaOptions as Options } from 'mocha'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
@@ -7,7 +7,6 @@ import type { File, Files } from '../files'
 import { install } from '../pipe'
 
 import Mocha from 'mocha'
-import { Failure } from '../failure'
 import { SourceMapsPlug } from './sourcemaps'
 import { FilePath, getRelativePath } from '../utils/paths'
 import { setupLoader } from '../utils/loader'
@@ -48,9 +47,6 @@ export class MochaPlug implements Plug {
     this.#matcher = match({ globs, options })
     this.#matchOriginalPaths = matchOriginalPaths
     this.#options = options
-
-    // Replace "null" with our "NullReporter"
-    if (this.#options.reporter === 'null') this.#options.reporter = NullReporter
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
@@ -66,7 +62,7 @@ export class MochaPlug implements Plug {
     }
 
     // Fail if we can't find any test file...
-    if (! files.length) throw new Failure('No test files found')
+    if (! files.length) run.fail('No test files found')
 
     // Sort our matching test files before sending them off to Mocha
     files.sort((a, b): number => {
@@ -75,8 +71,12 @@ export class MochaPlug implements Plug {
         a.absolutePath.localeCompare(b.absolutePath)
     })
 
+    // Clone our options and see if we have to report...
+    const options = { ...this.#options }
+    if (log.level >= LogLevel.QUIET) options.reporter = NullReporter
+
     // Create Mocha and add all our test files...
-    const mocha = new Mocha(this.#options)
+    const mocha = new Mocha(options)
     for (const file of files) {
       log.trace(`Mocha testing with "${file.absolutePath}"`)
       mocha.addFile(file.absolutePath)
@@ -98,7 +98,7 @@ export class MochaPlug implements Plug {
       }
     })
 
-    if (failures) throw new Failure(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)
+    if (failures) run.fail(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)
     log.debug('Mocha processed', files.length, 'test files in', time)
     return input
   }
