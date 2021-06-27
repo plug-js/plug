@@ -1,7 +1,7 @@
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
 
-import { RGB, STYLE } from './colors'
+import { RGB, STYLE, RESET } from './colors'
 import { inspect } from 'util'
 import { isatty } from 'tty'
 import { nanos } from './nanos'
@@ -90,16 +90,16 @@ function emit(
   // Simplify writing with colors, and writing lines
   const colors = logOptions.colors
   const strings: string[] = []
-  function push(col: STYLE | RGB | null, ...args: string[]): void {
+  function push(col: STYLE | RGB | RESET | null, ...args: string[]): void {
     colors && col ? strings.push(col, ...args) : strings.push(...args)
   }
   function line(): void {
-    push(STYLE.RESET)
+    push(RESET)
     logOptions.write(strings.join(''))
   }
 
   // Reset our color at the beginning of the line
-  push(STYLE.RESET)
+  push(RESET)
 
   // The current time, if we have to
   if (logOptions.times) {
@@ -143,7 +143,7 @@ function emit(
   }
 
   // Reset before giving control to "inspect"
-  push(STYLE.RESET)
+  push(RESET)
 
   // Emit all arguments...
   for (let i = 0, arg = args[0]; i < args.length; arg = args[++ i]) {

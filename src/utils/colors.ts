@@ -7,9 +7,11 @@
  * https://jonasjacek.github.io/colors/
  */
 
-export enum STYLE {
-  'RESET' = '\u001b[0m',
+export type RESET = string & { __style_reset: any }
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const RESET: RESET = '\u001b[0m' as RESET
 
+export enum STYLE {
   'BOLD' = '\u001b[1m',
   'BOLD_OFF' = '\u001b[21m',
 
