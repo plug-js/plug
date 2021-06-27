@@ -1,5 +1,9 @@
 /* eslint-disable no-console */
 
+import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+chai.use(chaiAsPromised)
+
 import { Files } from '../src/files'
 import { Project } from '../src/project'
 import { Run } from '../src/run'
