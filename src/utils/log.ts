@@ -4,6 +4,7 @@ import type { Run } from '../run'
 import { RGB, STYLE } from './colors'
 import { inspect } from 'util'
 import { isatty } from 'tty'
+import { nanos } from './nanos'
 
 /* ========================================================================== */
 
@@ -52,7 +53,7 @@ export type Log = ((...args: [ any, ...any ]) => void) & {
 /* ========================================================================== */
 
 /* The default configurations from command line */
-export const options: LogOptions = (() => {
+export const logOptions: LogOptions = (() => {
   // eslint-disable-next-line no-console
   const write = console.log
   const colors = isatty((<any> process.stdout).fd)
@@ -83,25 +84,25 @@ function emit(
     ...args: any[]
 ): void {
   // First check if we _really_ have to log this message
-  if (level < options.level) return
+  if (level < logOptions.level) return
   if (args.length === 0) return
 
   // Simplify writing with colors, and writing lines
-  const colors = options.colors
+  const colors = logOptions.colors
   const strings: string[] = []
   function push(col: STYLE | RGB | null, ...args: string[]): void {
     colors && col ? strings.push(col, ...args) : strings.push(...args)
   }
   function line(): void {
     push(STYLE.RESET)
-    options.write(strings.join(''))
+    logOptions.write(strings.join(''))
   }
 
   // Reset our color at the beginning of the line
   push(STYLE.RESET)
 
   // The current time, if we have to
-  if (options.times) {
+  if (logOptions.times) {
     const now = new Date()
     push(RGB['#8a8a8a'], now.getHours().toString().padStart(2, '0'))
     push(RGB['#585858'], ':')
@@ -130,13 +131,12 @@ function emit(
       push(RGB['#005f00'], i ? '|' : '{')
       push(RGB['#00ff00'], run.project.getTaskName(run.tasks[i]))
     }
-    // w(RGB['#00ff00'], taskName)
-    if (plug) {
+    if (plug && (level <= LogLevel.DEBUG)) {
       push(RGB['#005f00'], '|')
       push(RGB['#00af00'], plug)
     }
     push(RGB['#005f00'], '} ')
-  } else if (plug) {
+  } else if (plug && (level <= LogLevel.DEBUG)) {
     push(RGB['#005f00'], '{')
     push(RGB['#00af00'], plug)
     push(RGB['#005f00'], '} ')
@@ -164,9 +164,10 @@ function emit(
     // Not an error, add a space and continue...
     if (i) strings.push(' ')
     if (arg && (typeof arg === 'object') && (start in arg)) {
-      const nanos = process.hrtime.bigint() - arg[start]
-      const millis = Number(nanos / 1000n) / 1000
-      strings.push(inspect(millis, { colors }), ' ms')
+      const times = nanos(process.hrtime.bigint() - arg[start])
+      for (const [ amount, unit ] of times ) {
+        strings.push(inspect(amount, { colors }), ` ${unit}`)
+      }
     } else if (typeof arg === 'string') {
       strings.push(arg)
     } else {
@@ -191,11 +192,11 @@ export function makeLog(run?: Run, { name: plug } = {} as Plug): Log {
   log.debug = (...args: any[]): void => emit(LogLevel.DEBUG, run, plug, ...args)
   log.alert = (...args: any[]): void => emit(LogLevel.ALERT, run, plug, ...args)
   log.error = (...args: any[]): void => emit(LogLevel.ERROR, run, plug, ...args)
-  log.write = (what: string) => options.level < LogLevel.QUIET ? options.write(what) : undefined
+  log.write = (what: string) => logOptions.level < LogLevel.QUIET ? logOptions.write(what) : undefined
   log.start = () => ({ [start]: process.hrtime.bigint() })
-  log.colors = options.colors
-  log.level = options.level
-  log.times = options.times
+  log.colors = logOptions.colors
+  log.level = logOptions.level
+  log.times = logOptions.times
   return log
 }
 
