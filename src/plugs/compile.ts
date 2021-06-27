@@ -71,7 +71,7 @@ export class CompilePlug implements Plug {
     // Read our compiler options and fail on error
     const host = new TypeScriptHost(input)
     const { options, diagnostics } = getCompilerOptions(input, this.#config, this.#options)
-    checkDiagnostics(diagnostics, host, 'Error in TypeScript configuration')
+    checkDiagnostics(diagnostics, host, run, 'Error in TypeScript configuration')
 
     // We always want inline sourcemaps
     options.declaration = !! options.declaration
@@ -109,7 +109,7 @@ export class CompilePlug implements Plug {
 
     // Get our build file and create the master program
     const program = createProgram(paths, options, host, undefined, diagnostics)
-    checkDiagnostics(getPreEmitDiagnostics(program), host, 'Error compiling')
+    checkDiagnostics(getPreEmitDiagnostics(program), host, run, 'Error compiling')
 
     // TypeScript always seem to write ".map" files for ".d.ts" files, whether
     // inlining or not... So, let's always use separate source maps and handle
@@ -136,7 +136,7 @@ export class CompilePlug implements Plug {
     })
 
     // Check for errors...
-    checkDiagnostics(result.diagnostics, host, 'Error emitting compilation')
+    checkDiagnostics(result.diagnostics, host, run, 'Error emitting compilation')
 
     // Process each file we emitted and add it to the output
     for (const [ path, code ] of emittedFiles.entries()) {
