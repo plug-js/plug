@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable strict */
-
-process.env.LOG_LEVEL = 'trace'
+'use strict'
 
 const { load } = require('./bootstrap/src/project')
 load(process.cwd() + '/plugfile.ts')
