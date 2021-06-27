@@ -43,6 +43,8 @@ export type Log = ((...args: [ any, ...any ]) => void) & {
   alert(...args: [ any, ...any ]): void
   /** Emit an _error_ message */
   error(...args: [ any, ...any ]): void
+  /** Write to the log output (mainly for reporting) */
+  write(data: string): void
   /** Obtain a marker for logging times */
   start(): Marker
 } & Readonly<Omit<LogOptions, 'write'>>
@@ -189,6 +191,7 @@ export function makeLog(run?: Run, { name: plug } = {} as Plug): Log {
   log.debug = (...args: any[]): void => emit(LogLevel.DEBUG, run, plug, ...args)
   log.alert = (...args: any[]): void => emit(LogLevel.ALERT, run, plug, ...args)
   log.error = (...args: any[]): void => emit(LogLevel.ERROR, run, plug, ...args)
+  log.write = (what: string) => options.level < LogLevel.QUIET ? options.write(what) : undefined
   log.start = () => ({ [start]: process.hrtime.bigint() })
   log.colors = options.colors
   log.level = options.level

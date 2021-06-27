@@ -32,7 +32,7 @@ describe('Log', () => {
     expect(log.logs).to.eql([])
   })
 
-  it('should log at "debug" level', () => {
+  it('should log at "trace" level', () => {
     const log = makeTestLog({ level: LogLevel.TRACE, times: false })
 
     log('A simple message')
@@ -40,6 +40,7 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
     expect(log.logs).to.eql([
       'A simple message',
@@ -47,6 +48,7 @@ describe('Log', () => {
       '[DEBUG] A debug message',
       '[ALERT] An alert message',
       '[ERROR] An error message',
+      'A report',
     ])
   })
 
@@ -58,12 +60,14 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
     expect(log.logs).to.eql([
       'A simple message',
       '[DEBUG] A debug message',
       '[ALERT] An alert message',
       '[ERROR] An error message',
+      'A report',
     ])
   })
 
@@ -75,11 +79,13 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
     expect(log.logs).to.eql([
       'A simple message',
       '[ALERT] An alert message',
       '[ERROR] An error message',
+      'A report',
     ])
   })
 
@@ -91,10 +97,12 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
     expect(log.logs).to.eql([
       '[ALERT] An alert message',
       '[ERROR] An error message',
+      'A report',
     ])
   })
 
@@ -106,8 +114,12 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
-    expect(log.logs).to.eql([ '[ERROR] An error message' ])
+    expect(log.logs).to.eql([
+      '[ERROR] An error message',
+      'A report',
+    ])
   })
 
   it('should not log at "quiet" level', () => {
@@ -118,6 +130,7 @@ describe('Log', () => {
     log.debug('A debug message')
     log.alert('An alert message')
     log.error('An error message')
+    log.write('A report')
 
     expect(log.logs).to.eql([])
   })
