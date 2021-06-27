@@ -1,15 +1,15 @@
 import assert from 'assert'
 
-import { CompilePlug } from '../plugs/compile'
-import { Files } from '../files'
+import { CompilePlug } from './plugs/compile'
+import { Files } from './files'
 import { ModuleKind, ScriptTarget } from 'typescript'
-import { Project } from '../project'
+import { Project } from './project'
 import { extname } from 'path'
-import { setupLoader } from '../utils/loader'
-import { SourceMapsPlug } from '../plugs/sourcemaps'
+import { setupLoader } from './utils/loader'
+import { SourceMapsPlug } from './plugs/sourcemaps'
 
-import type { DirectoryPath, FilePath } from '../utils/paths'
-import type { Task } from '../task'
+import type { DirectoryPath, FilePath } from './utils/paths'
+import type { Task } from './task'
 
 /* ========================================================================== *
  * BUILD FILE LOADER                                                          *
@@ -47,7 +47,6 @@ export async function loadBuildFile(buildFile: FilePath, directory?: DirectoryPa
     },
   }
 
-  // Await for the output of the compilation
   const output = await new Project({ init }, buildFile, directory).runTask('init')
 
   // Build our output file list, and figure out where the original

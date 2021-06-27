@@ -4,7 +4,7 @@ import { Failure } from './failure'
 import { Run } from './run'
 import { getParent, isChild } from './utils/paths'
 import { isAbsolute } from 'path'
-import { loadBuildFile } from './typescript/loader'
+import { loadBuildFile } from './loader'
 import { log } from './utils/log'
 
 import type { DirectoryPath, FilePath } from './utils/paths'

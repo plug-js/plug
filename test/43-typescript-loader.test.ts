@@ -2,7 +2,7 @@ import { ReportFailure } from '../src/failure'
 import { createFilePath } from '../src/utils/paths'
 import { directory } from './support'
 import { expect } from 'chai'
-import { loadBuildFile } from '../src/typescript/loader'
+import { loadBuildFile } from '../src/loader'
 
 describe('TypeScript Loader', function() {
   // compiling takes time...
