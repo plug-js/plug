@@ -64,10 +64,17 @@ export function createFilePath(root: DirectoryPath, path: string, ...paths: stri
 
 /** Create a `FilePath` by resolving all of its path components */
 export function createDirectoryPath(root: DirectoryPath, path?: string): DirectoryPath
+/** Create a `FilePath` by resolving all of its path components */
 export function createDirectoryPath(root: DirectoryPath, path: string, ...paths: string[]): DirectoryPath
+// overloaded methods implementation
 export function createDirectoryPath(root: DirectoryPath, path?: string | undefined, ...paths: string[]): DirectoryPath {
   assert(isAbsolute(root), `Not an absolute path: ${root}`)
   return path ? resolve(root, path, ...paths) as DirectoryPath : root
+}
+
+/** Return the process' current working directory as a `DirectoryPath` */
+export function getCurrentDirectory(): DirectoryPath {
+  return process.cwd() as DirectoryPath
 }
 
 /** Return the relative path from a directory to a file */
