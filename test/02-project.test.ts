@@ -1,5 +1,4 @@
 import { AssertionError } from 'assert'
-import { Failure } from '../src/failure'
 import { Project } from '../src/project'
 import { disableLogs } from './support'
 import { expect } from 'chai'
@@ -65,7 +64,7 @@ describe('Project', () => {
     expect(await project.runTask('task0')).to.equal(0)
     expect(await project.runTask('task1')).to.equal(1)
     expect(await project.runTask('task2')).to.equal(2)
-    await expect(project.runTask()).to.be.rejectedWith(Failure, 'No such task "default"')
+    await expect(project.runTask()).to.be.rejectedWith('No such task "default"')
   })
 
   it('should cleanup what it can reading a project', () => {
@@ -88,8 +87,8 @@ describe('Project', () => {
     const dir = '/foo' as DirectoryPath
     const file = createFilePath(dir, 'build.ts')
 
-    expect(() => new Project(null as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
-    expect(() => new Project('xx' as any, file, dir)).to.throw(Failure, 'Build file "/foo/build.ts" has no exports')
+    expect(() => new Project(null as any, file, dir)).to.throw(Error, 'Build file "/foo/build.ts" has no exports')
+    expect(() => new Project('xx' as any, file, dir)).to.throw(Error, 'Build file "/foo/build.ts" has no exports')
     expect(() => new Project(null as any, 'foo' as FilePath))
         .to.throw(AssertionError, 'Not an absolute build file: "foo"')
     expect(() => new Project(null as any, file, 'foo' as DirectoryPath))

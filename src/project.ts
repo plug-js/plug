@@ -1,6 +1,5 @@
 import assert from 'assert'
 
-import { Failure } from './failure'
 import { Run } from './run'
 import { getParent, isChild } from './utils/paths'
 import { isAbsolute } from 'path'
@@ -30,7 +29,7 @@ export class Project {
 
     // We have to be careful, as build files are loaded...
     if (!(build && (typeof build === 'object'))) {
-      throw new Failure(`Build file "${buildFile}" has no exports`)
+      throw new Error(`Build file "${buildFile}" has no exports`)
     }
 
     // We should oly see exported tasks...
@@ -77,8 +76,8 @@ export class Project {
   }
 
   async runTask(name: string = 'default'): Promise<Files> {
+    const run = new Run(this)
     const task = this.#tasks.get(name)
-    if (! task) throw new Failure(`No such task "${name}"`)
-    return task.run(new Run(this))
+    return task ? task.run(run) : run.fail(`No such task "${name}"`)
   }
 }

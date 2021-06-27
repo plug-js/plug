@@ -7,6 +7,15 @@ import type { Log } from './utils/log'
 import type { Plug } from './pipe'
 import type { Task } from './task'
 
+/** An `Error` representing a build failure */
+class Failure extends Error {
+  constructor(taskName?: string, message?: string) {
+    const failure = taskName ? `Task "${taskName}" failed` : 'Build failed'
+    super(message ? `${failure}: ${message}` : failure)
+    this.name = 'Failure'
+  }
+}
+
 /**
  * The `Run` class describes a contract beteween `Plug`s and `Processor`s
  * and the underlying subsystem actually calling them.
@@ -59,6 +68,12 @@ export class Run {
 
   for(task: Task): Run {
     return new Run(this, task)
+  }
+
+  fail(message?: string): never {
+    const task = this.tasks[this.tasks.length - 1]
+    const taskName = task ? this.project.getTaskName(task) : undefined
+    throw new Failure(taskName, message)
   }
 }
 

@@ -6,29 +6,47 @@ import { expect } from 'chai'
 import { inspect } from 'util'
 
 describe('Run', () => {
-  const project = new Project({}, '/foo/build.ts' as any, '/foo' as any)
+  const task1: Task = { run() {} } as any
+  const task2: Task = { run() {} } as any // this has no name
+  const project = new Project({ task1 }, '/foo/build.ts' as any, '/foo' as any)
 
   it('should create a new run', () => {
-    const task: Task = {} as any
     const run0 = new Run(project)
-    const run1 = new Run(project).for(task)
-    const run2 = new Run(project).for(task)
+    const run1 = new Run(project).for(task1)
+    const run2 = new Run(project).for(task2)
 
     expect(run0.tasks).to.be.an('array').with.length(0)
     expect(run1.tasks).to.be.an('array').with.length(1)
     expect(run2.tasks).to.be.an('array').with.length(1)
 
-    expect(run1.tasks[0]).to.equal(task)
-    expect(run2.tasks[0]).to.equal(task)
+    expect(run1.tasks[0]).to.equal(task1)
+    expect(run2.tasks[0]).to.equal(task2)
 
     expect(run0.id).to.not.equal(run1.id)
     expect(run0.id).to.not.equal(run2.id)
     expect(run1.id).to.not.equal(run2.id)
+
+    expect(() => run0.fail())
+        .to.throw(/^Build failed$/)
+        .with.property('name', 'Failure')
+    expect(() => run0.fail('Message...'))
+        .to.throw(/^Build failed: Message...$/)
+        .with.property('name', 'Failure')
+    expect(() => run1.fail())
+        .to.throw(/^Task "task1" failed$/)
+        .with.property('name', 'Failure')
+    expect(() => run1.fail('Message...'))
+        .to.throw(/^Task "task1" failed: Message...$/)
+        .with.property('name', 'Failure')
+    expect(() => run2.fail())
+        .to.throw(/^Task "unknown" failed$/)
+        .with.property('name', 'Failure')
+    expect(() => run2.fail('Message...'))
+        .to.throw(/^Task "unknown" failed: Message...$/)
+        .with.property('name', 'Failure')
   })
 
   it('should derive a new run for another task', () => {
-    const task1: Task = {} as any
-    const task2: Task = {} as any
     const run1 = new Run(project).for(task1)
     const run2 = run1.for(task2)
 
