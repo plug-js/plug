@@ -16,7 +16,7 @@ type Marker = { [start]: bigint }
 export enum LogLevel {
   TRACE = 0,
   DEBUG = 1,
-  BASIC = 2,
+  PLAIN = 2,
   ALERT = 3,
   ERROR = 4,
   QUIET = 5,
@@ -59,13 +59,13 @@ export const logOptions: LogOptions = (() => {
   const colors = isatty((<any> process.stdout).fd)
   const times = true
 
-  let level = LogLevel.BASIC
+  let level = LogLevel.PLAIN
   // istanbul ignore next - processed at strtup...
   switch (process.env.LOG_LEVEL?.toUpperCase()) {
     case 'TRACE': level = LogLevel.TRACE; break
     case 'DEBUG': level = LogLevel.DEBUG; break
     case 'INFO': // alias
-    case 'BASIC': level = LogLevel.BASIC; break
+    case 'PLAIN': level = LogLevel.PLAIN; break
     case 'WARN': // alias
     case 'ALERT': level = LogLevel.ALERT; break
     case 'ERROR': level = LogLevel.ERROR; break
@@ -187,7 +187,7 @@ export function makeLog(run: Run): Log
 export function makeLog(run: Run, plug: Plug): Log
 // overloaded function
 export function makeLog(run?: Run, { name: plug } = {} as Plug): Log {
-  const log = (...args: any[]): void => emit(LogLevel.BASIC, run, plug, ...args)
+  const log = (...args: any[]): void => emit(LogLevel.PLAIN, run, plug, ...args)
   log.trace = (...args: any[]): void => emit(LogLevel.TRACE, run, plug, ...args)
   log.debug = (...args: any[]): void => emit(LogLevel.DEBUG, run, plug, ...args)
   log.alert = (...args: any[]): void => emit(LogLevel.ALERT, run, plug, ...args)

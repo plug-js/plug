@@ -71,8 +71,8 @@ describe('Log', () => {
     ])
   })
 
-  it('should log at "normal" level', () => {
-    const log = makeTestLog({ level: LogLevel.BASIC, times: false })
+  it('should log at "plain" level', () => {
+    const log = makeTestLog({ level: LogLevel.PLAIN, times: false })
 
     log('A simple message')
     log.trace('A trace message')
@@ -136,7 +136,7 @@ describe('Log', () => {
   })
 
   it('should log with stack traces', () => {
-    const log = makeTestLog({ level: LogLevel.BASIC, times: false })
+    const log = makeTestLog({ level: LogLevel.PLAIN, times: false })
     const err = new Error('This is a test error')
 
     log(err) // Only an error
@@ -172,7 +172,7 @@ describe('Log', () => {
   })
 
   it('should generate and log a time difference', () => {
-    const log = makeTestLog({ level: LogLevel.BASIC, times: false })
+    const log = makeTestLog({ level: LogLevel.PLAIN, times: false })
     const start = log.start()
     log('Before', start, 'After')
     const logs = log.logs
@@ -194,7 +194,7 @@ describe('Log', () => {
         for (const plug of [ undefined, plug1 ]) {
           const log = makeLog(run, plug as Plug)
           switch (level) {
-            case LogLevel.BASIC: log('A simple message logged after', start); break
+            case LogLevel.PLAIN: log('A simple message logged after', start); break
             case LogLevel.TRACE: log.trace('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.DEBUG: log.debug('A debug message', 1, true, { hello: 'world' }); break
             case LogLevel.ALERT: log.alert('An alert message', 1, true, { hello: 'world' }); break
@@ -203,7 +203,7 @@ describe('Log', () => {
         }
       }
     }
-    test(LogLevel.BASIC, true)
+    test(LogLevel.PLAIN, true)
     test(LogLevel.TRACE, true)
     test(LogLevel.DEBUG, true)
     test(LogLevel.ALERT, true)
