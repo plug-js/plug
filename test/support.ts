@@ -13,7 +13,7 @@ import { existsSync } from 'fs'
 import { resolve, isAbsolute } from 'path'
 
 import { DirectoryPath, createFilePath } from '../src/utils/paths'
-import { Log, options } from '../src/utils/log'
+import { Log, logOptions } from '../src/utils/log'
 import assert from 'assert'
 
 function findDirectory(directory: string): string {
@@ -27,15 +27,15 @@ function findDirectory(directory: string): string {
 export const directory = resolve(findDirectory(__dirname), 'test', 'support') as DirectoryPath
 
 // Inject hooks to disable logs
-const logWriter = options.write
+const logWriter = logOptions.write
 export function disableLogs(): void {
   before(() => {
     console.log('    \u001b[38;5;63m\u2605\u001b[0m disabling logs')
-    if (process.env.LOG_LEVEL !== 'debug') options.write = () => {}
+    if (process.env.LOG_LEVEL !== 'debug') logOptions.write = () => {}
   })
   after(() => {
     console.log('    \u001b[38;5;63m\u2605\u001b[0m re-enabling logs')
-    options.write = logWriter
+    logOptions.write = logWriter
   })
 }
 
