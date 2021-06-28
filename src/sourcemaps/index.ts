@@ -1,6 +1,7 @@
 import type { FilePath } from '../utils/paths'
-import type { FileSourceMap } from './file'
+import type { Files } from '../files'
 
+import { FileSourceMap } from './file'
 import { extractSourceMappingURL } from './extract'
 import { parseSourceMappingURL } from './parse'
 
@@ -31,8 +32,9 @@ export const SOURCE_MAPPING_URL = 'sourceMappingURL'
  * @param code The code to parse for source mapping URLs
  * @param wipe Whether to wipe the source mapping URL from the file or not
  */
-export function extractSourceMap(path: FilePath, code: string, wipe: boolean): ExtractedSourceMap {
+export function extractSourceMap(path: FilePath, files: Files, code: string, wipe: boolean): ExtractedSourceMap {
   const { contents, url } = extractSourceMappingURL(code, wipe)
-  const { sourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
+  const { rawSourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
+  const sourceMap = rawSourceMap ? FileSourceMap.for(path, rawSourceMap, files) : undefined
   return { contents, sourceMap, sourceMapFile }
 }

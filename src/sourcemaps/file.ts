@@ -30,9 +30,11 @@ export class FileSourceMap {
   readonly #names: readonly string[]
   readonly #sources: readonly FilePath[]
   readonly #sourcesContent: (string | null)[]
-  #attachedSources?: readonly (File | undefined)[]
+  readonly #attachedSources: readonly (File | undefined)[]
 
-  private constructor(path: FilePath, data: FileSourceMap | RawSourceMap) {
+  private constructor(path: FilePath, data: FileSourceMap)
+  private constructor(path: FilePath, data: RawSourceMap, files?: Files)
+  private constructor(path: FilePath, data: FileSourceMap | RawSourceMap, files?: Files) {
     Object.defineProperty(this, 'file', { enumerable: true, value: path })
 
     if (data instanceof FileSourceMap) {
@@ -65,6 +67,11 @@ export class FileSourceMap {
     // Push extra "sourcesContent" in case we had less and trim any excess...
     for (let i = sourcesContent.length; i < this.#sources.length; i ++) sourcesContent.push(null)
     this.#sourcesContent = sourcesContent.slice(0, this.#sources.length)
+
+    // Attach source map sources
+    this.#attachedSources = this.#sources.map((source, i) => {
+      if (! this.#sourcesContent[i]) return files?.get(source)
+    })
   }
 
   get mappings(): string {
@@ -91,13 +98,11 @@ export class FileSourceMap {
     return new FileSourceMap(path, this)
   }
 
-  static for(path: FilePath, data: RawSourceMap, sourceMapSources?: Files): FileSourceMap | undefined {
+  static for(path: FilePath, data: RawSourceMap, files?: Files): FileSourceMap | undefined {
     if (data && (typeof data === 'object') && data.version) {
       // sometimes version is a string, and only accept version 3
       if (data.version.toString() === '3') {
-        const sourceMap = new FileSourceMap(path, data)
-        if (sourceMapSources) sourceMap.attachSources(sourceMapSources)
-        return sourceMap
+        return new FileSourceMap(path, data, files)
       }
     }
   }
@@ -173,14 +178,6 @@ export class FileSourceMap {
   }
 
   /* ======================================================================== */
-
-  attachSources(files: Files): void {
-    // Do not attach a specific file source if we already have its content
-    // from the original sourcemap that created this instance...
-    this.#attachedSources = this.#sources.map((source, i) => {
-      if (! this.#sourcesContent[i]) return files.get(source)
-    })
-  }
 
   produceSourceMap(options: SourceMapOptions = {}): Promise<RawSourceMap> {
     const { attachSources = false, combineSourceMaps: combinedSourceMap = true } = options
