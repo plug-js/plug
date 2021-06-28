@@ -85,7 +85,7 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       // If we have source maps to write the output will be different: we might
       // have extra files (the external source maps) and the content will most
       // likely change (the source mapping URL is added)
-      output = new Files(input)
+      output = input.fork()
       await parallelize(input, async (originalFile) => {
         const relative = getRelativePath(input.directory, originalFile.absolutePath)
         const to = createFilePath(directory, relative)
@@ -95,7 +95,7 @@ export class WritePlug extends SourceMapsPlug implements Plug {
     } else if (directory != input.directory) {
       // If the target directory is not the same as the input one, we "move"
       // the files, so, we have to pass new files through to the next stage
-      output = new Files(input)
+      output = input.fork()
       await parallelize(input, async (file) => {
         const relative = getRelativePath(input.directory, file.absolutePath)
         const to = createFilePath(directory, relative)

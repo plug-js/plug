@@ -162,7 +162,7 @@ export class SourceMapsPlug implements Plug {
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
-    const output = new Files(run)
+    const output = input.fork()
     const time = log.start()
 
     await parallelize(input, (file) =>

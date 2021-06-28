@@ -66,7 +66,7 @@ export class CompilePlug implements Plug {
 
   process(input: Files, run: Run, log: Log): Files {
     const time = log.start()
-    const output = new Files(run)
+    const output = input.fork()
 
     // Read our compiler options and fail on error
     const host = new TypeScriptHost(input)
@@ -150,7 +150,6 @@ export class CompilePlug implements Plug {
       output.add(path, {
         contents,
         sourceMap: sourceMap /* istanbul ignore next */ || false,
-        sourceMapSources: input,
         originalPath: originalPath,
       })
     }

@@ -39,7 +39,7 @@ export class FilterPlug implements Plug {
     if (! input.length) return input
 
     const files = this.filter(input)
-    const output = new Files(input)
+    const output = input.fork()
     files.forEach((file) => output.add(file))
 
     log.debug('Forwarding', output.length, 'files out of', input.length,
