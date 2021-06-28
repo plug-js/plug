@@ -1,4 +1,3 @@
-import { Files } from '../src/files'
 import { Runnable } from '../src/run'
 import { expect } from 'chai'
 import { PlugPipe, Processor, TaskPipe } from '../src/pipe'
@@ -132,33 +131,33 @@ describe('Plug Tasks', () => {
       return files
     }))
 
-    const task1 = task('one', () => task0().plug(pipe(async (input, run) => {
+    const task1 = task('one', () => task0().plug(pipe(async (input) => {
       await sleep(20) // finish last!
 
       expect(input).to.equal(files)
-      const list = new Files(run)
+      const list = files.fork()
       for (const file of files) list.add(file)
       list.add('xxxx.txt', 'first')
       list.add(`foo${++ counter}.txt`, counter.toString())
       return list
     })))
 
-    const task2 = task('two', () => task0().plug(pipe(async (input, run) => {
+    const task2 = task('two', () => task0().plug(pipe(async (input) => {
       await sleep(10) // finish in between!
 
       expect(input).to.equal(files)
-      const list = new Files(run)
+      const list = files.fork()
       for (const file of files) list.add(file)
       list.add('xxxx.txt', { contents: 'second' })
       list.add(`bar${++ counter}.txt`, counter.toString())
       return list
     })))
 
-    const task3 = task('three', () => task0().plug(pipe((input, run) => {
+    const task3 = task('three', () => task0().plug(pipe((input) => {
       // immediate!
 
       expect(input).to.equal(files)
-      const list = new Files(run)
+      const list = files.fork()
       for (const file of files) list.add(file)
       list.add('xxxx.txt', { contents: 'third' })
       list.add(`baz${++ counter}.txt`, counter.toString())
