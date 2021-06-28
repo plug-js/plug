@@ -12,7 +12,7 @@ export abstract class File {
   /** The _original_ path of this `File` from where this was generated from */
   readonly originalPath!: FilePath
   /** The path of this `File` relative to its `Files`'s `directory` */
-  readonly relativePath!: string
+  // readonly relativePath!: string
   /** The _canonical_ path of this `File` (dependant on filesystem case sensitivity) */
   readonly canonicalPath!: CanonicalPath
 

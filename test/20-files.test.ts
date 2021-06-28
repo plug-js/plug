@@ -41,7 +41,6 @@ describe('File lists', () => {
       expect(file.absolutePath).to.equal(testfile)
       expect(file.originalPath).to.equal(testfile)
       expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
-      expect(file.relativePath).to.equal(basename(testfile))
 
       expect(files.get(testfile)).to.equal(file)
       expect(files.get(basename(testfile))).to.equal(file)
@@ -66,7 +65,6 @@ describe('File lists', () => {
         expect(file.files).to.equal(files)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
         expect(file.originalPath).to.equal('/Foo/Bar.Txt')
-        expect(file.relativePath).to.equal('Bar.Txt')
         expect(file.canonicalPath).to.equal('/Foo/Bar.Txt')
 
         // Re-get the same file
@@ -97,7 +95,6 @@ describe('File lists', () => {
         expect(file.files).to.equal(files)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
         expect(file.originalPath).to.equal('/Foo/Bar.Txt')
-        expect(file.relativePath).to.equal('Bar.Txt')
         expect(file.canonicalPath).to.equal('/foo/bar.txt') // case insensitive
 
         // Re-get the same file
@@ -128,7 +125,6 @@ describe('File lists', () => {
       expect(file.absolutePath).to.equal(testfile)
       expect(file.originalPath).to.equal(testfile)
       expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
-      expect(file.relativePath).to.equal(basename(testfile))
 
       expect(files.get(testfile)).to.equal(file)
       expect(files.get(basename(testfile))).to.equal(file)
@@ -150,7 +146,6 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('One.Txt', 'content')
 
-        expect(file.relativePath).to.equal('One.Txt')
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
         expect(file.originalPath).to.equal('/Foo/One.Txt')
         expect(file.canonicalPath).to.equal('/Foo/One.Txt')
@@ -182,7 +177,6 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('One.Txt', 'content')
 
-        expect(file.relativePath).to.equal('One.Txt')
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
         expect(file.originalPath).to.equal('/Foo/One.Txt')
         expect(file.canonicalPath).to.equal('/foo/one.txt') // case insensitive

@@ -98,7 +98,7 @@ export class Files {
     // as an argument, or from the _relative_ path of the original file...
     const absolutePath =
         path ? createFilePath(this.directory, path) :
-        file ? createFilePath(this.directory, file.relativePath) :
+        file ? file.absolutePath :
         undefined
     assert(absolutePath, 'No path for file to be added')
     assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)

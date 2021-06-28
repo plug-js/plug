@@ -17,17 +17,17 @@ describe('Plug Initialization', () => {
     expect(pipeline1).to.be.instanceof(TaskPipe)
 
     const output1 = await pipeline1.run(mock(directory).run)
-    const files1 = output1.list().map((file) => file.relativePath)
+    const files1 = output1.list().map((file) => file.absolutePath)
     expect(files1).to.have.length.greaterThan(1)
-    expect(files1).to.include('build.ts')
+    expect(files1).to.include(`${directory}/build.ts`)
 
     const pipeline2 = read('**/*.*', { ignore: [ '**/*.ts' ] })
     expect(pipeline2).to.be.instanceof(TaskPipe)
 
     const output2 = await pipeline2.run(mock(directory).run)
-    const files2 = output2.list().map((file) => file.relativePath)
+    const files2 = output2.list().map((file) => file.absolutePath)
     expect(files2).to.have.length.greaterThan(1)
-    expect(files2).to.not.include('build.ts')
+    expect(files1).to.include(`${directory}/build.ts`)
   })
 
   it('should create a TaskPipe with "from"', async () => {
@@ -35,16 +35,16 @@ describe('Plug Initialization', () => {
     expect(pipeline1).to.be.instanceof(TaskPipe)
 
     const output1 = await pipeline1.run(mock(directory).run)
-    const files1 = output1.list().map((file) => file.relativePath)
+    const files1 = output1.list().map((file) => file.absolutePath)
     expect(files1).to.have.length.greaterThan(1)
-    expect(files1).to.include('build.ts')
+    expect(files1).to.include(`${directory}/build.ts`)
 
     const pipeline2 = from(directory).read('**/*.*', { ignore: [ '**/*.ts' ] })
     expect(pipeline2).to.be.instanceof(TaskPipe)
 
     const output2 = await pipeline2.run(mock(directory).run)
-    const files2 = output2.list().map((file) => file.relativePath)
+    const files2 = output2.list().map((file) => file.absolutePath)
     expect(files2).to.have.length.greaterThan(1)
-    expect(files2).to.not.include('build.ts')
+    expect(files1).to.include(`${directory}/build.ts`)
   })
 })

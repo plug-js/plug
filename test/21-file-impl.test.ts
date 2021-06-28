@@ -1,6 +1,6 @@
 import { FileImpl } from '../src/files/impl'
 import { Project } from '../src/project'
-import { basename, join } from 'path'
+import { join } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
 import { tmpdir } from 'os'
@@ -166,10 +166,8 @@ describe('Files', () => {
 
       const files = makeFiles(directory)
       const file = files.get(filename)!
-      const relative = basename(filename)
 
       expect(file.absolutePath).to.equal(filename)
-      expect(file.relativePath).to.equal(relative)
 
       const data = readFileSync(filename, 'utf8')
 
@@ -343,10 +341,8 @@ describe('Files', () => {
 
       const files = makeFiles(directory)
       const file = files.get(filename)!
-      const relative = basename(filename)
 
       expect(file.absolutePath).to.equal(filename)
-      expect(file.relativePath).to.equal(relative)
 
       const data = readFileSync(filename, 'utf8')
       const contents = file.contentsSync()

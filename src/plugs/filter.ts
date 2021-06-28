@@ -29,7 +29,7 @@ export class FilterPlug implements Plug {
     for (const file of input) {
       const relative = matchOriginalPaths ?
           getRelativePath(input.directory, file.originalPath) :
-          file.relativePath
+          getRelativePath(input.directory, file.absolutePath)
       if (this.#matcher(relative)) files.push(file)
     }
     return files

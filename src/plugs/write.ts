@@ -8,7 +8,7 @@ import type { SourceMapsOptions } from './sourcemaps'
 
 import { Files } from '../files'
 import { SourceMapsPlug } from './sourcemaps'
-import { createDirectoryPath, createFilePath, isChild } from '../utils/paths'
+import { createDirectoryPath, createFilePath, getRelativePath, isChild } from '../utils/paths'
 import { getParent } from '../utils/paths'
 import { install } from '../pipe'
 import { mkdir, writeFile } from '../utils/asyncfs'
@@ -87,7 +87,8 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       // likely change (the source mapping URL is added)
       output = new Files(input)
       await parallelize(input, async (originalFile) => {
-        const to = createFilePath(directory, originalFile.relativePath)
+        const relative = getRelativePath(input.directory, originalFile.absolutePath)
+        const to = createFilePath(directory, relative)
         const added = await this.processFile(originalFile, to, output, log)
         return parallelize(added, (file) => this.write(file, log))
       })
@@ -96,7 +97,8 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       // the files, so, we have to pass new files through to the next stage
       output = new Files(input)
       await parallelize(input, async (file) => {
-        const to = createFilePath(directory, file.relativePath)
+        const relative = getRelativePath(input.directory, file.absolutePath)
+        const to = createFilePath(directory, relative)
         const added = output.add(to, file)
         return this.write(added, log)
       })

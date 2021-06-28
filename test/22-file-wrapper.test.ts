@@ -15,7 +15,6 @@ describe('File Wrapper', () => {
     const file: File = {
       files: undefined as any,
       absolutePath: '/foo/absolute path' as any,
-      relativePath: 'relative path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
       contents: (): Promise<string> => 'contents' as any,
@@ -27,7 +26,6 @@ describe('File Wrapper', () => {
     const wrapper = new FileWrapper(files, file)
     expect(wrapper.files).to.equal(files)
     expect(wrapper.absolutePath).to.equal('/foo/absolute path')
-    expect(wrapper.relativePath).to.equal('absolute path') // recomputed
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/absolute path') // recomputed!
 
@@ -53,7 +51,6 @@ describe('File Wrapper', () => {
     const file: File = {
       files: undefined as any,
       absolutePath: '/foo/absolute path' as any,
-      relativePath: 'relative path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
       contents: (): Promise<string> => 'contents' as any,
@@ -65,7 +62,6 @@ describe('File Wrapper', () => {
     const wrapper = new FileWrapper(files, file, '/foo/another absolute path' as any)
     expect(wrapper.files).to.equal(files)
     expect(wrapper.absolutePath).to.equal('/foo/another absolute path')
-    expect(wrapper.relativePath).to.equal('another absolute path') // recomputed
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/another absolute path') // recomputed
 
