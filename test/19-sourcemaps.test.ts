@@ -1,9 +1,10 @@
 import { FilePath } from '../src/utils/paths'
 import { expect } from 'chai'
-import { extractSourceMappingURL, parseSourceMappingURL, SOURCE_MAPPING_URL } from '../src/sourcemaps'
+import { appendSourceMap, encodeSourceMap, extractSourceMappingURL, parseSourceMappingURL, SOURCE_MAPPING_URL } from '../src/sourcemaps'
 import { disableLogs } from './support'
+import { RawSourceMap } from 'source-map'
 
-describe.skip('Source Maps', () => {
+describe('Source Maps', () => {
   disableLogs()
 
   it('should extract a source mapping url', () => {
@@ -48,20 +49,80 @@ describe.skip('Source Maps', () => {
   })
 
   it('should parse a source mapping URL', () => {
-    const file = '/foo/bar/baz.js' as FilePath
+    const path = '/foo/bar/baz.js' as FilePath
 
-    expect(parseSourceMappingURL(file)).to.eql({})
+    expect(parseSourceMappingURL(path)).to.eql({})
 
-    expect(parseSourceMappingURL(file, 'http://www/')).to.eql({})
+    expect(parseSourceMappingURL(path, 'http://www/')).to.eql({})
 
-    expect(parseSourceMappingURL(file, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(file, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(file, '../bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(file, './baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
-    expect(parseSourceMappingURL(file, 'baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, 'file:///foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, '/foo/bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, '../bar/baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, './baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
+    expect(parseSourceMappingURL(path, 'baz.js.map')).to.eql({ sourceMapFile: '/foo/bar/baz.js.map' })
 
-    expect(parseSourceMappingURL(file, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ==')).to.eql({ rawSourceMap: { version: 3 } })
-    expect(parseSourceMappingURL(file, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ')).to.eql({ rawSourceMap: { version: 3 } })
-    expect(() => parseSourceMappingURL(file, 'data:application/json;base64,')).to.throw(SyntaxError)
+    expect(parseSourceMappingURL(path, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ==')).to.eql({ rawSourceMap: { version: 3 } })
+    expect(parseSourceMappingURL(path, 'data:application/json;base64,eyJ2ZXJzaW9uIjozfQ')).to.eql({ rawSourceMap: { version: 3 } })
+    expect(() => parseSourceMappingURL(path, 'data:application/json;base64,')).to.throw(SyntaxError)
+  })
+
+  it('should encode a source map', () => {
+    const sm1 = {
+      version: 3,
+      file: 'file.txt',
+      sources: [ 'source1.txt', 'source2.txt' ],
+      names: [ 'name1', 'name2' ],
+      mappings: 'mappings',
+      sourceRoot: 'root',
+    }
+
+    const text1 = encodeSourceMap(sm1)
+    expect(JSON.parse(text1)).to.eql(sm1)
+    expect(text1).to.match(/^{"version":3,"file":"file.txt"/)
+
+    const text2 = encodeSourceMap({ version: 3 } as any)
+    expect(JSON.parse(text2)).to.eql({
+      version: 3,
+      mappings: '',
+      sources: [],
+      names: [],
+    })
+
+    const text3 = encodeSourceMap({
+      version: 3,
+      sources: [ 's1.txt', 's2.txt' ],
+      sourcesContent: [ 'source', null ],
+    } as any)
+    expect(JSON.parse(text3)).to.eql({
+      version: 3,
+      mappings: '',
+      sources: [ 's1.txt', 's2.txt' ],
+      sourcesContent: [ 'source', null ],
+      names: [],
+    })
+  })
+
+  it('should append a source map to some contents', () => {
+    const file = '/foo/bar/baz.js'
+
+    const map: RawSourceMap = { version: 3, file: 'file.txt', sources: [], names: [], mappings: '' }
+
+    const [ ecode, emap ] = appendSourceMap(file, 'some code...', map, false)
+    expect(ecode).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=baz.js.map`)
+    expect(emap).to.equal('{"version":3,"file":"baz.js","sources":[],"names":[],"mappings":""}')
+
+    const [ ecoder, emapr ] = appendSourceMap(file, 'some code...', map, false, 'root')
+    expect(ecoder).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=baz.js.map`)
+    expect(emapr).to.equal('{"version":3,"file":"baz.js","sourceRoot":"root","sources":[],"names":[],"mappings":""}')
+
+    const [ icode, imap ] = appendSourceMap(file, 'some code...', map, true) as any
+    expect(icode).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,` +
+      'eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYmF6LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==')
+    expect(imap).to.be.undefined
+
+    const [ icoder, imapr ] = appendSourceMap(file, 'some code...', map, true, 'root') as any
+    expect(icoder).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,` +
+      'eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYmF6LmpzIiwic291cmNlUm9vdCI6InJvb3QiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9')
+    expect(imapr).to.be.undefined
   })
 })
