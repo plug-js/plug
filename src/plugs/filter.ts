@@ -24,13 +24,21 @@ export class FilterPlug implements Plug {
     this.#matcher = match(parseOptions(args))
   }
 
+  // TODO: move me to an utiliy file
   protected filter(input: Files, matchOriginalPaths?: boolean): File[] {
     const files: File[] = []
-    for (const file of input) {
-      const relative = matchOriginalPaths ?
-          getRelativePath(input.directory, file.originalPath) :
-          getRelativePath(input.directory, file.absolutePath)
-      if (this.#matcher(relative)) files.push(file)
+    if (matchOriginalPaths) {
+      for (const file of input) {
+        if (! file.originalFile) continue
+        const original = file.originalFile.absolutePath
+        const relative = getRelativePath(input.directory, original)
+        if (this.#matcher(relative)) files.push(file)
+      }
+    } else {
+      for (const file of input) {
+        const relative = getRelativePath(input.directory, file.absolutePath)
+        if (this.#matcher(relative)) files.push(file)
+      }
     }
     return files
   }

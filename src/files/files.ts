@@ -1,13 +1,15 @@
 import assert from 'assert'
 
 import { File } from './file'
-import { FileImpl } from './impl'
+import { SimpleFile } from './simple'
 import { FileWrapper } from './wrapper'
 import { createFilePath, getCanonicalPath, isChild } from '../utils/paths'
 
 import type { CanonicalPath, DirectoryPath } from '../utils/paths'
 import type { FileOptions } from './index'
 import type { Run } from '../run'
+import { VirtualFile } from './virtual'
+import { statSync } from 'fs'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -67,7 +69,9 @@ export class Files {
     }
 
     try {
-      const file = new FileImpl(this, absolutePath)
+      const stat = statSync(absolutePath)
+      if (! stat.isFile()) return undefined
+      const file = new SimpleFile(this, absolutePath, true)
       this.#cache.set(file.canonicalPath, file)
       return file
     } catch (error) {
@@ -113,21 +117,19 @@ export class Files {
     assert(absolutePath, 'No path for file to be added')
     assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)
 
-    // Don't recreate if the file is already ours and has the correct path
-    if (file && (file.absolutePath === absolutePath)) {
-      this.#cache.set(file.canonicalPath, file)
-      this.#files.set(file.canonicalPath, file)
-      return file
-    }
-
     // Create a new file
     let newFile: File
     if (options) {
-      newFile = new FileImpl(this, absolutePath, options)
-    } else if (file) {
+      const { contents, originalFile, sourceMap = true } = options
+      newFile = new VirtualFile(this, absolutePath, contents, sourceMap, originalFile)
+    } else if (file && (file.absolutePath !== absolutePath)) {
       newFile = new FileWrapper(file, absolutePath)
+    } else if (file) {
+      newFile = file
     } else {
-      newFile = new FileImpl(this, absolutePath)
+      const file = this.get(absolutePath)
+      if (! file) throw new Error(`File "${absolutePath}" not found`)
+      newFile = file
     }
 
     // Cache, add and return the new file

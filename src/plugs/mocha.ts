@@ -55,7 +55,10 @@ export class MochaPlug implements Plug {
     const tests = new Set<FilePath>()
     for (const file of input) {
       if (extname(file.absolutePath) !== '.js') continue
-      const path = this.#matchOriginalPaths ? file.originalPath : file.absolutePath
+      const path = this.#matchOriginalPaths ?
+          file.originalFile?.absolutePath :
+          file.absolutePath
+      if (! path) continue
       const relativePath = getRelativePath(input.directory, path)
       if (this.#matcher(relativePath)) tests.add(file.absolutePath)
     }

@@ -7,7 +7,7 @@ import { PlugPipe } from './pipe'
 import { Project } from './project'
 import { Run } from './run'
 import { SourceMapsPlug } from './plugs/sourcemaps'
-import { extname } from 'path'
+import { extname, basename } from 'path'
 import { getParent } from './utils/paths'
 import { setupLoader } from './utils/loader'
 
@@ -21,7 +21,7 @@ import type { DirectoryPath, FilePath } from './utils/paths'
  * Load our build file from TypeScript (or JavaScript)
  */
 export async function loadBuildFile(buildFile: FilePath): Promise<any> {
-  if (extname(buildFile) === '.js') return require(buildFile)
+  if (extname(buildFile) !== '.ts') return require(buildFile)
 
   // Create our compiler
   const compiler = new CompilePlug({
@@ -54,14 +54,13 @@ export async function loadBuildFile(buildFile: FilePath): Promise<any> {
   // Build our output file list, and figure out where the original
   // typescript ended up in our compilation results
   const map = new Map<FilePath, string>()
-  let compiled
   for (const file of output) {
     map.set(file.absolutePath, await file.contents())
-    if (file.originalPath === buildFile) compiled = file.absolutePath
   }
 
   // Make sure we have a proper result and load our file
-  assert(compiled, `Build file ${buildFile} was not compiled`)
+  const compiled = output.get(`${basename(buildFile, '.ts')}.js`)?.absolutePath
+  assert(compiled, `Build file "${buildFile}" was not compiled`)
   setupLoader(map)
   try {
     return require(compiled)

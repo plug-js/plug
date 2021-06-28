@@ -1,4 +1,5 @@
-import { FileImpl } from '../src/files/impl'
+// @ts-nocheck
+import { VirtualFile } from '../src/files/virtual'
 import { join } from 'path'
 import { disableLogs } from './support'
 import { expect } from 'chai'
@@ -12,7 +13,7 @@ import { directory as directory } from './support'
 import { Run } from '../src/run'
 const filename = join(directory, 'build.ts')
 
-describe('Files', () => {
+describe.skip('Files', () => {
   function makeFiles(directory: string): Files {
     return Files.for({ project: { directory } } as Run)
   }
@@ -23,13 +24,13 @@ describe('Files', () => {
     const dir = directory as DirectoryPath
     const files = makeFiles(getParent(dir))
 
-    expect(() => new FileImpl(files, createFilePath(dir, 'this does not exist')))
+    expect(() => new VirtualFile(files, createFilePath(dir, 'this does not exist')))
         .to.throw(Error, `File "${directory}/this does not exist" not found`)
 
-    expect(() => new FileImpl(files, directory as any as FilePath))
+    expect(() => new VirtualFile(files, directory as any as FilePath))
         .to.throw(Error, `File "${directory}" is not a file`)
 
-    expect(new FileImpl(files, filename as FilePath)).to.be.instanceof(FileImpl)
+    expect(new VirtualFile(files, filename as FilePath)).to.be.instanceof(VirtualFile)
   })
 
   describe('Asynchronous Virtual File Access', () => {
@@ -188,8 +189,8 @@ describe('Files', () => {
           writeFileSync(path, 'contents...')
 
           const files = makeFiles(dir)
-          const file1 = new FileImpl(files, path)
-          const file2 = new FileImpl(files, path)
+          const file1 = new VirtualFile(files, path)
+          const file2 = new VirtualFile(files, path)
 
           // read file1, _not_ file2, and unlink
           expect(await file1.contents()).to.equal('contents...')
@@ -362,8 +363,8 @@ describe('Files', () => {
           writeFileSync(path, 'contents...')
 
           const files = makeFiles(dir)
-          const file1 = new FileImpl(files, path)
-          const file2 = new FileImpl(files, path)
+          const file1 = new VirtualFile(files, path)
+          const file2 = new VirtualFile(files, path)
 
           // read file1, _not_ file2, and unlink
           expect(file1.contentsSync()).to.equal('contents...')

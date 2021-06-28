@@ -1,5 +1,4 @@
 import { expect } from 'chai'
-import { FilePath } from '../src/utils/paths'
 import { File, Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { FilterPlug } from '../src/plugs/filter'
@@ -47,7 +46,8 @@ describe('Plug Filter Processor', () => {
   it('should filter some files matching original paths', () => {
     const { files } = mock('/foo')
 
-    const file1 = files.add('foo.js', { contents: 'contents', originalPath: '/foo/foo.ts' as FilePath })
+    const file0 = files.add('foo.ts', { contents: 'contents' })
+    const file1 = files.add('foo.js', { contents: 'contents', originalFile: file0 })
     /* file2   */ files.add('bar.js', { contents: 'contents' })
 
     const filter = new class extends FilterPlug {
@@ -60,8 +60,8 @@ describe('Plug Filter Processor', () => {
       }
     }
 
-    expect(filter.filter(files)).to.eql([]) // not matching originals
-    expect(filter.filter(files, false)).to.eql([]) // not matching originals
+    expect(filter.filter(files)).to.eql([ file0 ]) // not matching originals
+    expect(filter.filter(files, false)).to.eql([ file0 ]) // not matching originals
     expect(filter.filter(files, true)).to.eql([ file1 ]) // match originals
   })
 

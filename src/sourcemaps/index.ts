@@ -7,6 +7,8 @@ import { parseSourceMappingURL } from './parse'
 
 export type { SourceMapOptions } from './file'
 export { FileSourceMap } from './file'
+export { appendSourceMap } from './append'
+export { encodeSourceMap } from './encode'
 export { extractSourceMappingURL } from './extract'
 export { parseSourceMappingURL } from './parse'
 
@@ -35,6 +37,6 @@ export const SOURCE_MAPPING_URL = 'sourceMappingURL'
 export function extractSourceMap(path: FilePath, files: Files, code: string, wipe: boolean): ExtractedSourceMap {
   const { contents, url } = extractSourceMappingURL(code, wipe)
   const { rawSourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
-  const sourceMap = rawSourceMap ? FileSourceMap.for(path, rawSourceMap, files) : undefined
+  const sourceMap = rawSourceMap ? new FileSourceMap(path, rawSourceMap, files) : undefined
   return { contents, sourceMap, sourceMapFile }
 }

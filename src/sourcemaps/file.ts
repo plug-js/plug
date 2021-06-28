@@ -1,12 +1,14 @@
 import assert from 'assert'
 
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map'
-import { createFilePath, getParent } from '../utils/paths'
+import { createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { parallelize } from '../utils/parallelize'
 
 import type { File, Files } from '../files'
 import type { FilePath } from '../utils/paths'
 import type { RawSourceMap } from 'source-map'
+import { fileURLToPath, pathToFileURL, URL } from 'url'
+import { basename } from 'path/posix'
 
 export interface SourceMapOptions {
   /**
@@ -25,26 +27,27 @@ export interface SourceMapOptions {
 }
 
 export class FileSourceMap {
-  readonly file!: FilePath
   readonly #mappings: string
   readonly #names: readonly string[]
-  readonly #sources: readonly FilePath[]
-  readonly #sourcesContent: (string | null)[]
+  readonly #sources: readonly URL[]
+  readonly #sourcesContent: readonly (string | null)[]
   readonly #attachedSources: readonly (File | undefined)[]
 
-  private constructor(path: FilePath, data: FileSourceMap)
-  private constructor(path: FilePath, data: RawSourceMap, files?: Files)
-  private constructor(path: FilePath, data: FileSourceMap | RawSourceMap, files?: Files) {
-    Object.defineProperty(this, 'file', { enumerable: true, value: path })
+  /**
+   * Construct a `FileSourceMap` from a `RawSourceMap`.
+   *
+   * @param path The path where the source map was read from, either the file
+   *             containing an inline source map or the name of the ".map" file
+   * @param data The `RawSourceMap` as parsed from the original file
+   * @param files A `Files` instance where attached sources can be found
+   */
+  constructor(path: FilePath, data: RawSourceMap, files: Files) {
+    // Normally this comes from JSON (any) so be extra careful
+    assert(data && (typeof data === 'object'), `Raw source map from "${path}" is not an object`)
+    assert(data.version && (data.version.toString() === '3'), `Invalid source map version from "${path}"`)
 
-    if (data instanceof FileSourceMap) {
-      this.#mappings = data.#mappings
-      this.#names = data.#names
-      this.#sources = data.#sources
-      this.#sourcesContent = data.#sourcesContent
-      this.#attachedSources = data.#attachedSources
-      return
-    }
+    const url = pathToFileURL(path)
+    const dir = getParent(path)
 
     const root = data.sourceRoot ? data.sourceRoot.toString() : ''
 
@@ -55,11 +58,18 @@ export class FileSourceMap {
           return name
         }) : []
 
-    this.#sources = Array.isArray(data.sources) ?
-        data.sources.map((source) => {
-          assert(source && (typeof source === 'string'), `Invalid source "${source}" in source map for "${path}"`)
-          return createFilePath(getParent(path), root, source)
-        }) : []
+    const sources: URL[] = []
+    const attachedSources: (File | undefined)[] = []
+    if (Array.isArray(data.sources)) {
+      data.sources.forEach((string) => {
+        const source = root + string // spec says it's only a concatenation...
+        assert(source, `Invalid source "${source}" in source map for "${path}"`)
+        attachedSources.push(files.get(createFilePath(dir, source)))
+        sources.push(new URL(source, url))
+      })
+    }
+    this.#sources = sources
+    this.#attachedSources = attachedSources
 
     const sourcesContent = Array.isArray(data.sourcesContent) ?
         data.sourcesContent.map((content) => typeof content === 'string' ? content || null : null) : []
@@ -67,11 +77,6 @@ export class FileSourceMap {
     // Push extra "sourcesContent" in case we had less and trim any excess...
     for (let i = sourcesContent.length; i < this.#sources.length; i ++) sourcesContent.push(null)
     this.#sourcesContent = sourcesContent.slice(0, this.#sources.length)
-
-    // Attach source map sources
-    this.#attachedSources = this.#sources.map((source, i) => {
-      if (! this.#sourcesContent[i]) return files?.get(source)
-    })
   }
 
   get mappings(): string {
@@ -82,7 +87,7 @@ export class FileSourceMap {
     return [ ...this.#names ]
   }
 
-  get sources(): FilePath[] {
+  get sources(): URL[] {
     return [ ...this.#sources ]
   }
 
@@ -94,11 +99,7 @@ export class FileSourceMap {
     return this.#attachedSources ? [ ...this.#attachedSources ] : []
   }
 
-  with(path: FilePath): FileSourceMap {
-    return new FileSourceMap(path, this)
-  }
-
-  static for(path: FilePath, data: RawSourceMap, files?: Files): FileSourceMap | undefined {
+  static for(path: FilePath, data: RawSourceMap, files: Files): FileSourceMap | undefined {
     if (data && (typeof data === 'object') && data.version) {
       // sometimes version is a string, and only accept version 3
       if (data.version.toString() === '3') {
@@ -128,35 +129,38 @@ export class FileSourceMap {
     }))
   }
 
-  #produceSourceMap(): RawSourceMap {
+  #produceSourceMap(path: FilePath): RawSourceMap {
+    const sources: string[] = this.#sources.map((url) => {
+      if (url.protocol !== 'file:') return url.href
+      const source = fileURLToPath(url) as FilePath
+      return getRelativeFilePath(path, source)
+    })
+
     return {
       version: 3,
-      file: this.file,
+      file: basename(path),
       mappings: this.#mappings,
       names: [ ...this.#names ],
-      sources: [ ...this.#sources ],
+      sources,
     }
   }
 
-  async #produceSimpleSourceMap(attachSources: boolean): Promise<RawSourceMap> {
-    const sourceMap = this.#produceSourceMap()
+  async #produceSimpleSourceMap(path: FilePath, attachSources: boolean): Promise<RawSourceMap> {
+    const sourceMap = this.#produceSourceMap(path)
     if (attachSources) sourceMap.sourcesContent = await this.#readSourceContent()
     return sourceMap
   }
 
-  async #produceCombinedSourceMap(attachSources: boolean): Promise<RawSourceMap> {
-    // If we have no attached sources, it's pointless to even try...
-    if (! this.#attachedSources) return this.#produceSimpleSourceMap(attachSources)
-
+  async #produceCombinedSourceMap(path: FilePath, attachSources: boolean): Promise<RawSourceMap> {
     // Find all source maps associated with the attached sources...
     const sourceMaps = (await parallelize(this.#attachedSources, (file) => file?.sourceMap()))
         .filter((sourceMap) => sourceMap) as FileSourceMap[]
 
     // If no sourcemap was found, then we can just produce a simple source map
-    if (! sourceMaps.length) return this.#produceSimpleSourceMap(attachSources)
+    if (! sourceMaps.length) return this.#produceSimpleSourceMap(path, attachSources)
 
     // Start with _this_ sourcemap
-    const original = this.#produceSourceMap()
+    const original = this.#produceSourceMap(path)
     if (attachSources) original.sourcesContent = await this.#readSourceContent()
     const combined = await SourceMapConsumer.with(original, null, async (consumer) => {
       // Create a generator from this sourcemap
@@ -165,7 +169,7 @@ export class FileSourceMap {
       // Apply all other sourcemaps to this one... The original sources (if
       // any were found) will also be _applied_ to this sourcemap
       for (const fileSourceMap of sourceMaps) {
-        const sourceMap = await fileSourceMap.#produceCombinedSourceMap(attachSources)
+        const sourceMap = await fileSourceMap.#produceCombinedSourceMap(path, attachSources)
         await SourceMapConsumer.with(sourceMap, null, (c) => generator.applySourceMap(c))
       }
 
@@ -179,10 +183,10 @@ export class FileSourceMap {
 
   /* ======================================================================== */
 
-  produceSourceMap(options: SourceMapOptions = {}): Promise<RawSourceMap> {
+  produceSourceMap(path: FilePath, options: SourceMapOptions = {}): Promise<RawSourceMap> {
     const { attachSources = false, combineSourceMaps: combinedSourceMap = true } = options
     return combinedSourceMap ?
-        this.#produceCombinedSourceMap(attachSources) :
-        this.#produceSimpleSourceMap(attachSources)
+        this.#produceCombinedSourceMap(path, attachSources) :
+        this.#produceSimpleSourceMap(path, attachSources)
   }
 }

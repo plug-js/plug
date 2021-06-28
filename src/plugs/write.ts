@@ -89,7 +89,7 @@ export class WritePlug extends SourceMapsPlug implements Plug {
       await parallelize(input, async (originalFile) => {
         const relative = getRelativePath(input.directory, originalFile.absolutePath)
         const to = createFilePath(directory, relative)
-        const added = await this.processFile(originalFile, to, output, log)
+        const added = await this.processFile(originalFile, to, output)
         return parallelize(added, (file) => this.write(file, log))
       })
     } else if (directory != input.directory) {

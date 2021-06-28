@@ -83,7 +83,7 @@ export class CompilePlug implements Plug {
 
     // Make sure we _always_ have both `rootDir` and `outDir`...
     const rootDir = createDirectoryPath(input.directory, options.rootDir)
-    const outDir = createDirectoryPath(input.directory, options.outDir)
+    const outDir = options.outDir ? createDirectoryPath(input.directory, options.outDir) : rootDir
     options.rootDir = rootDir
     options.outDir = outDir
 
@@ -150,7 +150,7 @@ export class CompilePlug implements Plug {
       output.add(path, {
         contents,
         sourceMap: sourceMap /* istanbul ignore next */ || false,
-        originalPath: originalPath,
+        originalFile: originalPath ? input.get(originalPath) : undefined, // TODO: there's a better way
       })
     }
 

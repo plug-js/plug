@@ -7,6 +7,9 @@ import { expect } from 'chai'
 import { FilePath, getCanonicalPath } from '../src/utils/paths'
 
 import { directory } from './support'
+import { SimpleFile } from '../src/files/simple'
+import { VirtualFile } from '../src/files/virtual'
+import { FileWrapper } from '../src/files/wrapper'
 const testfile = join(directory, 'build.ts')
 
 describe('File lists', () => {
@@ -33,8 +36,9 @@ describe('File lists', () => {
       const file = files.get(testfile)!
 
       expect(file).to.not.be.undefined
+      expect(file).to.be.instanceOf(SimpleFile)
       expect(file.absolutePath).to.equal(testfile)
-      expect(file.originalPath).to.equal(testfile)
+      expect(file.originalFile).to.be.undefined
       expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
 
       expect(files.get(testfile)).to.equal(file)
@@ -57,8 +61,9 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('Bar.Txt', 'content')!
 
+        expect(file).to.be.instanceOf(VirtualFile)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
-        expect(file.originalPath).to.equal('/Foo/Bar.Txt')
+        expect(file.originalFile).to.be.undefined
         expect(file.canonicalPath).to.equal('/Foo/Bar.Txt')
 
         // Re-get the same file
@@ -86,8 +91,9 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('Bar.Txt', 'content')!
 
+        expect(file).to.be.instanceOf(VirtualFile)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
-        expect(file.originalPath).to.equal('/Foo/Bar.Txt')
+        expect(file.originalFile).to.be.undefined
         expect(file.canonicalPath).to.equal('/foo/bar.txt') // case insensitive
 
         // Re-get the same file
@@ -115,8 +121,9 @@ describe('File lists', () => {
       const file = files.add(testfile)
 
       expect(file).to.not.be.undefined
+      expect(file).to.be.instanceOf(SimpleFile)
       expect(file.absolutePath).to.equal(testfile)
-      expect(file.originalPath).to.equal(testfile)
+      expect(file.originalFile).to.be.undefined
       expect(file.canonicalPath).to.equal(getCanonicalPath(testfile as any))
 
       expect(files.get(testfile)).to.equal(file)
@@ -131,6 +138,9 @@ describe('File lists', () => {
       const files = makeFiles(directory)
       expect(() => files.add('this does not exist for sure'))
           .to.throw(Error, `File "${directory}/this does not exist for sure" not found`)
+
+      expect(() => files.add('dir'))
+          .to.throw(Error, `File "${directory}/dir" not found`)
     })
 
     it('should add a simple file with case sensitive paths', () => {
@@ -139,8 +149,9 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('One.Txt', 'content')
 
+        expect(file).to.be.instanceOf(VirtualFile)
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
-        expect(file.originalPath).to.equal('/Foo/One.Txt')
+        expect(file.originalFile).to.be.undefined
         expect(file.canonicalPath).to.equal('/Foo/One.Txt')
 
         expect(files.get('One.Txt')).to.equal(file) // same instance
@@ -169,8 +180,9 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('One.Txt', 'content')
 
+        expect(file).to.be.instanceOf(VirtualFile)
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
-        expect(file.originalPath).to.equal('/Foo/One.Txt')
+        expect(file.originalFile).to.be.undefined
         expect(file.canonicalPath).to.equal('/foo/one.txt') // case insensitive
 
         expect(files.get('One.Txt')).to.equal(file) // same instance
@@ -198,6 +210,8 @@ describe('File lists', () => {
 
       // add same file with the same path
       const file1 = files.add('bar.txt', 'content')
+      expect(file1).to.be.instanceOf(VirtualFile)
+
       expect(files.add(file1)).to.equals(file1) // same file, just added
       expect(files.list()).to.eql([ file1 ]) // and should show in the list
       expect(files.list()[0]).to.equal(file1) // same instance check
@@ -216,6 +230,8 @@ describe('File lists', () => {
 
       // add same file but with a different path
       const file2 = files.add('baz.txt', file1)
+      expect(file2).to.be.instanceOf(FileWrapper)
+
       expect(files.list()).to.eql([ file1, file2 ])
       expect(files.list()[0]).to.equal(file1)
       expect(files.list()[1]).to.equal(file2)
@@ -224,32 +240,47 @@ describe('File lists', () => {
     it('should add a file with some options', () => {
       const files = makeFiles('/foo')
       const file1 = files.add('bar.txt', {
-        contents: 'hello, world!',
+        contents: 'hello, world 1!',
         sourceMap: { version: 3 } as any,
       })
 
+      expect(file1).to.be.instanceOf(VirtualFile)
       expect(files.list()).to.eql([ file1 ])
       expect(files.list()[0]).to.equal(file1)
 
       expect(file1.absolutePath).to.equal('/foo/bar.txt')
-      expect(file1.originalPath).to.equal('/foo/bar.txt')
-      expect(file1.contentsSync()).to.equal('hello, world!')
-      expect(file1.sourceMapSync()).to.eql({ file: file1.absolutePath })
+      expect(file1.originalFile).to.be.undefined
+      expect(file1.contentsSync()).to.equal('hello, world 1!')
 
       // overwrite file...
       const file2 = files.add('bar.txt', {
-        contents: 'hello, world!',
+        contents: 'hello, world 2!',
         sourceMap: { version: 3 } as any,
-        originalPath: '/from/original.txt' as FilePath,
+        originalFile: file1,
       })
 
+      expect(file2).to.be.instanceOf(VirtualFile)
       expect(files.list()).to.eql([ file2 ])
       expect(files.list()[0]).to.equal(file2)
 
       expect(file2.absolutePath).to.equal('/foo/bar.txt')
-      expect(file2.originalPath).to.equal('/from/original.txt')
-      expect(file2.contentsSync()).to.equal('hello, world!')
-      expect(file2.sourceMapSync()).to.eql({ file: file2.absolutePath })
+      expect(file2.originalFile).to.equal(file1)
+      expect(file2.contentsSync()).to.equal('hello, world 2!')
+
+      // different path, different content
+      const file3 = files.add('baz.txt', {
+        contents: 'hello, world 3!',
+        sourceMap: { version: 3 } as any,
+        originalFile: file2,
+      })
+
+      expect(file3).to.be.instanceOf(VirtualFile)
+      expect(files.list().sort()).to.eql([ file2, file3 ])
+      expect(files.list().sort()[1]).to.equal(file3)
+
+      expect(file3.absolutePath).to.equal('/foo/baz.txt')
+      expect(file3.originalFile).to.equal(file2)
+      expect(file3.contentsSync()).to.equal('hello, world 3!')
     })
 
     it('should not add with an empty or invalid path', () => {
@@ -276,16 +307,16 @@ describe('File lists', () => {
       files.add('1.txt', 'content1')
 
       expect(files.list().sort()).to.eql([
-        { absolutePath: '/foo/1.txt', originalPath: '/foo/1.txt' },
-        { absolutePath: '/foo/2.txt', originalPath: '/foo/2.txt' },
-        { absolutePath: '/foo/3.txt', originalPath: '/foo/3.txt' },
+        { absolutePath: '/foo/1.txt' },
+        { absolutePath: '/foo/2.txt' },
+        { absolutePath: '/foo/3.txt' },
       ])
 
       // force a different sort alogorithm
       expect(files.list().sort((a, b) => b.absolutePath.localeCompare(a.absolutePath))).to.eql([
-        { absolutePath: '/foo/3.txt', originalPath: '/foo/3.txt' },
-        { absolutePath: '/foo/2.txt', originalPath: '/foo/2.txt' },
-        { absolutePath: '/foo/1.txt', originalPath: '/foo/1.txt' },
+        { absolutePath: '/foo/3.txt' },
+        { absolutePath: '/foo/2.txt' },
+        { absolutePath: '/foo/1.txt' },
       ])
     })
 

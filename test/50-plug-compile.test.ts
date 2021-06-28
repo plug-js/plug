@@ -18,31 +18,36 @@ describe('Plug TypeScript Compiler', function() {
     const compiler = new CompilePlug()
 
     const { files, run, log } = mock('/foo')
-    files.add('test.ts', { contents: 'void 0' })
+    const original = files.add('test.ts', { contents: 'void 0' })
 
     const output = compiler.process(files, run, log)
     expect(output.list()).to.eql([ {
       absolutePath: '/foo/test.js',
-      originalPath: '/foo/test.ts',
     } ])
+
+    const compiled = output.get('test.js')!
+    expect(compiled.originalFile).to.equal(original)
   })
 
   it('should compile with a default tsconfig.json', () => {
     const { files, run, log } = mock('/foo')
 
-    files.add('tsconfig.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
-    files.add('test.ts', { contents: 'void 0' })
+    const config = files.add('tsconfig.json', { contents: '{"compilerOptions":{"outDir":"out"}}' })
+    const source = files.add('test.ts', { contents: 'void 0' })
 
     const output1 = new CompilePlug().process(files, run, log)
     expect(output1.list()).to.eql([
-      { absolutePath: '/foo/out/test.js', originalPath: '/foo/test.ts' },
+      { absolutePath: '/foo/out/test.js' },
     ])
+    expect(output1.get('out/test.js')?.originalFile).to.equal(source)
 
     const output2 = new CompilePlug({ passThrough: true }).process(files, run, log)
     expect(output2.list().sort()).to.eql([
-      { absolutePath: '/foo/out/test.js', originalPath: '/foo/test.ts' },
-      { absolutePath: '/foo/out/tsconfig.json', originalPath: '/foo/tsconfig.json' },
+      { absolutePath: '/foo/out/test.js' },
+      { absolutePath: '/foo/out/tsconfig.json' },
     ])
+    expect(output2.get('out/test.js')?.originalFile).to.equal(source)
+    expect(output2.get('out/tsconfig.json')?.originalFile).to.equal(config)
   })
 
   it('should compile with a specific config file', () => {
@@ -53,47 +58,81 @@ describe('Plug TypeScript Compiler', function() {
 
     const output1 = new CompilePlug('options.json').process(files, run, log)
     expect(output1.list()).to.eql([
-      { absolutePath: '/foo/out/test.js', originalPath: '/foo/test.ts' },
+      { absolutePath: '/foo/out/test.js' },
     ])
 
     const output2 = new CompilePlug('options.json', { passThrough: true }).process(files, run, log)
     expect(output2.list().sort()).to.eql([
-      { absolutePath: '/foo/out/options.json', originalPath: '/foo/options.json' },
-      { absolutePath: '/foo/out/test.js', originalPath: '/foo/test.ts' },
+      { absolutePath: '/foo/out/options.json' },
+      { absolutePath: '/foo/out/test.js' },
     ])
   })
 
-  it('should compile also javascript files and copy resources', () => {
+  it('should compile and copy resources in the same directory', () => {
     const { files, run, log } = mock('/foo')
 
-    files.add('tsconfig.json', { contents: '{"compilerOptions":{"rootDir":"from","outDir":"to"}}' })
-    files.add('from/typescript.ts', { contents: 'import "./javascript"' })
-    files.add('from/javascript.js', { contents: 'void 0' })
-    files.add('from/resource.json', { contents: '{}' })
+    files.add('tsconfig.json', { contents: '{"compilerOptions":{"rootDir":"from"}}' })
+    const typescript = files.add('from/typescript.ts', { contents: 'import "./javascript"' })
+    const resource = files.add('from/resource.json', { contents: '{}' })
 
     const output1 = new CompilePlug({ allowJs: false, passThrough: false }).process(files, run, log)
     expect(output1.list()).to.eql([
-      { absolutePath: '/foo/to/typescript.js', originalPath: '/foo/from/typescript.ts' },
+      { absolutePath: '/foo/from/typescript.js' },
+    ])
+    expect(output1.get('from/typescript.js')?.originalFile).to.equal(typescript)
+
+    const output2 = new CompilePlug({ allowJs: false, passThrough: true }).process(files, run, log)
+    expect(output2.list().sort()).to.eql([
+      { absolutePath: '/foo/from/resource.json' },
+      { absolutePath: '/foo/from/typescript.js' },
     ])
 
-    const output2 = new CompilePlug({ allowJs: true, passThrough: false }).process(files, run, log)
-    expect(output2.list()).to.eql([
-      { absolutePath: '/foo/to/javascript.js', originalPath: '/foo/from/javascript.js' },
-      { absolutePath: '/foo/to/typescript.js', originalPath: '/foo/from/typescript.ts' },
+    expect(output2.get('from/typescript.js')?.originalFile).to.equal(typescript)
+    expect(output2.get('from/resource.json')).to.equal(resource)
+  })
+
+  it('should compile javascript to a different directory', () => {
+    const { files, run, log } = mock('/foo')
+
+    files.add('tsconfig.json', { contents: '{"compilerOptions":{"rootDir":"from","outDir":"to"}}' })
+    const typescript = files.add('from/typescript.ts', { contents: 'import "./javascript"' })
+    const javascript = files.add('from/javascript.js', { contents: 'void 0' })
+    const resource = files.add('from/resource.json', { contents: '{}' })
+
+    const output1 = new CompilePlug({ allowJs: false, passThrough: false }).process(files, run, log)
+    expect(output1.list()).to.eql([
+      { absolutePath: '/foo/to/typescript.js' },
     ])
+    expect(output1.get('to/typescript.js')?.originalFile).to.equal(typescript)
+
+    const output2 = new CompilePlug({ allowJs: true, passThrough: false }).process(files, run, log)
+    expect(output2.list().sort()).to.eql([
+      { absolutePath: '/foo/to/javascript.js' },
+      { absolutePath: '/foo/to/typescript.js' },
+    ])
+    expect(output2.get('to/typescript.js')?.originalFile).to.equal(typescript)
+    expect(output2.get('to/javascript.js')?.originalFile).to.equal(javascript)
 
     const output3 = new CompilePlug({ allowJs: false, passThrough: true }).process(files, run, log)
     expect(output3.list().sort()).to.eql([
-      { absolutePath: '/foo/to/javascript.js', originalPath: '/foo/from/javascript.js' },
-      { absolutePath: '/foo/to/resource.json', originalPath: '/foo/from/resource.json' },
-      { absolutePath: '/foo/to/typescript.js', originalPath: '/foo/from/typescript.ts' },
+      { absolutePath: '/foo/to/javascript.js' },
+      { absolutePath: '/foo/to/resource.json' },
+      { absolutePath: '/foo/to/typescript.js' },
     ])
+
+    expect(output3.get('to/typescript.js')?.originalFile).to.equal(typescript)
+    expect(output3.get('to/javascript.js')?.originalFile).to.equal(javascript)
+    expect(output3.get('to/resource.json')?.originalFile).to.equal(resource)
 
     const output4 = new CompilePlug({ allowJs: true, passThrough: true }).process(files, run, log)
     expect(output4.list().sort()).to.eql([
-      { absolutePath: '/foo/to/javascript.js', originalPath: '/foo/from/javascript.js' },
-      { absolutePath: '/foo/to/resource.json', originalPath: '/foo/from/resource.json' },
-      { absolutePath: '/foo/to/typescript.js', originalPath: '/foo/from/typescript.ts' },
+      { absolutePath: '/foo/to/javascript.js' },
+      { absolutePath: '/foo/to/resource.json' },
+      { absolutePath: '/foo/to/typescript.js' },
     ])
+
+    expect(output4.get('to/typescript.js')?.originalFile).to.equal(typescript)
+    expect(output4.get('to/javascript.js')?.originalFile).to.equal(javascript)
+    expect(output4.get('to/resource.json')?.originalFile).to.equal(resource)
   })
 })

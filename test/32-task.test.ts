@@ -171,10 +171,10 @@ describe('Plug Tasks', () => {
 
     expect(taskA.task.description).to.be.undefined
     expect(resultA.list().sort()).to.eql([
-      { absolutePath: '/foo/bar2.txt', originalPath: '/foo/bar2.txt' },
-      { absolutePath: '/foo/baz1.txt', originalPath: '/foo/baz1.txt' },
-      { absolutePath: '/foo/foo3.txt', originalPath: '/foo/foo3.txt' },
-      { absolutePath: '/foo/xxxx.txt', originalPath: '/foo/xxxx.txt' },
+      { absolutePath: '/foo/bar2.txt' },
+      { absolutePath: '/foo/baz1.txt' },
+      { absolutePath: '/foo/foo3.txt' },
+      { absolutePath: '/foo/xxxx.txt' },
     ])
 
     // Always rooted in project path
@@ -195,10 +195,10 @@ describe('Plug Tasks', () => {
 
     expect(taskB.task.description).to.equal('reversed')
     expect(resultB.list().sort()).to.eql([
-      { absolutePath: '/foo/bar2.txt', originalPath: '/foo/bar2.txt' },
-      { absolutePath: '/foo/baz1.txt', originalPath: '/foo/baz1.txt' },
-      { absolutePath: '/foo/foo3.txt', originalPath: '/foo/foo3.txt' },
-      { absolutePath: '/foo/xxxx.txt', originalPath: '/foo/xxxx.txt' },
+      { absolutePath: '/foo/bar2.txt' },
+      { absolutePath: '/foo/baz1.txt' },
+      { absolutePath: '/foo/foo3.txt' },
+      { absolutePath: '/foo/xxxx.txt' },
     ])
 
     // Always rooted in project path
