@@ -57,11 +57,11 @@ export function mock(
   const build = createFilePath(directory as DirectoryPath, 'build.ts')
 
   const tasks: Record<string, Task> = {}
-  for (const t of [ name, ...names ]) tasks[t] = { run: () => new Files(run) }
+  for (const t of [ name, ...names ]) tasks[t] = { run: () => files }
 
   const project = new Project(tasks, build)
-  const files = new Files(project)
   const run = new Run(project)
+  const files = Files.for(run)
   const log = run.log()
 
   return { files, run, log, project, tasks }
