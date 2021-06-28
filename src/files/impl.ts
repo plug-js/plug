@@ -40,13 +40,15 @@ export class FileImpl extends File {
   #data?: FileData
   #promise?: Promise<FileData>
   #sourceMapSources?: Files
+  #files: Files
 
   constructor(
       files: Files,
       absolutePath: FilePath,
       options?: FileOptions,
   ) {
-    super(files, absolutePath, options ? options.originalPath : undefined)
+    super(absolutePath, options ? options.originalPath : undefined)
+    this.#files = files
 
     // Process contents and related source map
     if (options) {
@@ -106,7 +108,7 @@ export class FileImpl extends File {
     const data = this.#readSync()
 
     if (typeof data.sourceMap === 'string') {
-      const sourceMapFile = this.files.get(data.sourceMap)
+      const sourceMapFile = this.#files.get(data.sourceMap)
       if (sourceMapFile) {
         const sourceMapContents = sourceMapFile.contentsSync()
         const sourceMap = JSON.parse(sourceMapContents)
@@ -131,7 +133,7 @@ export class FileImpl extends File {
     const data = await this.#read()
 
     if (typeof data.sourceMap === 'string') {
-      const sourceMapFile = this.files.get(data.sourceMap)
+      const sourceMapFile = this.#files.get(data.sourceMap)
       if (sourceMapFile) {
         const sourceMapContents = await sourceMapFile.contents()
         const sourceMap = JSON.parse(sourceMapContents)

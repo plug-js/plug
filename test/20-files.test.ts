@@ -62,7 +62,6 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('Bar.Txt', 'content')!
 
-        expect(file.files).to.equal(files)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
         expect(file.originalPath).to.equal('/Foo/Bar.Txt')
         expect(file.canonicalPath).to.equal('/Foo/Bar.Txt')
@@ -92,7 +91,6 @@ describe('File lists', () => {
         const files = makeFiles('/Foo')
         const file = files.add('Bar.Txt', 'content')!
 
-        expect(file.files).to.equal(files)
         expect(file.absolutePath).to.equal('/Foo/Bar.Txt')
         expect(file.originalPath).to.equal('/Foo/Bar.Txt')
         expect(file.canonicalPath).to.equal('/foo/bar.txt') // case insensitive
@@ -149,7 +147,6 @@ describe('File lists', () => {
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
         expect(file.originalPath).to.equal('/Foo/One.Txt')
         expect(file.canonicalPath).to.equal('/Foo/One.Txt')
-        expect(file.files).to.equal(files)
 
         expect(files.get('One.Txt')).to.equal(file) // same instance
         expect(files.get('./One.Txt')).to.equal(file) // same instance
@@ -180,7 +177,6 @@ describe('File lists', () => {
         expect(file.absolutePath).to.equal('/Foo/One.Txt')
         expect(file.originalPath).to.equal('/Foo/One.Txt')
         expect(file.canonicalPath).to.equal('/foo/one.txt') // case insensitive
-        expect(file.files).to.equal(files)
 
         expect(files.get('One.Txt')).to.equal(file) // same instance
         expect(files.get('./One.Txt')).to.equal(file) // same instance

@@ -1,6 +1,5 @@
 import type { FilePath } from '../utils/paths'
 import type { FileSourceMap } from '../sourcemaps'
-import type { Files } from './files'
 
 import { File } from './file'
 
@@ -8,8 +7,8 @@ export class FileWrapper extends File {
   #file: File
   #sourceMap?: FileSourceMap
 
-  constructor(files: Files, file: File, path: FilePath = file.absolutePath) {
-    super(files, path, file.originalPath)
+  constructor(file: File, path: FilePath = file.absolutePath) {
+    super(path, file.originalPath)
     this.#file = file
   }
 

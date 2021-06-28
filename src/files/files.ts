@@ -104,7 +104,7 @@ export class Files {
     assert(isChild(this.directory, absolutePath), `Refusing to add file "${absolutePath}" to "${this.directory}"`)
 
     // Don't recreate if the file is already ours and has the correct path
-    if (file && (file.files === this) && (file.absolutePath === absolutePath)) {
+    if (file && (file.absolutePath === absolutePath)) {
       this.#cache.set(file.canonicalPath, file)
       this.#files.set(file.canonicalPath, file)
       return file
@@ -115,7 +115,7 @@ export class Files {
     if (options) {
       newFile = new FileImpl(this, absolutePath, options)
     } else if (file) {
-      newFile = new FileWrapper(this, file, absolutePath)
+      newFile = new FileWrapper(file, absolutePath)
     } else {
       newFile = new FileImpl(this, absolutePath)
     }

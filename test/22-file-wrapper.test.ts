@@ -1,19 +1,12 @@
 import { FileSourceMap } from '../src/sourcemaps'
 import { FileWrapper } from '../src/files/wrapper'
-import { Project } from '../src/project'
 import { expect } from 'chai'
-import { File, Files } from '../src/files'
+import { File } from '../src/files'
 
 describe('File Wrapper', () => {
-  function makeFiles(directory: string): Files {
-    return new Files({ directory } as Project)
-  }
-
   it('should wrap an existing file', async () => {
-    const files = makeFiles('/foo')
     const map = FileSourceMap.for('/foo/wrong path' as any, { version: 3 } as any)
     const file: File = {
-      files: undefined as any,
       absolutePath: '/foo/absolute path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
@@ -23,8 +16,7 @@ describe('File Wrapper', () => {
       sourceMapSync: (): FileSourceMap | undefined => map,
     }
 
-    const wrapper = new FileWrapper(files, file)
-    expect(wrapper.files).to.equal(files)
+    const wrapper = new FileWrapper(file)
     expect(wrapper.absolutePath).to.equal('/foo/absolute path')
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/absolute path') // recomputed!
@@ -32,13 +24,13 @@ describe('File Wrapper', () => {
     expect(wrapper.contents()).to.equal('contents')
     expect(wrapper.contentsSync()).to.equal('contentsSync')
 
-    const asyncWrapper = new FileWrapper(files, file)
+    const asyncWrapper = new FileWrapper(file)
     const asyncMap = await asyncWrapper.sourceMap()
     expect(asyncMap).to.equal(map) // same path
     expect(await asyncWrapper.sourceMap()).to.equal(map) // cached
     expect(asyncWrapper.sourceMapSync()).to.equal(map) // cached
 
-    const syncWrapper = new FileWrapper(files, file)
+    const syncWrapper = new FileWrapper(file)
     const syncMap = syncWrapper.sourceMapSync()
     expect(syncMap).to.equal(map) // same path
     expect(await syncWrapper.sourceMap()).to.equal(syncMap) // cached
@@ -46,10 +38,8 @@ describe('File Wrapper', () => {
   })
 
   it('should wrap an existing file with a different absolute path', async () => {
-    const files = makeFiles('/foo')
     const map = FileSourceMap.for('/foo/wrong path' as any, { version: 3 } as any)
     const file: File = {
-      files: undefined as any,
       absolutePath: '/foo/absolute path' as any,
       originalPath: '/foo/original path' as any,
       canonicalPath: '/foo/canonical path' as any,
@@ -59,8 +49,7 @@ describe('File Wrapper', () => {
       sourceMapSync: (): FileSourceMap | undefined => map,
     }
 
-    const wrapper = new FileWrapper(files, file, '/foo/another absolute path' as any)
-    expect(wrapper.files).to.equal(files)
+    const wrapper = new FileWrapper(file, '/foo/another absolute path' as any)
     expect(wrapper.absolutePath).to.equal('/foo/another absolute path')
     expect(wrapper.originalPath).to.equal('/foo/original path')
     expect(wrapper.canonicalPath).to.equal('/foo/another absolute path') // recomputed
@@ -68,13 +57,13 @@ describe('File Wrapper', () => {
     expect(wrapper.contents()).to.equal('contents')
     expect(wrapper.contentsSync()).to.equal('contentsSync')
 
-    const asyncWrapper = new FileWrapper(files, file, '/foo/async first' as any)
+    const asyncWrapper = new FileWrapper(file, '/foo/async first' as any)
     const asyncMap = await asyncWrapper.sourceMap()
     expect(asyncMap?.file).to.equal('/foo/async first')
     expect(await asyncWrapper.sourceMap()).to.equal(asyncMap) // cached
     expect(asyncWrapper.sourceMapSync()).to.equal(asyncMap) // cached
 
-    const syncWrapper = new FileWrapper(files, file, '/foo/async later' as any)
+    const syncWrapper = new FileWrapper(file, '/foo/async later' as any)
     const syncMap = syncWrapper.sourceMapSync()
     expect(syncMap?.file).to.equal('/foo/async later')
     expect(await syncWrapper.sourceMap()).to.equal(syncMap) // cached
