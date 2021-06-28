@@ -1,8 +1,14 @@
 import { basename, sep } from 'path'
 import { RawSourceMap } from 'source-map'
-import { SOURCE_MAPPING_URL } from './index'
 import { createFilePath, FilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { encodeSourceMap } from './encode'
+
+/**
+ * The `sourceMappingURL` constant (without any leading comment marker or
+ * trailing equal sign) exposed here so that we don't end up with false
+ * positives when compiling our own code
+ */
+export const SOURCE_MAPPING_URL = 'sourceMappingURL'
 
 export function appendSourceMap(file: FilePath, source: string, inputSourceMap: RawSourceMap, inline: true, sourceRoot?: string): [ string ]
 export function appendSourceMap(file: FilePath, source: string, inputSourceMap: RawSourceMap, inline: false, sourceRoot?: string): [ string, string ]

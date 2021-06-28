@@ -1,5 +1,5 @@
 import type { FilePath } from '../utils/paths'
-import type { FileSourceMap } from '../sourcemaps'
+import type { FileSourceMap } from './sourcemap'
 
 import { File } from './file'
 import { assert } from 'console'

@@ -4,11 +4,14 @@ import { SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { createFilePath, getParent, getRelativeFilePath } from '../utils/paths'
 import { parallelize } from '../utils/parallelize'
 
-import type { File, Files } from '../files'
+import type { File } from './file'
+import type { Files } from './files'
 import type { FilePath } from '../utils/paths'
 import type { RawSourceMap } from 'source-map'
+
 import { fileURLToPath, pathToFileURL, URL } from 'url'
 import { basename } from 'path/posix'
+import { extractSourceMappingURL, parseSourceMappingURL } from '../sourcemaps'
 
 export interface SourceMapOptions {
   /**
@@ -189,4 +192,26 @@ export class FileSourceMap {
         this.#produceCombinedSourceMap(path, attachSources) :
         this.#produceSimpleSourceMap(path, attachSources)
   }
+}
+
+interface ExtractedSourceMap {
+  contents: string,
+  sourceMap?: FileSourceMap,
+  sourceMapFile?: FilePath,
+}
+
+/**
+ * Extracts, optionally wiping, a source mapping url from some code at the
+ * specified path, returning either the source map or the location of the
+ * external file containing it
+ *
+ * @param path The absolute path of the code to parse
+ * @param code The code to parse for source mapping URLs
+ * @param wipe Whether to wipe the source mapping URL from the file or not
+ */
+export function extractSourceMap(path: FilePath, files: Files, code: string, wipe: boolean): ExtractedSourceMap {
+  const { contents, url } = extractSourceMappingURL(code, wipe)
+  const { rawSourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
+  const sourceMap = rawSourceMap ? new FileSourceMap(path, rawSourceMap, files) : undefined
+  return { contents, sourceMap, sourceMapFile }
 }

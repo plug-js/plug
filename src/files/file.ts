@@ -1,5 +1,5 @@
 import { RawSourceMap } from 'source-map'
-import type { FileSourceMap, SourceMapOptions } from '../sourcemaps'
+import type { FileSourceMap, SourceMapOptions } from './sourcemap'
 import type { CanonicalPath, FilePath } from '../utils/paths'
 
 import { getCanonicalPath } from '../utils/paths'
