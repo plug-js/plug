@@ -33,7 +33,7 @@ export class SimpleFile extends File {
     if (typeof sourceMap === 'boolean') { // parse the source map
       this.#sourceMap = sourceMap || undefined
     } else {
-      this.#sourceMap = new FileSourceMap(absolutePath, sourceMap, files)
+      this.#sourceMap = new FileSourceMap(absolutePath, files, sourceMap)
     }
   }
 
@@ -101,7 +101,7 @@ export class SimpleFile extends File {
       if (file) {
         const json = await file.contents()
         const data = JSON.parse(json)
-        this.#sourceMap = new FileSourceMap(file.absolutePath, data, this.#files)
+        this.#sourceMap = new FileSourceMap(file.absolutePath, this.#files, data)
       } else {
         log.alert(`External source map file "${this.#sourceMap}" for "${this.absolutePath}" not found`)
         this.#sourceMap = undefined

@@ -22,7 +22,7 @@ export class VirtualFile extends File {
     this.#files = files
 
     if (typeof sourceMap === 'object') {
-      this.#sourceMap = new FileSourceMap(path, sourceMap, files)
+      this.#sourceMap = new FileSourceMap(path, files, sourceMap)
       this.#contents = contents
     } else if (sourceMap === true) {
       const { contents: code, sourceMap, sourceMapFile } = extractSourceMap(path, files, contents, true)
@@ -55,7 +55,7 @@ export class VirtualFile extends File {
 
     // Read the source map file contents, parse it, cache it, and return
     const sourceMap = JSON.parse(await sourceMapFile.contents())
-    this.#sourceMap = new FileSourceMap(this.#sourceMapFile, sourceMap, this.#files)
+    this.#sourceMap = new FileSourceMap(this.#sourceMapFile, this.#files, sourceMap)
     return this.#sourceMap
   }
 }
