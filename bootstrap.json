@@ -2,11 +2,5 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "bootstrap"
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/.*.ts",
-    "test/**/*.ts",
-    "test/**/.*.ts"
-  ]
+  }
 }

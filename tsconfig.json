@@ -21,9 +21,15 @@
     "allowJs": false,
     "rootDir": ".",
   },
+  "include": [
+    "src/**/*.ts",
+    "src/**/.*.ts",
+    "test/**/*.ts",
+    "test/**/.*.ts",
+  ],
   "exclude": [
-    "test/support/",
-    "bootstrap/",
-    "build/",
+    "test/support",
+    "bootstrap",
+    "build",
   ],
 }
