@@ -22,11 +22,10 @@ type FileData = {
 function parseContentsForSourceMap(
     file: File,
     code: string,
-    sourceMapSources: Files | undefined,
+    files: Files,
 ): FileData {
-  const { contents, sourceMap, sourceMapFile } = extractSourceMap(file.absolutePath, code, true)
+  const { contents, sourceMap, sourceMapFile } = extractSourceMap(file.absolutePath, files, code, true)
   if (sourceMap) {
-    if (sourceMapSources) sourceMap.attachSources(sourceMapSources)
     return { contents, sourceMap }
   } else if (sourceMapFile) {
     return { contents, sourceMap: sourceMapFile }
@@ -39,7 +38,6 @@ function parseContentsForSourceMap(
 export class FileImpl extends File {
   #data?: FileData
   #promise?: Promise<FileData>
-  #sourceMapSources?: Files
   #files: Files
 
   constructor(
@@ -52,15 +50,14 @@ export class FileImpl extends File {
 
     // Process contents and related source map
     if (options) {
-      const { contents, sourceMap = true, sourceMapSources } = options
-      this.#sourceMapSources = sourceMapSources
+      const { contents, sourceMap = true } = options
 
       if (sourceMap === true) { // parse the source map
-        this.#data = parseContentsForSourceMap(this, contents, sourceMapSources)
+        this.#data = parseContentsForSourceMap(this, contents, files)
       } else if (sourceMap instanceof FileSourceMap) {
         this.#data = { contents, sourceMap: sourceMap.with(this.absolutePath) }
       } else if (sourceMap !== false) {
-        const fileSourceMap = FileSourceMap.for(absolutePath, sourceMap, sourceMapSources)
+        const fileSourceMap = FileSourceMap.for(absolutePath, sourceMap, files)
         this.#data = { contents, sourceMap: fileSourceMap }
       } else {
         this.#data = { contents }
@@ -84,7 +81,7 @@ export class FileImpl extends File {
     if (this.#data) return this.#data
 
     const code = readFileSync(this.originalPath, 'utf8')
-    return this.#data = parseContentsForSourceMap(this, code, this.#sourceMapSources)
+    return this.#data = parseContentsForSourceMap(this, code, this.#files)
   }
 
   #read(): Promise<FileData> {
@@ -93,7 +90,7 @@ export class FileImpl extends File {
 
     return this.#promise = Promise.resolve()
         .then(() => readFile(this.originalPath, 'utf8'))
-        .then((content) => this.#data = parseContentsForSourceMap(this, content, this.#sourceMapSources))
+        .then((content) => this.#data = parseContentsForSourceMap(this, content, this.#files))
   }
 
   /* ======================================================================== *
@@ -112,7 +109,7 @@ export class FileImpl extends File {
       if (sourceMapFile) {
         const sourceMapContents = sourceMapFile.contentsSync()
         const sourceMap = JSON.parse(sourceMapContents)
-        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
+        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#files)
       } else {
         log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
       }
@@ -137,7 +134,7 @@ export class FileImpl extends File {
       if (sourceMapFile) {
         const sourceMapContents = await sourceMapFile.contents()
         const sourceMap = JSON.parse(sourceMapContents)
-        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#sourceMapSources)
+        return data.sourceMap = FileSourceMap.for(this.absolutePath, sourceMap, this.#files)
       } else {
         log.alert(`External source map "${data.sourceMap}" for "${this.absolutePath}" not found`)
       }

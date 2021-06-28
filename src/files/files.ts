@@ -7,7 +7,6 @@ import { createFilePath, getCanonicalPath, isChild } from '../utils/paths'
 
 import type { CanonicalPath, DirectoryPath } from '../utils/paths'
 import type { FileOptions } from './index'
-import type { Project } from '../project'
 import type { Run } from '../run'
 
 /* ========================================================================== *
@@ -26,22 +25,27 @@ export class Files {
 
   /** The base directory of this `Files` instance */
   readonly directory!: DirectoryPath
-  /** The `Project` associated with this `Files` instance */
-  readonly project!: Project
+  /** The parent `Files` instance of this */
+  readonly parent?: Files
 
   /**
    * Create a new `Files` instance associated with the specified `Project`.
    */
-  constructor(run: Run)
-  constructor(files: Files)
-  constructor(project: Project)
-  constructor(arg: Files | Project | Run) {
-    const project: Project = 'project' in arg ? arg.project : arg
-    const directory: DirectoryPath = project.directory
+  private constructor(arg: DirectoryPath | Files) {
+    const directory = typeof arg === 'string' ? arg : arg.directory
+    const parent = typeof arg === 'string' ? undefined : arg
     Object.defineProperties(this, {
       directory: { enumerable: true, value: directory },
-      project: { enumerable: false, value: project },
+      parent: { enumerable: false, value: parent },
     })
+  }
+
+  static for(run: Run): Files {
+    return new Files(run.project.directory)
+  }
+
+  fork(): Files {
+    return new Files(this)
   }
 
   /* ======================================================================== *
@@ -55,6 +59,12 @@ export class Files {
 
     const cached = this.#cache.get(canonicalPath)
     if (cached) return cached
+
+    if (this.parent) {
+      const file = this.parent.get(path)
+      if (file) this.#cache.set(file.canonicalPath, file)
+      return file
+    }
 
     try {
       const file = new FileImpl(this, absolutePath)
