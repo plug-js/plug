@@ -15,7 +15,7 @@ describe('Plug Write Processor', () => {
     expect(new PlugPipe().write).to.be.a('function')
   })
 
-  it('should write with an inline source map', async () => {
+  it.skip('should write with an inline source map', async () => {
     // default should be "inline" and no directory... no constructor
     const written: Record<string, string> = {}
     const writer = new class extends WritePlug {
@@ -56,7 +56,7 @@ describe('Plug Write Processor', () => {
     })
   })
 
-  it('should write with an external source map', async () => {
+  it.skip('should write with an external source map', async () => {
     const written: Record<string, string> = {}
     const writer = new class extends WritePlug {
       constructor() {

@@ -8,7 +8,7 @@ import { SourceMapsPlug } from '../src/plugs/sourcemaps'
 import { mock } from './support'
 import { createFilePath, FilePath } from '../src/utils/paths'
 
-describe('Plug Surcemaps Processor', () => {
+describe.skip('Plug Surcemaps Processor', () => {
   it('should be installed', () => {
     expect(new PlugPipe().sourcemaps).to.be.a('function')
   })
