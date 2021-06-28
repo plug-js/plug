@@ -11,25 +11,20 @@ const testfile = join(directory, 'build.ts')
 
 describe('File lists', () => {
   function makeFiles(directory: string): Files {
-    return new Files({ directory } as Project)
+    return Files.for({ project: { directory } } as Run)
   }
 
   it('should create a Files instance', () => {
     const project = { directory: '/projectDir' } as Project
-    const files = { project: project, directory: '/filesDir' } as Files
     const run = { project } as Run
 
-    const projectFiles = new Files(project)
-    expect(projectFiles.project).to.equal(project)
-    expect(projectFiles.directory).to.equal('/projectDir')
-
-    const runFiles = new Files(run)
-    expect(runFiles.project).to.equal(project)
+    const runFiles = Files.for(run)
     expect(runFiles.directory).to.equal('/projectDir')
+    expect(runFiles.parent).to.be.undefined
 
-    const filesFiles = new Files(files)
-    expect(filesFiles.project).to.equal(project)
-    expect(filesFiles.directory).to.equal('/projectDir') // not from files!
+    const forkFiles = runFiles.fork()
+    expect(forkFiles.directory).to.equal('/projectDir')
+    expect(forkFiles.parent).to.equal(runFiles)
   })
 
   describe('Getting files', () => {
