@@ -1,20 +1,19 @@
+import { SourceMapsPlug } from './sourcemaps'
+import { extname } from 'path'
+import { getRelativePath } from '../utils/paths'
+import { install } from '../pipe'
+import { match } from '../utils/match'
+import { parallelize } from '../utils/parallelize'
+import { parseOptions } from '../utils/options'
+import { runMocha } from '../utils/mocha'
+
+import type { FilePath } from '../utils/paths'
+import type { Files } from '../files'
 import type { Log } from '../utils/log'
+import type { Matcher, MatchOptions } from '../utils/match'
 import type { MochaOptions as Options } from 'mocha'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-
-import type { Files } from '../files'
-import { install } from '../pipe'
-
-import { SourceMapsPlug } from './sourcemaps'
-import { FilePath } from '../utils/paths'
-import { getRelativePath } from '../utils/paths'
-import { parseOptions } from '../utils/options'
-import type { Matcher, MatchOptions } from '../utils/match'
-import { match } from '../utils/match'
-import { extname } from 'path'
-import { parallelize } from '../utils/parallelize'
-import { runMocha } from '../utils/mocha'
 
 /* ========================================================================== *
  * MOCHA PLUG                                                                 *
