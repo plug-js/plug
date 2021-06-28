@@ -78,7 +78,6 @@ describe('Plug Surcemaps Processor', () => {
         version: 3,
         sources: [ 'target/original.txt' ], // check normalization of paths
       } as RawSourceMap,
-      sourceMapSources: input,
     })
 
     const target = createFilePath(output.directory, 'target', 'output.txt')
