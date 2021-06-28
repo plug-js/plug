@@ -12,7 +12,7 @@ async function readDirectory(run: Run, directory: DirectoryPath, ...args: ParseO
   const log = run.log()
   const time = log.start()
 
-  const files = new Files(run)
+  const files = Files.for(run)
   for await (const path of walk(directory, ...args)) files.add(path)
 
   log.debug(`Directory "${directory}" scanned in`, time)

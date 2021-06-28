@@ -141,7 +141,7 @@ class ParallelTask extends AbstractTask {
     const outputs = await parallelize(this.#tasks, (task) => task.run(run, log))
 
     // Create a new file list cloning our input
-    const result = new Files(run)
+    const result = Files.for(run)
     // Each file of each output gets added to our output list (in order)
     outputs.forEach((output) => output.forEach((file) => result.add(file)))
     // Return our combined result list

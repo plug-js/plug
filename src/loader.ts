@@ -42,11 +42,14 @@ export async function loadBuildFile(buildFile: FilePath): Promise<any> {
   // Create a pipe to compile our build file with source maps
   const pipe = new PlugPipe().plug(compiler).plug(sourcemaps)
 
-  // Run our pipe with the build file to compile all our code
+  // Prepare a simple (empty) process for running our pipeline
   const project = new Project({}, buildFile, getParent(buildFile))
-  const files = new Files(project)
+  const run = new Run(project)
+  const files = Files.for(run)
   files.add(buildFile)
-  const output = await pipe.process(files, new Run(project))
+
+  // Run our pipeline to compile the build file
+  const output = await pipe.process(files, run)
 
   // Build our output file list, and figure out where the original
   // typescript ended up in our compilation results
