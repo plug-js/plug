@@ -1,5 +1,5 @@
 import type { FilePath } from '../utils/paths'
-import { extractSourceMap, FileSourceMap } from '../sourcemaps'
+import { extractSourceMap, FileSourceMap } from './sourcemap'
 
 import { File } from './file'
 import { RawSourceMap } from 'source-map'

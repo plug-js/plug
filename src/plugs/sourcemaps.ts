@@ -1,13 +1,14 @@
 import type { File } from '../files'
+import type { FilePath } from '../utils/paths'
+import type { Files } from '../files'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-import { appendSourceMap, SourceMapOptions } from '../sourcemaps'
+import type { SourceMapOptions } from '../files/sourcemap'
 
-import { Files } from '../files'
 import { install } from '../pipe'
 import { parallelize } from '../utils/parallelize'
-import { FilePath } from '../utils/paths'
+import { appendSourceMap } from '../sourcemaps'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
