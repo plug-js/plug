@@ -25,7 +25,7 @@ export class VirtualFile extends File {
       this.#sourceMap = new FileSourceMap(path, files, sourceMap)
       this.#contents = contents
     } else if (sourceMap === true) {
-      const { contents: code, sourceMap, sourceMapFile } = extractSourceMap(path, files, contents, true)
+      const { contents: code, sourceMap, sourceMapFile } = extractSourceMap(path, files, contents)
       this.#contents = code
       this.#sourceMap = sourceMap
       this.#sourceMapFile = sourceMapFile

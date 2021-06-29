@@ -45,7 +45,7 @@ export class SimpleFile extends File {
     assert(this.#contents === undefined, `Contents for "${this.absolutePath}" already processed`)
 
     if (this.#sourceMap === true) {
-      const { contents, sourceMap, sourceMapFile } = extractSourceMap(this.absolutePath, this.#files, data, true)
+      const { contents, sourceMap, sourceMapFile } = extractSourceMap(this.absolutePath, this.#files, data)
       this.#sourceMap =
         sourceMap ? sourceMap : // we have an inline sourcemap, just keep it
         sourceMapFile ? sourceMapFile : // will parse an external sourcemap
