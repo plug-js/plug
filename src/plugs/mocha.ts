@@ -5,7 +5,7 @@ import { install } from '../pipe'
 import { match } from '../utils/match'
 import { parallelize } from '../utils/parallelize'
 import { parseOptions } from '../utils/options'
-import { runMocha } from '../utils/mocha'
+import { runMocha } from '../detached/mocha'
 
 import type { FilePath } from '../utils/paths'
 import type { Files } from '../files'

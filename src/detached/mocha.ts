@@ -1,11 +1,13 @@
+/* istanbul ignore file */
+
 import Mocha from 'mocha'
 
-import { LogLevel, log, logOptions } from './log'
+import { LogLevel, log, logOptions } from '../utils/log'
 import { fork } from 'child_process'
-import { setupLoader } from './loader'
+import { setupLoader } from '../utils/loader'
 
-import type { FilePath, DirectoryPath } from './paths'
-import type { LogOptions } from './log'
+import type { FilePath, DirectoryPath } from '../utils/paths'
+import type { LogOptions } from '../utils/log'
 import type { MochaOptions } from 'mocha'
 
 class NullReporter extends Mocha.reporters.Base {
