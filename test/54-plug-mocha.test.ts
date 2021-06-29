@@ -3,7 +3,7 @@ import { RawSourceMap } from 'source-map'
 import { PlugPipe } from '../src/pipe'
 import { MochaOptions, MochaPlug } from '../src/plugs/mocha'
 import { caseSensitivePaths } from '../src/utils/paths'
-import { mock } from './support'
+import { disableLogs, mock } from './support'
 
 describe('Plug Mocha Processor', () => {
   const { files: input, run, log } = mock('/foo')
@@ -38,6 +38,8 @@ describe('Plug Mocha Processor', () => {
   }
 
   /* ======================================================================== */
+
+  disableLogs()
 
   beforeEach(() => {
     mochaArgs = undefined
@@ -121,5 +123,47 @@ describe('Plug Mocha Processor', () => {
     failures = 1 // singular
     await expect(mocha.process(input, run, log))
         .to.be.rejectedWith('Mocha detected 1 test failure')
+  })
+
+  describe('Forking Mocha', function() {
+    this.slow(2000)
+
+    it('should run a remote test', async () => {
+      const mocha = new MochaPlug('**/*.js', { matchOriginalPaths: false })
+      const { files, run, log } = mock('/foo')
+      files.add('test.js', {
+        contents: 'it("runs", () => { /* all good */ })',
+        sourceMap: false,
+      })
+
+      // the test fails, doh!
+      await expect(mocha.process(files, run, log))
+    })
+
+    it('should run a remote failing test', async () => {
+      const mocha = new MochaPlug('**/*.js', { matchOriginalPaths: false })
+      const { files, run, log } = mock('/foo')
+      files.add('test.js', {
+        contents: 'it("runs", () => { throw new Error("Foo!") })',
+        sourceMap: false,
+      })
+
+      // the test fails, doh!
+      await expect(mocha.process(files, run, log))
+          .to.be.rejectedWith('Mocha detected 1 test failure')
+    })
+
+    it('should run a remote compilation test', async () => {
+      const mocha = new MochaPlug('**/*.js', { matchOriginalPaths: false })
+      const { files, run, log } = mock('/foo')
+      files.add('test.js', {
+        contents: 'yo, this is NOT javascript!',
+        sourceMap: false,
+      })
+
+      // the test fails, doh!
+      await expect(mocha.process(files, run, log))
+          .to.be.rejectedWith('Mocha failed with error code 1')
+    })
   })
 })

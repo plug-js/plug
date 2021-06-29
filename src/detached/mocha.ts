@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-
 import Mocha from 'mocha'
 
 import { LogLevel, log, logOptions } from '../utils/log'
@@ -17,6 +15,7 @@ class NullReporter extends Mocha.reporters.Base {
 }
 
 if (require.main === module) {
+  // istanbul ignore next - can't test for this...
   const timeout = setTimeout(() => {
     log.error('Mocha child timeout waiting for message')
     process.exit(2)
@@ -32,6 +31,8 @@ if (require.main === module) {
       logOptions.times = times
       logOptions.level = level
 
+      // Should we use our "null" reporter (be silent!)
+      // istanbul ignore else - always running silent
       if (level === LogLevel.QUIET) options.reporter = NullReporter
 
       // Setup our loader with the appropriate scripts
@@ -95,10 +96,11 @@ export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<nu
 
     child.on('message', (message: number) => failures = message)
     child.on('spawn', () => child.send(message))
+    // istanbul ignore next - we test the basics, not all message paths
     child.on('close', (code, signal) => {
       if (code === 0) return resolve(failures)
       if (signal) reject(new Error(`Mocha exited due to signal ${signal}`))
-      else reject(new Error(`Mocha failed with code ${code || -1}`))
+      else reject(new Error(`Mocha failed with error code ${code || -1}`))
     })
   })
 }
