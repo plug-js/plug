@@ -1,5 +1,4 @@
-import { RawSourceMap } from 'source-map'
-import type { FileSourceMap, SourceMapOptions } from './sourcemap'
+import type { FileSourceMap } from './sourcemap'
 import type { CanonicalPath, FilePath } from '../utils/paths'
 
 import { getCanonicalPath } from '../utils/paths'
@@ -35,10 +34,4 @@ export abstract class File {
 
   /** Return a `FileSourceMap` associated with this `File` if any */
   abstract sourceMap(): Promise<FileSourceMap | undefined>
-
-  /** Produce a `RawSourceMap` for this file, if any source map data was available */
-  async rawSourceMap(options?: SourceMapOptions): Promise<RawSourceMap | undefined> {
-    const sourceMap = await this.sourceMap()
-    return await sourceMap?.produceSourceMap(this.absolutePath, options)
-  }
 }
