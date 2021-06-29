@@ -3,13 +3,14 @@ import assert from 'assert'
 import { CompilePlug } from './plugs/compile'
 import { Files } from './files'
 import { ModuleKind, ScriptTarget } from 'typescript'
-import { PlugPipe } from './pipe'
 import { Project } from './project'
 import { Run } from './run'
-import { SourceMapsPlug } from './plugs/sourcemaps'
 import { extname, basename } from 'path'
 import { getParent } from './utils/paths'
+import { log } from './utils/log'
+import { parallelize } from './utils/parallelize'
 import { setupLoader } from './utils/loader'
+import { writeSourceMap } from './files/sourcemap'
 
 import type { DirectoryPath, FilePath } from './utils/paths'
 
@@ -36,27 +37,25 @@ export async function loadBuildFile(buildFile: FilePath): Promise<any> {
     noEmit: false, // we always want our output to be gnerated
   })
 
-  // Inject our source maps
-  const sourcemaps = new SourceMapsPlug({ sourceMaps: 'inline' })
-
-  // Create a pipe to compile our build file with source maps
-  const pipe = new PlugPipe().plug(compiler).plug(sourcemaps)
-
   // Prepare a simple (empty) process for running our pipeline
   const project = new Project({}, buildFile, getParent(buildFile))
   const run = new Run(project)
-  const files = Files.for(run)
-  files.add(buildFile)
+  const input = Files.for(run)
+  input.add(buildFile)
 
   // Run our pipeline to compile the build file
-  const output = await pipe.process(files, run)
+  const output = await compiler.process(input, run, log)
 
   // Build our output file list, and figure out where the original
   // typescript ended up in our compilation results
   const map = new Map<FilePath, string>()
-  for (const file of output) {
-    map.set(file.absolutePath, await file.contents())
-  }
+  await parallelize(output, async (file) => {
+    const outputs = await writeSourceMap(file.absolutePath, file, {
+      sourceMaps: 'inline', // inline source maps, easier for node to find them
+      combineSourceMaps: false, // produce simple source maps (1 level deep!)
+    }) // default, inline!
+    for (const [ path, contents ] of outputs) map.set(path, contents)
+  })
 
   // Make sure we have a proper result and load our file
   const compiled = output.get(`${basename(buildFile, '.ts')}.js`)?.absolutePath
