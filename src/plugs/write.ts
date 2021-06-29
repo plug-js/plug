@@ -4,15 +4,14 @@ import type { File } from '../files'
 import type { Log } from '../utils/log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-import type { SourceMapsOptions } from './sourcemaps'
 
 import { Files } from '../files'
-import { SourceMapsPlug } from './sourcemaps'
-import { createDirectoryPath, createFilePath, getRelativePath, isChild } from '../utils/paths'
+import { createDirectoryPath, createFilePath, FilePath, getRelativePath, isChild } from '../utils/paths'
 import { getParent } from '../utils/paths'
 import { install } from '../pipe'
 import { mkdir, writeFile } from '../utils/asyncfs'
 import { parallelize } from '../utils/parallelize'
+import { writeSourceMap, WriteSourceMapOptions } from '../files/sourcemap'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
@@ -20,18 +19,7 @@ declare module '../pipe' {
   }
 }
 
-export interface WriteOptions extends SourceMapsOptions {
-  /**
-   * How to write source maps, whether they need to be `inline`, saved as an
-   * external file (`external`), not processed at all (`none`)
-   *
-   * This alters the behavior of `SourceMapsPlug`, because when `none` is
-   * specified, rather than _stripping_ source maps we do no processing at all.
-   *
-   * @default 'inline'
-   */
-   sourceMaps?: 'inline' | 'external' | 'none'
-
+export interface WriteOptions extends WriteSourceMapOptions {
    /**
    * The encoding used to write files.
    *
@@ -40,16 +28,15 @@ export interface WriteOptions extends SourceMapsOptions {
    encoding?: BufferEncoding
 }
 
-export class WritePlug extends SourceMapsPlug implements Plug {
+export class WritePlug implements Plug {
   #encoding: BufferEncoding
+  #options: WriteOptions
+
   #directory?: string
 
   constructor(directory?: string)
-  constructor(options?: WriteOptions)
   constructor(directory: string, options?: WriteOptions)
   constructor(first?: string | WriteOptions, extra?: WriteOptions) {
-    super(typeof first === 'string' ? extra : first)
-
     // Destructure our arguments
     const { directory, options = {} } =
         typeof first === 'string' ? { directory: first, options: extra } :
@@ -59,58 +46,59 @@ export class WritePlug extends SourceMapsPlug implements Plug {
     // Let's build us up
     this.#encoding = options.encoding || 'utf8'
     this.#directory = directory
+    this.#options = options
   }
 
   /** The function used for writing files (mainly for testing) */
-  protected async write(file: File, log: Log): Promise<void> {
-    const path = file.absolutePath
+  protected async write(path: FilePath, contents: string, log: Log): Promise<void> {
     await mkdir(getParent(path), { recursive: true })
-    await writeFile(path, await file.contents(), this.#encoding)
+    await writeFile(path, contents, this.#encoding)
     log.trace(`Written "${path}"`)
   }
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const time = log.start()
 
-    // Resolve our target directory and check it's a child of our input
-    // directory (never write outside our designated area)
+    // Resolve our target directory
     const directory = this.#directory ?
         createDirectoryPath(input.directory, this.#directory) : input.directory
+
+    // Make sure we're writing either to the input directory or its child
     assert(isChild(input.directory, directory) || (directory === input.directory),
         `Refusing to write to "${directory}", not a child of "${input.directory}"`)
 
-    // Slightly different process if we have source maps or not
-    let output: Files
-    if (this.sourceMaps) {
-      // If we have source maps to write the output will be different: we might
-      // have extra files (the external source maps) and the content will most
-      // likely change (the source mapping URL is added)
-      output = input.fork()
-      await parallelize(input, async (originalFile) => {
-        const relative = getRelativePath(input.directory, originalFile.absolutePath)
-        const to = createFilePath(directory, relative)
-        const added = await this.processFile(originalFile, to, output)
-        return parallelize(added, (file) => this.write(file, log))
-      })
-    } else if (directory != input.directory) {
-      // If the target directory is not the same as the input one, we "move"
-      // the files, so, we have to pass new files through to the next stage
-      output = input.fork()
-      await parallelize(input, async (file) => {
-        const relative = getRelativePath(input.directory, file.absolutePath)
-        const to = createFilePath(directory, relative)
-        const added = output.add(to, file)
-        return this.write(added, log)
-      })
-    } else {
-      // No sourcemaps, no relocation to another directory... Just WRITE!
-      await parallelize(input, (file) => this.write(file, log))
-      output = input
+    // Prepare an array of [ path -> file ] tuples
+    const files: [ FilePath, File ][] = (directory === input.directory) ?
+        input.map((file) => [ file.absolutePath, file ]) :
+        input.map((file) => {
+          const relative = getRelativePath(input.directory, file.absolutePath)
+          const path = createFilePath(directory, relative)
+          return [ path, file ]
+        })
+
+    // If we don't have to process source maps, it's a quick parallel call
+    if (this.#options.sourceMaps === 'none') {
+      await parallelize(files, ([ path, file ]) =>
+        file.contents().then((contents) => this.write(path, contents, log)))
+
+      // Log what we wrote and be done with it
+      log.debug('Written', files.length, 'files in', time)
+      return input
     }
 
+    // Source maps need to be produced before writing...
+    let count = 0
+    await parallelize(files, async ([ path, file ]) => {
+      const outputs = await writeSourceMap(path, file, this.#options)
+      await parallelize(outputs, ([ output, contents ]) => {
+        count ++
+        return this.write(output, contents, log)
+      })
+    })
+
     // Log what we wrote and be done with it
-    log.debug('Written', output.length, 'files in', time)
-    return output
+    log.debug('Written', count, 'files in', time)
+    return input
   }
 }
 
