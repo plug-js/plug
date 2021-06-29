@@ -35,6 +35,7 @@ export class WritePlug implements Plug {
   #directory?: string
 
   constructor(directory?: string)
+  constructor(options: WriteOptions)
   constructor(directory: string, options?: WriteOptions)
   constructor(first?: string | WriteOptions, extra?: WriteOptions) {
     // Destructure our arguments
