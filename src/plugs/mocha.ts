@@ -1,4 +1,3 @@
-import { SourceMapsPlug } from './sourcemaps'
 import { extname } from 'path'
 import { getRelativePath } from '../utils/paths'
 import { install } from '../pipe'
@@ -6,6 +5,7 @@ import { match } from '../utils/match'
 import { parallelize } from '../utils/parallelize'
 import { parseOptions } from '../utils/options'
 import { runMocha } from '../detached/mocha'
+import { writeSourceMap } from '../files/sourcemap'
 
 import type { FilePath } from '../utils/paths'
 import type { Files } from '../files'
@@ -25,7 +25,7 @@ declare module '../pipe' {
   }
 }
 
-interface MochaOptions extends MatchOptions, Options {
+export interface MochaOptions extends MatchOptions, Options {
   matchOriginalPaths?: boolean,
   reporter?: string,
 }
@@ -48,6 +48,12 @@ export class MochaPlug implements Plug {
     this.#options = options
   }
 
+  // A simple wrapper to `runMocha(...)` in our detached runners for testing!
+  // istanbul ignore next
+  protected runMocha(...args: Parameters<typeof runMocha>): ReturnType<typeof runMocha> {
+    return runMocha(...args)
+  }
+
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const time = log.start()
 
@@ -68,11 +74,17 @@ export class MochaPlug implements Plug {
 
     // Prepare our files with source maps
     const files = new Map<FilePath, string>()
-    const sources = await new SourceMapsPlug({ sourceMaps: 'inline' }).process(input, run, log)
-    await parallelize(sources, async (f) => files.set(f.absolutePath, await f.contents()))
+    await parallelize(input, async (file) => {
+      if (extname(file.absolutePath) !== '.js') return
+      const outputs = await writeSourceMap(file.absolutePath, file, {
+        sourceMaps: 'inline', // inline source maps, easier for node to find them
+        combineSourceMaps: true, // produce combined source maps for mocha
+      }) // default, inline!
+      for (const [ path, contents ] of outputs) files.set(path, contents)
+    })
 
     // Let's prep our mocha run
-    const failures = await runMocha({ files: files, tests, options: this.#options })
+    const failures = await this.runMocha({ files: files, tests, options: this.#options })
 
     // Check for failures
     if (failures) run.fail(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)
