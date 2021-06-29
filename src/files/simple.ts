@@ -92,7 +92,7 @@ export class SimpleFile extends File {
     if (this.#sourceMap === undefined) return undefined
 
     // If our source map is still "true" then we'll have to extract by reading
-    if (this.#sourceMap === true) await this.#contents
+    if (this.#sourceMap === true) await this.contents()
     assert(this.#sourceMap !== true, `Source map for "${this.absolutePath}" not extracted`)
 
     // We could have extracted a file path to an external source map
