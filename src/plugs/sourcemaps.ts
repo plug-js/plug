@@ -35,7 +35,7 @@ export class SourceMapsPlug implements Plug {
     const time = log.start()
 
     await parallelize(input, async (file) => {
-      const outputs = await writeSourceMap(file, file.absolutePath, this.#options)
+      const outputs = await writeSourceMap(file.absolutePath, file, this.#options)
       for (const [ path, contents ] of outputs) {
         output.add(path, { contents, sourceMap: false })
       }

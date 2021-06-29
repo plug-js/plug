@@ -260,8 +260,8 @@ export function extractSourceMap(path: FilePath, files: Files, code: string): Ex
  * @param options Options for writing the source map.
  */
 export async function writeSourceMap(
-    file: File,
     to: FilePath,
+    file: File,
     options: WriteSourceMapOptions,
 ): Promise<[ FilePath, string ][]> {
   // Get contents and source map in parallel...
