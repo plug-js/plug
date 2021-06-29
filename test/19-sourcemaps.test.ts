@@ -103,26 +103,15 @@ describe('Source Maps', () => {
   })
 
   it('should append a source map to some contents', () => {
-    const file = '/foo/bar/baz.js'
+    const map: RawSourceMap = { version: 3, file: 'baz.js', sources: [], names: [], mappings: '' }
 
-    const map: RawSourceMap = { version: 3, file: 'file.txt', sources: [], names: [], mappings: '' }
-
-    const [ ecode, emap ] = appendSourceMap(file, 'some code...', map, false)
+    const [ ecode, emap ] = appendSourceMap('some code...', map, false)
     expect(ecode).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=baz.js.map`)
     expect(emap).to.equal('{"version":3,"file":"baz.js","sources":[],"names":[],"mappings":""}')
 
-    const [ ecoder, emapr ] = appendSourceMap(file, 'some code...', map, false, 'root')
-    expect(ecoder).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=baz.js.map`)
-    expect(emapr).to.equal('{"version":3,"file":"baz.js","sourceRoot":"root","sources":[],"names":[],"mappings":""}')
-
-    const [ icode, imap ] = appendSourceMap(file, 'some code...', map, true) as any
+    const [ icode, imap ] = appendSourceMap('some code...', map, true) as any
     expect(icode).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,` +
       'eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYmF6LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==')
     expect(imap).to.be.undefined
-
-    const [ icoder, imapr ] = appendSourceMap(file, 'some code...', map, true, 'root') as any
-    expect(icoder).to.equal(`some code...\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,` +
-      'eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYmF6LmpzIiwic291cmNlUm9vdCI6InJvb3QiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9')
-    expect(imapr).to.be.undefined
   })
 })
