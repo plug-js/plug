@@ -54,6 +54,19 @@ describe('File lists', () => {
       expect(file).to.be.undefined
     })
 
+    it('should get a file from its parent', () => {
+      const files1 = makeFiles('/foo')
+      const file = files1.add('bar.txt', 'hello, world!')
+
+      expect(files1.get('bar.txt')).to.equal(file)
+      expect(files1.get('baz.txt')).to.be.undefined
+
+      const files2 = files1.fork()
+
+      expect(files2.get('bar.txt')).to.equal(file)
+      expect(files2.get('baz.txt')).to.be.undefined
+    })
+
     it('should get files from a Files instance with case sensitive paths', () => {
       try {
         (<any> globalThis).caseSensitivePaths = true
