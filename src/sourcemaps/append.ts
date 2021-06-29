@@ -1,4 +1,3 @@
-import { basename } from 'path'
 import { RawSourceMap } from 'source-map'
 import { encodeSourceMap } from './encode'
 
@@ -9,17 +8,9 @@ import { encodeSourceMap } from './encode'
  */
 export const SOURCE_MAPPING_URL = 'sourceMappingURL'
 
-export function appendSourceMap(file: string, source: string, inputSourceMap: RawSourceMap, inline: true, sourceRoot?: string): [ string ]
-export function appendSourceMap(file: string, source: string, inputSourceMap: RawSourceMap, inline: false, sourceRoot?: string): [ string, string ]
-export function appendSourceMap(file: string, source: string, inputSourceMap: RawSourceMap, inline: boolean, sourceRoot?: string): string[] {
-  // First of all clone the source map
-  const sourceMap = { ...inputSourceMap }
-
-  // then replace the file and inject any source root
-  sourceMap.file = basename(file)
-  if (sourceRoot) sourceMap.sourceRoot = sourceRoot
-
-  // we can finally get the JSON out of this sourcemap
+export function appendSourceMap(source: string, sourceMap: RawSourceMap, inline: true): [ string ]
+export function appendSourceMap(source: string, sourceMap: RawSourceMap, inline: false): [ string, string ]
+export function appendSourceMap(source: string, sourceMap: RawSourceMap, inline: boolean): string[] {
   const encodedSourceMap = encodeSourceMap(sourceMap)
 
   // if we need to inline the source map, we need to encode the JSON
