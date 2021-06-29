@@ -10,8 +10,9 @@ import type { RawSourceMap } from 'source-map'
 
 import { fileURLToPath, pathToFileURL, URL } from 'url'
 import { basename, sep } from 'path'
-import { extractSourceMappingURL, parseSourceMappingURL } from '../sourcemaps'
+import { extractSourceMappingURL, parseSourceMappingURL, appendSourceMap } from '../sourcemaps'
 
+/** A type describing how source maps can be _produced_ from a `File` */
 export interface SourceMapOptions {
   /**
    * Whether to attach the original source code to this sitemam or not.
@@ -26,7 +27,29 @@ export interface SourceMapOptions {
    * @default true
    */
   combineSourceMaps?: boolean
+  /**
+   * Any `sourceRoot` to inject in the generated source map.
+   */
+  sourceRoot?: string
 }
+
+/**
+ * A type describing how source maps can be _produced_ and _inlined_
+ * from a `File`'s own contents.
+ */
+export interface WriteSourceMapOptions extends SourceMapOptions {
+  /**
+   * How to write source maps, whether they need to be `inline`, saved as an
+   * external file (`external`), or stripped entirely (`none`)
+   *
+   * @default 'inline'
+   */
+  sourceMaps?: 'inline' | 'external' | 'none'
+}
+
+/* ========================================================================== *
+ * FILE SOURCE MAP IMPLEMENTATION                                             *
+ * ========================================================================== */
 
 export class FileSourceMap {
   readonly #mappings: string
@@ -189,6 +212,8 @@ export class FileSourceMap {
         await this.#produceCombinedSourceMap(path, attachSources) :
         await this.#produceSimpleSourceMap(path, attachSources)
 
+    if (options.sourceRoot) sourceMap.sourceRoot = options.sourceRoot
+
     sourceMap.file = basename(path)
     sourceMap.sources = sourceMap.sources.map((source) => {
       if (! source.startsWith('file:')) return source
@@ -201,6 +226,10 @@ export class FileSourceMap {
   }
 }
 
+/* ========================================================================== *
+ * UTILITY FUNCTIONS                                                          *
+ * ========================================================================== */
+
 interface ExtractedSourceMap {
   contents: string,
   sourceMap?: FileSourceMap,
@@ -208,17 +237,52 @@ interface ExtractedSourceMap {
 }
 
 /**
- * Extracts, optionally wiping, a source mapping url from some code at the
- * specified path, returning either the source map or the location of the
- * external file containing it
+ * Extracts, (and wipe) a source mapping url from some code at the specified
+ * path, returning either the source map itself (if _inline_) or the location
+ * of the external file containing it
  *
  * @param path The absolute path of the code to parse
  * @param code The code to parse for source mapping URLs
- * @param wipe Whether to wipe the source mapping URL from the file or not
  */
-export function extractSourceMap(path: FilePath, files: Files, code: string, wipe: boolean): ExtractedSourceMap {
-  const { contents, url } = extractSourceMappingURL(code, wipe)
+export function extractSourceMap(path: FilePath, files: Files, code: string): ExtractedSourceMap {
+  const { contents, url } = extractSourceMappingURL(code, true)
   const { rawSourceMap, sourceMapFile } = parseSourceMappingURL(path, url)
   const sourceMap = rawSourceMap ? new FileSourceMap(path, files, rawSourceMap) : undefined
   return { contents, sourceMap, sourceMapFile }
+}
+
+/**
+ * Prepare the contents of a `File` to be written with an _inline_ or
+ * _external_ source map embedded.
+ *
+ * @param file The `File` whose contents will be written.
+ * @param to The final `FilePath` where the file's contents should be written.
+ * @param options Options for writing the source map.
+ */
+export async function writeSourceMap(
+    file: File,
+    to: FilePath,
+    options: WriteSourceMapOptions,
+): Promise<[ FilePath, string ][]> {
+  // Get contents and source map in parallel...
+  const [ contents, fileSourceMap ] = await Promise.all([ file.contents(), file.sourceMap() ])
+
+  // If the file had no source map, or simply no processing has to be done, return
+  if ((options.sourceMaps === 'none') || (!fileSourceMap)) return [ [ to, contents ] ]
+
+  // Produce the raw source map to be injected in the contents
+  const sourceMap = await fileSourceMap.produceSourceMap(to, options)
+
+  // External source maps (2 files)
+  if (options.sourceMaps === 'external') {
+    const [ newContents, mapContents ] = appendSourceMap(await file.contents(), sourceMap, false)
+    return [
+      [ to, newContents ],
+      [ to + '.map' as FilePath, mapContents ],
+    ]
+  }
+
+  // Inline source maps (default - 1 file)
+  const [ newContents ] = appendSourceMap(await file.contents(), sourceMap, true)
+  return [ [ to, newContents ] ]
 }
