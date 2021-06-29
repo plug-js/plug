@@ -1,135 +1,57 @@
 import { expect } from 'chai'
 import { RawSourceMap } from 'source-map'
 import { SOURCE_MAPPING_URL } from '../src/sourcemaps'
-import { File } from '../src/files'
-import { Files } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { SourceMapsPlug } from '../src/plugs/sourcemaps'
 import { mock } from './support'
-import { createFilePath, FilePath } from '../src/utils/paths'
 
-describe.skip('Plug Surcemaps Processor', () => {
+describe('Plug Surcemaps Processor', () => {
   it('should be installed', () => {
     expect(new PlugPipe().sourcemaps).to.be.a('function')
   })
 
   it('should prepare an inline source map', async () => {
     // default should be "inline"... no constructor
-    const processor = new class extends SourceMapsPlug {
-      processFile(file: File, target: FilePath, files: Files): Promise<File[]> {
-        return super.processFile(file, target, files)
-      }
-    }
-
-    const { files: input } = mock('/foo/source')
-    const { files: output } = mock('/foo')
-
-    const file = input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const target = createFilePath(output.directory, 'target', 'output.txt')
-    const files = await processor.processFile(file, target, output)
-    expect(files).to.be.an('array').with.length(1)
-
-    const outFile = files[0]
-
-    expect(outFile.absolutePath).to.equal('/foo/target/output.txt')
-
-    const needle = `source\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,`
-    const haystack = outFile.contentsSync()
-    expect(haystack.indexOf(needle)).to.equal(0)
-
-    const base64 = haystack.substr(needle.length)
-    const json = Buffer.from(base64, 'base64').toString('utf8')
-
-    expect(JSON.parse(json)).to.eql({
-      version: 3,
-      file: 'output.txt',
-      sources: [ '../source/more/original.txt' ],
-      mappings: '',
-      names: [],
-    })
-  })
-
-  it('should prepare an external source map', async () => {
-    const processor = new class extends SourceMapsPlug {
-      constructor() {
-        super({ // test other non-default stuff!
-          sourceMaps: 'external',
-          sourceRoot: 'https://example.org/bar/',
-          attachSources: true,
-        })
-      }
-      processFile(file: File, target: FilePath, files: Files): Promise<File[]> {
-        return super.processFile(file, target, files)
-      }
-    }
-
-    const { files: input } = mock('/foo')
-    const { files: output } = mock('/foo')
-
-    input.add('target/original.txt', { contents: 'original', sourceMap: false })
-    const file = input.add('generated.txt', {
-      contents: 'source',
-      sourceMap: {
-        version: 3,
-        sources: [ 'target/original.txt' ], // check normalization of paths
-      } as RawSourceMap,
-    })
-
-    const target = createFilePath(output.directory, 'target', 'output.txt')
-    const files = await processor.processFile(file, target, output)
-    expect(files).to.be.an('array').with.length(2)
-
-    const [ mapFile, outFile ] = files
-
-    expect(outFile.absolutePath).to.equal('/foo/target/output.txt')
-    expect(outFile.contentsSync()).to.equal(`source\n//# ${SOURCE_MAPPING_URL}=output.txt.map`)
-
-    expect(mapFile.absolutePath).to.equal('/foo/target/output.txt.map')
-    expect(JSON.parse(mapFile.contentsSync())).to.eql({
-      version: 3,
-      file: 'output.txt',
-      sources: [ './original.txt' ],
-      sourceRoot: 'https://example.org/bar/',
-      sourcesContent: [ 'original' ],
-      mappings: '',
-      names: [],
-    })
-  })
-
-  it.skip('should emit no sourcemaps but preserve them in files', async () => {
-    // default should be "inline"... no constructor
-    const processor = new SourceMapsPlug({ sourceMaps: 'none' })
+    const processor = new SourceMapsPlug()
 
     const { files, run, log } = mock('/foo')
 
-    // supplied source map
-    files.add('supplied.txt', { contents: 'supplied...', sourceMap: {
+    files.add('generated.txt', { contents: 'source', sourceMap: {
       version: 3,
-      sources: [ '../sources/supplied.src' ],
     } as RawSourceMap })
-    files.add('missing.txt', { contents: 'missing...', sourceMap: false })
 
     const output = await processor.process(files, run, log)
-    expect(output).to.have.length(2)
 
-    const [ supplied, missing ] = output.list()
+    expect(output.list().length).to.equal(1)
 
-    expect(supplied.absolutePath).to.equal('/foo/supplied.txt')
-    expect(supplied.contentsSync()).to.equal('supplied...')
-    expect((await supplied.sourceMap())?.produceSourceMap('/foo/supplied.txt' as any)).to.eql({
+    // predictable output, we sort our JSON fields
+    const file = await output.get('generated.txt')!
+    expect(await file.contents()).to.equal(`source\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,` +
+        'eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2VuZXJhdGVkLnR4dCIsInNvdXJjZXMiOltdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiIn0=')
+  })
+
+  it('should prepare an external source map', async () => {
+    // default should be "inline"... no constructor
+    const processor = new SourceMapsPlug({ sourceMaps: 'external' })
+
+    const { files, run, log } = mock('/foo')
+
+    files.add('generated.txt', { contents: 'source', sourceMap: {
       version: 3,
-      file: '/foo/supplied.txt',
-      sources: [ '/sources/supplied.src' ],
+    } as RawSourceMap })
+
+    const output = await processor.process(files, run, log)
+
+    expect(output.list().length).to.equal(2)
+
+    expect(await output.get('generated.txt')!.contents())
+        .to.equal(`source\n//# ${SOURCE_MAPPING_URL}=generated.txt.map`)
+    expect(JSON.parse(await output.get('generated.txt.map')!.contents())).to.eql({
+      version: 3,
+      file: 'generated.txt',
       mappings: '',
       names: [],
+      sources: [],
     })
-
-    expect(missing.absolutePath).to.equal('/foo/missing.txt')
-    expect(missing.contentsSync()).to.equal('missing...')
-    expect(await missing.sourceMap()).to.be.undefined
   })
 })
