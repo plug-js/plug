@@ -48,7 +48,7 @@ describe('Plug Filter Processor', () => {
 
     const file0 = files.add('foo.ts', { contents: 'contents' })
     const file1 = files.add('foo.js', { contents: 'contents', originalFile: file0 })
-    /* file2   */ files.add('bar.js', { contents: 'contents' })
+    /* file2   */ files.add('bar.js', { contents: 'contents', originalFile: file1 })
 
     const filter = new class extends FilterPlug {
       constructor() {
