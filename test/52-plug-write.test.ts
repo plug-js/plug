@@ -1,136 +1,60 @@
 import { expect } from 'chai'
-import { existsSync, mkdtempSync, rmdirSync, rmSync } from 'fs'
+import { existsSync, mkdtempSync, readFileSync, rmdirSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { RawSourceMap } from 'source-map'
-import { File } from '../src/files'
 import { PlugPipe } from '../src/pipe'
 import { WritePlug } from '../src/plugs/write'
 import { SOURCE_MAPPING_URL } from '../src/sourcemaps'
-import { Log } from '../src/utils/log'
-import { getParent, DirectoryPath } from '../src/utils/paths'
+import { getParent, DirectoryPath, FilePath } from '../src/utils/paths'
 import { mock } from './support'
 
 describe('Plug Write Processor', () => {
+  const sourceMap = { version: 3, mappings: 'mappings' } as RawSourceMap
+
+  const { files, run, log } = mock('/foo')
+  files.add('generated.txt', { contents: 'source', sourceMap })
+
+  const external = `source\n//# ${SOURCE_MAPPING_URL}=generated.txt.map`
+  const json = '{"version":3,"file":"generated.txt","sources":[],"names":[],"mappings":"mappings"}'
+  const inline = `source\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,${Buffer.from(json).toString('base64')}`
+
   it('should be installed', () => {
     expect(new PlugPipe().write).to.be.a('function')
   })
 
-  it.skip('should write with an inline source map', async () => {
+  it('should write with an inline source map', async () => {
     // default should be "inline" and no directory... no constructor
     const written: Record<string, string> = {}
     const writer = new class extends WritePlug {
-      async write(file: File): Promise<void> {
-        written[file.absolutePath] = await file.contents()
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
       }
     }
-
-    const { files: input, run, log } = mock('/foo')
-
-    input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const output = await writer.process(input, run, log)
-    expect(output).to.have.length(1)
-
-    const outFile = output.get('/foo/generated.txt')!
-
-    const needle = `source\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,`
-    const haystack = outFile.contentsSync()
-    expect(haystack.indexOf(needle)).to.equal(0)
-
-    const base64 = haystack.substr(needle.length)
-    const json = Buffer.from(base64, 'base64').toString('utf8')
-
-    expect(JSON.parse(json)).to.eql({
-      version: 3,
-      file: 'generated.txt',
-      sources: [ './more/original.txt' ],
-      mappings: '',
-      names: [],
-    })
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
 
     expect(written).to.eql({
-      '/foo/generated.txt': outFile.contentsSync(),
+      '/foo/generated.txt': inline,
     })
   })
 
-  it.skip('should write with an external source map', async () => {
+  it('should write with an external source map', async () => {
     const written: Record<string, string> = {}
     const writer = new class extends WritePlug {
       constructor() {
         super({ sourceMaps: 'external' })
       }
-      async write(file: File): Promise<void> {
-        written[file.absolutePath] = await file.contents()
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
       }
     }
 
-    const { files: input, run, log } = mock('/foo')
-
-    input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const output = await writer.process(input, run, log)
-    expect(output).to.have.length(2)
-
-    const outFile = output.get('/foo/generated.txt')!
-    const mapFile = output.get('/foo/generated.txt.map')!
-
-    expect(outFile.contentsSync()).to.equal(`source\n//# ${SOURCE_MAPPING_URL}=generated.txt.map`)
-    expect(JSON.parse(mapFile.contentsSync())).to.eql({
-      version: 3,
-      file: 'generated.txt',
-      sources: [ './more/original.txt' ],
-      mappings: '',
-      names: [],
-    })
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
 
     expect(written).to.eql({
-      '/foo/generated.txt': outFile.contentsSync(),
-      '/foo/generated.txt.map': mapFile.contentsSync(),
-    })
-  })
-
-  it('should write in a directory with an external source map', async () => {
-    const written: Record<string, string> = {}
-    const writer = new class extends WritePlug {
-      constructor() {
-        super('bar', { sourceMaps: 'external' })
-      }
-      async write(file: File): Promise<void> {
-        written[file.absolutePath] = await file.contents()
-      }
-    }
-
-    const { files: input, run, log } = mock('/foo')
-
-    input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const output = await writer.process(input, run, log)
-    expect(output).to.have.length(2)
-
-    const outFile = output.get('/foo/bar/generated.txt')!
-    const mapFile = output.get('/foo/bar/generated.txt.map')!
-
-    expect(outFile.contentsSync()).to.equal(`source\n//# ${SOURCE_MAPPING_URL}=generated.txt.map`)
-    expect(JSON.parse(mapFile.contentsSync())).to.eql({
-      version: 3,
-      file: 'generated.txt',
-      sources: [ '../more/original.txt' ],
-      mappings: '',
-      names: [],
-    })
-
-    expect(written).to.eql({
-      '/foo/bar/generated.txt': outFile.contentsSync(),
-      '/foo/bar/generated.txt.map': mapFile.contentsSync(),
+      '/foo/generated.txt': external,
+      '/foo/generated.txt.map': json,
     })
   })
 
@@ -140,29 +64,55 @@ describe('Plug Write Processor', () => {
       constructor() {
         super({ sourceMaps: 'none' })
       }
-      async write(file: File): Promise<void> {
-        written[file.absolutePath] = await file.contents()
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
       }
     }
 
-    const { files: input, run, log } = mock('/foo')
-
-    const inFile = input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const output = await writer.process(input, run, log)
-    expect(output).to.equal(input)
-    expect(output).to.have.length(1)
-
-    const outFile = output.get('/foo/generated.txt')!
-    expect(outFile).to.equal(inFile)
-
-    expect(outFile.contentsSync()).to.equal('source')
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
 
     expect(written).to.eql({
-      '/foo/generated.txt': outFile.contentsSync(),
+      '/foo/generated.txt': 'source',
+    })
+  })
+
+  it('should write in a directory with an inline source map', async () => {
+    // default should be "inline" and no directory... no constructor
+    const written: Record<string, string> = {}
+    const writer = new class extends WritePlug {
+      constructor() {
+        super('bar')
+      }
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
+      }
+    }
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
+
+    expect(written).to.eql({
+      '/foo/bar/generated.txt': inline,
+    })
+  })
+
+  it('should write in a directory with an external source map', async () => {
+    const written: Record<string, string> = {}
+    const writer = new class extends WritePlug {
+      constructor() {
+        super('bar', { sourceMaps: 'external' })
+      }
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
+      }
+    }
+
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
+
+    expect(written).to.eql({
+      '/foo/bar/generated.txt': external,
+      '/foo/bar/generated.txt.map': json,
     })
   })
 
@@ -172,41 +122,29 @@ describe('Plug Write Processor', () => {
       constructor() {
         super('bar', { sourceMaps: 'none' })
       }
-      async write(file: File): Promise<void> {
-        written[file.absolutePath] = await file.contents()
+      async write(path: FilePath, contents: string): Promise<void> {
+        written[path] = await contents
       }
     }
 
-    const { files: input, run, log } = mock('/foo')
-
-    input.add('generated.txt', { contents: 'source', sourceMap: {
-      version: 3,
-      sources: [ './more/original.txt' ],
-    } as RawSourceMap })
-
-    const output = await writer.process(input, run, log)
-    expect(output).to.have.length(1)
-
-    const outFile = output.get('/foo/bar/generated.txt')!
-
-    expect(outFile.contentsSync()).to.equal('source')
+    const output = await writer.process(files, run, log)
+    expect(output).to.equal(files)
 
     expect(written).to.eql({
-      '/foo/bar/generated.txt': outFile.contentsSync(),
+      '/foo/bar/generated.txt': 'source',
     })
   })
 
   it('should write come content to the filesystem', async () => {
     const dir = mkdtempSync(tmpdir()) as DirectoryPath
-    const { files, log } = mock(dir)
+    const { files, run, log } = mock(dir)
     const file = files.add('foo/bar/baz.txt', { contents: 'contents...' })
     try {
-      const writer = new class extends WritePlug {
-        async write(file: File, log: Log): Promise<void> {
-          return super.write(file, log)
-        }
-      }
-      await writer.write(file, log)
+      const writer = new WritePlug()
+      await writer.process(files, run, log)
+
+      const contents = readFileSync(file.absolutePath, 'utf8')
+      expect(contents).to.equal('contents...')
     } finally {
       if (existsSync(file.absolutePath)) rmSync(file.absolutePath)
       for (let parent = getParent(file.absolutePath); parent != dir; parent = getParent(parent)) {
