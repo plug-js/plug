@@ -9,7 +9,7 @@
  * promise will be rejected.
  */
 export function parallelize<I, R>(
-    items: IterableIterator<I> | Iterable<I> | readonly I[],
+    items: Iterable<I>,
     callback: (item: I) => R | Promise<R>,
     thisArg?: any,
 ): Promise<R[]> {
