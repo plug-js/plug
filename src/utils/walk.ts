@@ -99,13 +99,11 @@ export function walk(directory: DirectoryPath, ...args: ParseOptions<WalkOptions
   if (! options.dot) directoryGlobs.push('**/.*')
 
   // Create our negative matcher to ignore directories
-  const ignoreDir = directoryGlobs.length === 0 ? () => false : match({
-    options: { ...options, ignore: [] },
-    globs: directoryGlobs,
-  })
+  const ignoreDir = directoryGlobs.length === 0 ? () => false :
+    match(...directoryGlobs as [ string, ...string[] ], { ...options, ignore: [] })
 
   // Create our positive matcher to match files
-  const matchFile = match({ globs, options })
+  const matchFile = match(...globs, options)
 
   // Do the walk!
   return walker(directory, '', matchFile, ignoreDir, followSymlinks, maxDepth, 0)
