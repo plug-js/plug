@@ -5,12 +5,12 @@ describe('Glob Matcher', () => {
   it('should honor case sensitivity of the filesystem', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
-      const matcher1 = match({ globs: [ '**/*.ts' ] })
+      const matcher1 = match('**/*.ts')
       expect(matcher1('Foo.Ts')).to.be.false
       expect(matcher1('bar.ts')).to.be.true
 
       ;(<any> globalThis).caseSensitivePaths = false
-      const matcher2 = match({ globs: [ '**/*.ts' ] })
+      const matcher2 = match('**/*.ts')
       expect(matcher2('Foo.Ts')).to.be.true
       expect(matcher2('bar.ts')).to.be.true
     } finally {
@@ -21,20 +21,20 @@ describe('Glob Matcher', () => {
   it('should override case sensitivity of the filesystem', () => {
     try {
       (<any> globalThis).caseSensitivePaths = true
-      const matcher1 = match({ globs: [ '**/*.ts' ], options: { nocase: true } })
+      const matcher1 = match('**/*.ts', { nocase: true })
       expect(matcher1('Foo.Ts')).to.be.true
       expect(matcher1('bar.ts')).to.be.true
 
-      const matcher2 = match({ globs: [ '**/*.ts' ], options: { nocase: true } })
+      const matcher2 = match('**/*.ts', { nocase: true })
       expect(matcher2('Foo.Ts')).to.be.true
       expect(matcher2('bar.ts')).to.be.true
 
       ;(<any> globalThis).caseSensitivePaths = false
-      const matcher3 = match({ globs: [ '**/*.ts' ], options: { nocase: false } })
+      const matcher3 = match('**/*.ts', { nocase: false })
       expect(matcher3('Foo.Ts')).to.be.false
       expect(matcher3('bar.ts')).to.be.true
 
-      const matcher4 = match({ globs: [ '**/*.ts' ], options: { nocase: false } })
+      const matcher4 = match('**/*.ts', { nocase: false })
       expect(matcher4('Foo.Ts')).to.be.false
       expect(matcher4('bar.ts')).to.be.true
     } finally {
