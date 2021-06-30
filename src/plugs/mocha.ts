@@ -24,7 +24,22 @@ declare module '../pipe' {
 }
 
 export interface MochaOptions extends Omit<FilterOptions, 'scriptsOnly'>, Options {
-  reporter?: string,
+  /**
+   * Match original paths of files.
+   *
+   * @default true
+   */
+   matchOriginalPaths?: boolean,
+
+   /**
+    * The reporter to use.
+    *
+    * Note that no matter what you chose here, no report will be emitted if
+    * the logging level is set to `QUIET`.
+    *
+    * @default 'spec'
+    */
+   reporter?: string,
 }
 
 export class MochaPlug implements Plug {
@@ -32,7 +47,10 @@ export class MochaPlug implements Plug {
   #options: Options
 
   constructor(...args: ParseOptions<MochaOptions>) {
-    const { globs, options } = parseOptions(args, {})
+    const { globs, options } = parseOptions(args, {
+      matchOriginalPaths: true,
+      reporter: 'spec',
+    })
     this.#args = [ ...globs, { ...options, scriptsOnly: true } ]
     this.#options = options
   }

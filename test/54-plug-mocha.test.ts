@@ -74,7 +74,10 @@ describe('Plug Mocha Processor', () => {
     expect(tests).to.have.length(1)
     expect(tests).to.include('/foo/test/mytest.js')
 
-    expect(options).to.eql({})
+    expect(options).to.eql({
+      matchOriginalPaths: true,
+      reporter: 'spec',
+    })
   })
 
   it('should process some test files matching absolute paths', async () => {
