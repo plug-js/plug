@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { RawSourceMap } from 'source-map'
 import { PlugPipe } from '../src/pipe'
 import { MochaOptions, MochaPlug } from '../src/plugs/mocha'
-import { caseSensitivePaths } from '../src/utils/paths'
 import { disableLogs, mock } from './support'
 
 describe('Plug Mocha Processor', () => {
@@ -75,11 +74,14 @@ describe('Plug Mocha Processor', () => {
     expect(tests).to.have.length(1)
     expect(tests).to.include('/foo/test/mytest.js')
 
-    expect(options).to.eql({ nocase: !caseSensitivePaths() })
+    expect(options).to.eql({})
   })
 
   it('should process some test files matching absolute paths', async () => {
-    const mocha = new TestMochaPlug('test/**/*.js', { matchOriginalPaths: false })
+    const mocha = new TestMochaPlug('test/**/*.js', {
+      matchOriginalPaths: false, // also test other options
+      reporter: 'foobar',
+    })
 
     const output = await mocha.process(input, run, log)
     expect(output).to.equal(input)
@@ -103,7 +105,10 @@ describe('Plug Mocha Processor', () => {
     expect(tests).to.have.length(1)
     expect(tests).to.include('/foo/test/mytest.js')
 
-    expect(options).to.eql({ nocase: !caseSensitivePaths() })
+    expect(options).to.eql({
+      matchOriginalPaths: false,
+      reporter: 'foobar',
+    })
   })
 
   it('should fail when no tests are found', async () => {
