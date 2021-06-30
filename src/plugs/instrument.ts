@@ -1,0 +1,101 @@
+import { Files } from '../files'
+import { install } from '../pipe'
+import { parseOptions } from '../utils/options'
+
+import type { Log } from '../utils/log'
+import type { ParseOptions } from '../utils/options'
+import type { Plug } from '../pipe'
+import type { Run } from '../run'
+
+import { createInstrumenter, InstrumenterOptions } from 'istanbul-lib-instrument'
+import { parallelize } from '../utils/parallelize'
+import { RawSourceMap } from 'source-map'
+import { extname } from 'path/posix'
+import { FilterOptions } from '../utils/filter'
+
+declare module '../pipe' {
+  interface Pipe<P extends Pipe<P>> {
+    instrument: PlugExtension<P, typeof InstrumentPlug>
+  }
+}
+
+/**
+ * A subset of Istanbul's own instrumenter options.
+ */
+export interface InstrumentOptions extends Omit<FilterOptions, 'scriptsOnly'> {
+  /**
+   * Match original paths of files
+   *
+   * @default true
+   */
+   matchOriginalPaths?: boolean,
+
+   /**
+   * Preserve comments in instrumented code
+   *
+   * @default false
+  */
+  preserveComments?: boolean;
+
+  /**
+   * Generate compact code
+   *
+   * @default true
+   */
+  compact?: boolean;
+
+  /**
+   * Instrument ES6 modules
+   *
+   * @default false
+   */
+  esModules?: boolean;
+
+  /**
+   * Allow `return` statements outside of functions
+   *
+   * @default false
+   */
+  autoWrap?: boolean;
+}
+
+export class InstrumentPlug implements Plug {
+  #args: ParseOptions<FilterOptions>
+  #options: Partial<InstrumenterOptions>
+
+  constructor(...args: ParseOptions<InstrumentOptions>) {
+    const { globs, options } = parseOptions(args, { matchOriginalPaths: true })
+    this.#args = [ ...globs, { ...options, scriptsOnly: true } ]
+    this.#options = { ...options, produceSourceMap: true }
+  }
+
+  async process(input: Files, run: Run, log: Log): Promise<Files> {
+    const time = log.start()
+    const instrumenter = createInstrumenter(this.#options)
+    const output = input.fork()
+
+    await parallelize(input.filter(...this.#args), async (file) => {
+      const path = file.absolutePath
+      if (extname(path) !== '.js') return output.add(file)
+
+      const time = log.start()
+      const code = await file.contents()
+      const fileSourceMap = await file.sourceMap()
+      const rawSourceMap = await fileSourceMap?.produceSourceMap(path)
+      return new Promise<void>((resolve, reject) => {
+        instrumenter.instrument(code, path, (error, contents) => {
+          if (error) return reject(error)
+          log.trace(`Instrumented "${file.absolutePath}" in`, time)
+          const originalFile = file.originalFile
+          const sourceMap: RawSourceMap = instrumenter.lastSourceMap() as any
+          output.add(path, { contents, sourceMap, originalFile })
+          resolve()
+        }, rawSourceMap as any)
+      })
+    })
+    log.debug('Instrumented', output.length, 'files in', time)
+    return output
+  }
+}
+
+export const instrument = install('instrument', InstrumentPlug)
