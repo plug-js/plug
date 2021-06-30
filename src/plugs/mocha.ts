@@ -1,19 +1,17 @@
 import { extname } from 'path'
-import { getRelativePath } from '../utils/paths'
 import { install } from '../pipe'
-import { match } from '../utils/match'
 import { parallelize } from '../utils/parallelize'
-import { parseOptions } from '../utils/options'
+import { ParseOptions, parseOptions } from '../utils/options'
 import { runMocha } from '../detached/mocha'
 import { writeSourceMap } from '../files/sourcemap'
 
 import type { FilePath } from '../utils/paths'
 import type { Files } from '../files'
 import type { Log } from '../utils/log'
-import type { Matcher, MatchOptions } from '../utils/match'
 import type { MochaOptions as Options } from 'mocha'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
+import type { FilterOptions } from '../utils/filter'
 
 /* ========================================================================== *
  * MOCHA PLUG                                                                 *
@@ -25,26 +23,17 @@ declare module '../pipe' {
   }
 }
 
-export interface MochaOptions extends MatchOptions, Options {
-  matchOriginalPaths?: boolean,
+export interface MochaOptions extends Omit<FilterOptions, 'scriptsOnly'>, Options {
   reporter?: string,
 }
 
-type MochaArguments = [ string, ...string[], MochaOptions ] | [ string, ...string[] ]
-
 export class MochaPlug implements Plug {
-  #matchOriginalPaths: boolean
-  #options: Mocha.MochaOptions
-  #matcher: Matcher
+  #args: ParseOptions<FilterOptions>
+  #options: Options
 
-  constructor(...args: MochaArguments) {
-    const { globs, options: { matchOriginalPaths, ...options } } =
-        parseOptions(args, {
-          matchOriginalPaths: true,
-        })
-
-    this.#matcher = match({ globs, options })
-    this.#matchOriginalPaths = matchOriginalPaths
+  constructor(...args: ParseOptions<MochaOptions>) {
+    const { globs, options } = parseOptions(args, {})
+    this.#args = [ ...globs, { ...options, scriptsOnly: true } ]
     this.#options = options
   }
 
@@ -58,15 +47,7 @@ export class MochaPlug implements Plug {
 
     // We can only run ".js" files, so let's start filtering stuff out...
     const tests = new Set<FilePath>()
-    for (const file of input) {
-      if (extname(file.absolutePath) !== '.js') continue
-      const path = this.#matchOriginalPaths ?
-          file.originalFile?.absolutePath :
-          file.absolutePath
-      if (! path) continue
-      const relativePath = getRelativePath(input.directory, path)
-      if (this.#matcher(relativePath)) tests.add(file.absolutePath)
-    }
+    for (const file of input.filter(...this.#args)) tests.add(file.absolutePath)
 
     // Fail if we can't find any test file...
     if (! tests.size) run.fail('No test files found')
