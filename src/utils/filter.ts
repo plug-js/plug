@@ -5,7 +5,17 @@ import { parseOptions, ParseOptions } from './options'
 import { DirectoryPath, getRelativePath } from './paths'
 
 export interface FilterOptions extends MatchOptions {
+  /**
+   * Match original paths of files
+   *
+   * @default false
+   */
   matchOriginalPaths?: boolean,
+  /**
+   * Match only scripts (`.js` files)
+   *
+   * @default: false
+   */
   scriptsOnly?: boolean,
 }
 
@@ -15,7 +25,7 @@ export function* filter(
     ...args: ParseOptions<FilterOptions>
 ): Generator<File, void, void> {
   const { globs, options } = parseOptions(args, {
-    matchOriginalPaths: true,
+    matchOriginalPaths: false,
     scriptsOnly: false,
   })
 
