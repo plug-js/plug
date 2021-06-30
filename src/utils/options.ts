@@ -1,6 +1,8 @@
-export type ParsedOptions<Options> = { globs: string[], options: Options }
-export type ParsedOptionalOptions<Options> = { globs: string[], options?: Options | undefined }
-export type ParseOptions<Options> = [ string, ...string[] ] | [ string, ...string[], Options ]
+type StringArguments = [ string, ...string[] ]
+
+export type ParsedOptions<Options> = { globs: StringArguments, options: Options }
+export type ParsedOptionalOptions<Options> = { globs: StringArguments, options?: Options | undefined }
+export type ParseOptions<Options> = StringArguments | [ ...StringArguments, Options ]
 
 /** Parse an array of at least one string, followed by an optional `Options` argument. */
 export function parseOptions<Options>(args: ParseOptions<Options>): ParsedOptionalOptions<Options>
@@ -14,13 +16,13 @@ export function parseOptions<Options, Defaults extends Options>(args: ParseOptio
 
   const { globs, options } =
     typeof last === 'string' ? {
-      globs: [ ...args as string[], last ],
+      globs: [ ...args, last ] as StringArguments,
       options: defaults,
     } : defaults ? {
-      globs: [ ...args as string[] ],
+      globs: [ ...args ] as StringArguments,
       options: { ...defaults, ...last },
     } : {
-      globs: [ ...args as string[] ],
+      globs: [ ...args ] as StringArguments,
       options: last,
     }
 
