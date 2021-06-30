@@ -1,15 +1,18 @@
 import assert from 'assert'
 
 import { File } from './file'
-import { SimpleFile } from './simple'
 import { FileWrapper } from './wrapper'
+import { SimpleFile } from './simple'
+import { VirtualFile } from './virtual'
 import { createFilePath, getCanonicalPath, isChild } from '../utils/paths'
+import { filter } from '../utils/filter'
+import { statSync } from 'fs'
 
 import type { CanonicalPath, DirectoryPath } from '../utils/paths'
 import type { FileOptions } from './index'
+import type { FilterOptions } from '../utils/filter'
+import type { ParseOptions } from '../utils/options'
 import type { Run } from '../run'
-import { VirtualFile } from './virtual'
-import { statSync } from 'fs'
 
 /* ========================================================================== *
  * VIRTUAL FILE LIST IMPLEMENTATION                                           *
@@ -163,6 +166,11 @@ export class Files {
 
     // Return our list
     return list
+  }
+
+  /** Filter this instance's `File`s with the globs and options specified  */
+  filter(...args: ParseOptions<FilterOptions>): Generator<File, void, void> {
+    return filter(this.directory, this, ...args)
   }
 
   /* ======================================================================== *
