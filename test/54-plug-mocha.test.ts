@@ -3,7 +3,7 @@ import { RawSourceMap } from 'source-map'
 import { PlugPipe } from '../src/pipe'
 import { MochaOptions, MochaPlug } from '../src/plugs/mocha'
 import { SOURCE_MAPPING_URL } from '../src/sourcemaps'
-import { disableLogs, mock } from './support'
+import { mock } from './support'
 
 describe('Plug Mocha Processor', () => {
   const { files: input, run, log } = mock('/foo')
@@ -44,8 +44,6 @@ describe('Plug Mocha Processor', () => {
   }
 
   /* ======================================================================== */
-
-  disableLogs()
 
   beforeEach(() => {
     mochaArgs = undefined
@@ -140,7 +138,7 @@ describe('Plug Mocha Processor', () => {
         .to.be.rejectedWith('Mocha detected 1 test failure')
   })
 
-  describe('Forking Mocha', function() {
+  describe.skip('Forking Mocha', function() {
     this.slow(2000)
 
     it('should run a remote test', async () => {

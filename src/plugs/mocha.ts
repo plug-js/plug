@@ -56,6 +56,7 @@ export class MochaPlug implements Plug {
   }
 
   // A simple wrapper to `runMocha(...)` in our detached runners for testing!
+  // istanbul ignore next - we don't write to disk in our plugfile so fork will fail!
   protected runMocha(...args: Parameters<typeof runMocha>): ReturnType<typeof runMocha> {
     return runMocha(...args)
   }

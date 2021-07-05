@@ -1,3 +1,4 @@
+/* istanbul ignore file - this would need to be written to disk to test */
 import Mocha from 'mocha'
 
 import { LogLevel, log, logOptions } from '../utils/log'
