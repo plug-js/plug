@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { RawSourceMap } from 'source-map'
 import { PlugPipe } from '../src/pipe'
 import { MochaOptions, MochaPlug } from '../src/plugs/mocha'
+import { SOURCE_MAPPING_URL } from '../src/sourcemaps'
 import { disableLogs, mock } from './support'
 
 describe('Plug Mocha Processor', () => {
@@ -32,7 +33,13 @@ describe('Plug Mocha Processor', () => {
     }
     runMocha(...args: Parameters<MochaPlug['runMocha']>): ReturnType<MochaPlug['runMocha']> {
       mochaArgs = args
-      return Promise.resolve(failures)
+      return Promise.resolve({
+        suites: 0,
+        tests: 1,
+        passes: 2,
+        pending: 3,
+        failures,
+      })
     }
   }
 
@@ -66,9 +73,9 @@ describe('Plug Mocha Processor', () => {
       '/foo/utils/extra.js',
     ])
     expect(files.get('/foo/test/mytest.js' as any))
-        .to.equal('testCompiled\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibXl0ZXN0LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==')
+        .to.equal(`testCompiled\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibXl0ZXN0LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==`)
     expect(files.get('/foo/src/testable.js' as any))
-        .to.equal('codeCompiled\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdGFibGUuanMiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9')
+        .to.equal(`codeCompiled\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdGFibGUuanMiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9`)
     expect(files.get('/foo/utils/extra.js' as any)).to.equal('utility')
 
     expect(tests).to.have.length(1)
@@ -100,9 +107,9 @@ describe('Plug Mocha Processor', () => {
       '/foo/utils/extra.js',
     ])
     expect(files.get('/foo/test/mytest.js' as any))
-        .to.equal('testCompiled\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibXl0ZXN0LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==')
+        .to.equal(`testCompiled\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibXl0ZXN0LmpzIiwic291cmNlcyI6W10sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiIifQ==`)
     expect(files.get('/foo/src/testable.js' as any))
-        .to.equal('codeCompiled\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdGFibGUuanMiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9')
+        .to.equal(`codeCompiled\n//# ${SOURCE_MAPPING_URL}=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdGFibGUuanMiLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9`)
     expect(files.get('/foo/utils/extra.js' as any)).to.equal('utility')
 
     expect(tests).to.have.length(1)
@@ -144,8 +151,7 @@ describe('Plug Mocha Processor', () => {
         sourceMap: false,
       })
 
-      // the test fails, doh!
-      await expect(mocha.process(files, run, log))
+      await mocha.process(files, run, log)
     })
 
     it('should run a remote failing test', async () => {
