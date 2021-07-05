@@ -2,7 +2,9 @@ import {
   mkdir as asyncMkdir,
   readFile as asyncReadFile,
   readdir as asyncReaddir,
+  rmdir as asyncRmdir,
   stat as asyncStat,
+  unlink as asyncUnlink,
   writeFile as asyncWriteFile,
 } from 'fs/promises'
 
@@ -17,6 +19,7 @@ import type {
   Mode,
   OpenMode,
   PathLike,
+  RmDirOptions,
   StatOptions,
   Stats,
 } from 'fs'
@@ -85,6 +88,26 @@ export function writeFile(path: PathLike | FileHandle, data: string | Uint8Array
 // implementation
 export function writeFile(...args: Parameters<typeof asyncWriteFile>): ReturnType<typeof asyncWriteFile> {
   return asyncWriteFile(...args).catch(/* istanbul ignore next */ (error) => {
+    Error.captureStackTrace(error)
+    throw error
+  })
+}
+
+// definitions
+export function unlink(path: PathLike): Promise<void>
+// implementation
+export function unlink(...args: Parameters<typeof asyncUnlink>): ReturnType<typeof asyncUnlink> {
+  return asyncUnlink(...args).catch(/* istanbul ignore next */ (error) => {
+    Error.captureStackTrace(error)
+    throw error
+  })
+}
+
+// definitions
+export function rmdir(path: PathLike, options?: RmDirOptions): Promise<void>
+// implementation
+export function rmdir(...args: Parameters<typeof asyncRmdir>): ReturnType<typeof asyncRmdir> {
+  return asyncRmdir(...args).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
