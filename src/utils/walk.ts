@@ -18,12 +18,15 @@ async function* walker(
     relative: string,
     matchFile: (path: string) => boolean,
     igoreDir: (path: string) => boolean,
+    onDir: (directory: DirectoryPath) => boolean | void,
     symlinks: boolean,
     maxdepth: number,
     depth: number,
 ): WalkGenerator {
   // Read the directory, including file types
-  const dirents = await fs.readdir(join(root, relative), { withFileTypes: true })
+  const dir = join(root, relative)
+  if (onDir(dir as DirectoryPath) === false) return
+  const dirents = await fs.readdir(dir, { withFileTypes: true })
 
   // For each entry we determine the full path
   for (const dirent of dirents) {
@@ -34,7 +37,7 @@ async function* walker(
 
     // If the entry is a directory within our depth, walk it recursively
     else if (dirent.isDirectory() && (!igoreDir(path)) && (depth < maxdepth)) {
-      const children = walker(root, path, matchFile, igoreDir, symlinks, maxdepth, depth + 1)
+      const children = walker(root, path, matchFile, igoreDir, onDir, symlinks, maxdepth, depth + 1)
       for await (const child of children) yield child
 
     // If this is a symlink and we're told to check them let's see what we have
@@ -46,7 +49,7 @@ async function* walker(
 
       // If the link is a directory within our depth, walk it recursively
       else if (stat.isDirectory() && (!igoreDir(path)) && (depth < maxdepth)) {
-        const children = walker(root, path, matchFile, igoreDir, symlinks, maxdepth, depth + 1)
+        const children = walker(root, path, matchFile, igoreDir, onDir, symlinks, maxdepth, depth + 1)
         for await (const child of children) yield child
       }
     }
@@ -75,6 +78,16 @@ export interface WalkOptions extends MatchOptions {
    * @default false
    */
   allowNodeModules?: boolean,
+
+  /**
+   * A callback invoked on each individual directory being walked.
+   *
+   * If the callback returns `false` the directory and all of its children will
+   * not be walked.
+   *
+   * @default undefined
+   */
+  onDirectory?: (directory: DirectoryPath) => boolean | void,
 }
 
 /**
@@ -82,8 +95,9 @@ export interface WalkOptions extends MatchOptions {
  * the `FilePath`s found matching the specified globs and matching options
  */
 export function walk(directory: DirectoryPath, ...args: ParseOptions<WalkOptions>): WalkGenerator {
-  const { globs, options: { followSymlinks, maxDepth, ...options } } =
+  const { globs, options: { followSymlinks, maxDepth, onDirectory, ...options } } =
       parseOptions(args, {
+        onDirectory: () => {},
         allowNodeModules: false,
         followSymlinks: true,
         maxDepth: Infinity,
@@ -106,5 +120,5 @@ export function walk(directory: DirectoryPath, ...args: ParseOptions<WalkOptions
   const matchFile = match(...globs, options)
 
   // Do the walk!
-  return walker(directory, '', matchFile, ignoreDir, followSymlinks, maxDepth, 0)
+  return walker(directory, '', matchFile, ignoreDir, onDirectory, followSymlinks, maxDepth, 0)
 }

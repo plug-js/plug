@@ -1,7 +1,7 @@
 import { directory } from './support'
 import { expect } from 'chai'
 import { walk } from '../src/utils/walk'
-import { FilePath } from '../src/utils/paths'
+import { DirectoryPath, FilePath } from '../src/utils/paths'
 import { extname } from 'path/posix'
 
 describe('Directory Walking', () => {
@@ -87,7 +87,7 @@ describe('Directory Walking', () => {
     expect(results2).to.include(`${directory}/.hidden/file.txt`)
   })
 
-  it('should ignore any ".*" directory if told to do so', async () => {
+  it('should ignore any specific directory if told to do so', async () => {
     const generator1 = walk(directory, '**/*.*', { ignore: [ 'dir' ] })
     const results1 = []
     for await (const file of generator1) results1.push(file)
@@ -111,5 +111,71 @@ describe('Directory Walking', () => {
     expect(results3).to.include(`${directory}/.hidden/file.txt`)
     expect(results3).to.include(`${directory}/node_modules/file.txt`)
     expect(results3).to.include(`${directory}/dir/file.txt`)
+  })
+
+  it('should ignore any directory according to a callback', async () => {
+    const dirs1: DirectoryPath[] = []
+    function onDir1(dir: DirectoryPath): void {
+      dirs1.push(dir)
+    }
+    const generator1 = walk(directory, '**/*.*', { dot: true, allowNodeModules: true, onDirectory: onDir1 })
+    const results1 = []
+
+    for await (const file of generator1) results1.push(file)
+    expect(results1).to.have.length.greaterThan(1)
+    expect(results1).to.include(`${directory}/.hidden/file.txt`)
+    expect(results1).to.include(`${directory}/dir/file.txt`)
+    expect(results1).to.include(`${directory}/linkdir/file.txt`)
+    expect(results1).to.include(`${directory}/node_modules/file.txt`)
+
+    expect(dirs1).to.have.length.greaterThan(1)
+    expect(dirs1).to.include(`${directory}/.hidden`)
+    expect(dirs1).to.include(`${directory}/dir`)
+    expect(dirs1).to.include(`${directory}/linkdir`)
+    expect(dirs1).to.include(`${directory}/node_modules`)
+
+    // "true" is default
+    const dir2: DirectoryPath[] = []
+    function onDir2(dir: DirectoryPath): boolean {
+      dir2.push(dir)
+      return true
+    }
+    const generator2 = walk(directory, '**/*.*', { dot: true, allowNodeModules: true, onDirectory: onDir2 })
+    const results2 = []
+
+    for await (const file of generator2) results2.push(file)
+    expect(results2).to.have.length.greaterThan(1)
+    expect(results2).to.include(`${directory}/.hidden/file.txt`)
+    expect(results2).to.include(`${directory}/dir/file.txt`)
+    expect(results2).to.include(`${directory}/linkdir/file.txt`)
+    expect(results2).to.include(`${directory}/node_modules/file.txt`)
+
+    expect(dir2).to.have.length.greaterThan(1)
+    expect(dir2).to.include(`${directory}/.hidden`)
+    expect(dir2).to.include(`${directory}/dir`)
+    expect(dir2).to.include(`${directory}/linkdir`)
+    expect(dir2).to.include(`${directory}/node_modules`)
+
+    // strip out "dir" from our callback
+    const dirs3: DirectoryPath[] = []
+    function onDir3(dir: DirectoryPath): boolean | void {
+      if (dir === `${directory}/dir`) return false
+      dirs3.push(dir)
+    }
+    const generator3 = walk(directory, '**/*.*', { dot: true, allowNodeModules: true, onDirectory: onDir3 })
+    const results3 = []
+
+    for await (const file of generator3) results3.push(file)
+    expect(results3).to.have.length.greaterThan(1)
+    expect(results3).to.include(`${directory}/.hidden/file.txt`)
+    expect(results3).to.include(`${directory}/linkdir/file.txt`)
+    expect(results3).to.include(`${directory}/node_modules/file.txt`)
+    expect(results3).not.to.include(`${directory}/dir/file.txt`)
+
+    expect(dirs3).to.have.length.greaterThan(1)
+    expect(dirs3).to.include(`${directory}/.hidden`)
+    expect(dirs3).to.include(`${directory}/linkdir`)
+    expect(dirs3).to.include(`${directory}/node_modules`)
+    expect(dirs3).not.to.include(`${directory}/dir`)
   })
 })
