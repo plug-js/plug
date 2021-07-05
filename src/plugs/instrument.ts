@@ -71,9 +71,12 @@ export class InstrumentPlug implements Plug {
 
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const time = log.start()
-    const instrumenter = createInstrumenter(this.#options)
     const output = input.fork()
 
+    // Note to self: I tried to implement worker pools (using "piscina") but
+    // the even with a pre-allocated 8-worker pool, the savings were not that
+    // significant, from 2.5 to 2.2 seconds on our entire code base...
+    const instrumenter = createInstrumenter(this.#options)
     await parallelize(input.filter(...this.#args), async (file) => {
       const path = file.absolutePath
       if (extname(path) !== '.js') return output.add(file)
@@ -93,6 +96,7 @@ export class InstrumentPlug implements Plug {
         }, rawSourceMap as any)
       })
     })
+
     log.debug('Instrumented', output.length, 'files in', time)
     return output
   }
