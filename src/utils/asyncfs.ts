@@ -1,5 +1,6 @@
 import {
   mkdir as asyncMkdir,
+  mkdtemp as asyncMkdtemp,
   readFile as asyncReadFile,
   readdir as asyncReaddir,
   rmdir as asyncRmdir,
@@ -14,6 +15,7 @@ import type { FileHandle } from 'fs/promises'
 import type {
   BaseEncodingOptions,
   BigIntStats,
+  BufferEncodingOption,
   Dirent,
   MakeDirectoryOptions,
   Mode,
@@ -108,6 +110,19 @@ export function rmdir(path: PathLike, options?: RmDirOptions): Promise<void>
 // implementation
 export function rmdir(...args: Parameters<typeof asyncRmdir>): ReturnType<typeof asyncRmdir> {
   return asyncRmdir(...args).catch(/* istanbul ignore next */ (error) => {
+    Error.captureStackTrace(error)
+    throw error
+  })
+}
+
+// definitions
+export function mkdtemp(prefix: string, options?: BaseEncodingOptions | BufferEncoding | null): Promise<string>
+export function mkdtemp(prefix: string, options: BufferEncodingOption): Promise<Buffer>
+export function mkdtemp(prefix: string, options?: BaseEncodingOptions | BufferEncoding | null): Promise<string | Buffer>
+// implementation
+export function mkdtemp(prefix: string, options?: any): Promise<any> {
+  // export function mkdtemp(...args: Parameters<typeof asyncMkdtemp>): ReturnType<typeof asyncMkdtemp> {
+  return asyncMkdtemp(prefix, options).catch(/* istanbul ignore next */ (error) => {
     Error.captureStackTrace(error)
     throw error
   })
