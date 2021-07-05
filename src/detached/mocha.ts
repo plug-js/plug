@@ -47,8 +47,8 @@ if (require.main === module) {
       for (const test of tests.sort()) mocha.addFile(test)
 
       // Run mocha and report back failures
-      mocha.run((failures) => {
-        process.send?.(failures)
+      const runner = mocha.run(() => {
+        process.send?.(runner.stats)
         process.exit(0)
       })
     } catch (error) {
@@ -71,9 +71,9 @@ export interface MochaRun {
   tests: Set<FilePath>,
 }
 
-export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<number> {
-  return new Promise<number>((resolve, reject) => {
-    let failures = -1
+export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<Mocha.Stats> {
+  return new Promise<Mocha.Stats>((resolve, reject) => {
+    let stats: (Mocha.Stats | undefined)
 
     const message: MochaMessage = {
       log: {
@@ -94,11 +94,14 @@ export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<nu
       ...process.env,
     } })
 
-    child.on('message', (message: number) => failures = message)
+    child.on('message', (message: Mocha.Stats) => stats = message)
     child.on('spawn', () => child.send(message))
     // istanbul ignore next - we test the basics, not all message paths
     child.on('close', (code, signal) => {
-      if (code === 0) return resolve(failures)
+      if (code === 0) {
+        if (!stats) return reject(new Error('Mocha produced no stats'))
+        return resolve(stats)
+      }
       if (signal) reject(new Error(`Mocha exited due to signal ${signal}`))
       else reject(new Error(`Mocha failed with error code ${code || -1}`))
     })
