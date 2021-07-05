@@ -1,13 +1,14 @@
 import { disableLogs } from './support'
 import { expect } from 'chai'
-import { tmpdir } from 'os'
-import { DirectoryPath, createFilePath } from '../src/utils/paths'
+import { createFilePath } from '../src/utils/paths'
 import { Files } from '../src/files'
-import { existsSync, mkdtempSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from 'fs'
+import { readFileSync, unlinkSync, writeFileSync } from 'fs'
 
 import { directory as directory } from './support'
 import { Run } from '../src/run'
 import { SimpleFile } from '../src/files/simple'
+import { mktempdir } from '../src/utils/mktempdir'
+import { rmdirs } from '../src/utils/rmdirs'
 
 describe('Simple Files', () => {
   function makeFiles(directory: string): Files {
@@ -120,64 +121,56 @@ describe('Simple Files', () => {
   })
 
   it('should cache or fail when a file disappears (async)', async () => {
-    const dir = mkdtempSync(tmpdir()) as DirectoryPath
+    const dir = await mktempdir({ directory } as any)
     try {
       const path = createFilePath(dir, 'test.txt')
-      try {
-        writeFileSync(path, 'contents...')
+      writeFileSync(path, 'contents...')
 
-        const files = makeFiles(dir)
-        const file1 = new SimpleFile(files, path, false)
-        const file2 = new SimpleFile(files, path, false)
-        const file3 = new SimpleFile(files, path, false)
+      const files = makeFiles(dir)
+      const file1 = new SimpleFile(files, path, false)
+      const file2 = new SimpleFile(files, path, false)
+      const file3 = new SimpleFile(files, path, false)
 
-        // read file1, file2 synchronously, but _not_ file3
-        expect(await file1.contents()).to.equal('contents...')
-        expect(file2.contentsSync()).to.equal('contents...')
+      // read file1, file2 synchronously, but _not_ file3
+      expect(await file1.contents()).to.equal('contents...')
+      expect(file2.contentsSync()).to.equal('contents...')
 
-        // unlink
-        unlinkSync(path)
+      // unlink
+      unlinkSync(path)
 
-        // file1/3 should have cached contents, file2 should fail
-        expect(await file1.contents()).to.equal('contents...')
-        expect(await file2.contents()).to.equal('contents...')
-        await expect(file3.contents()).to.be.rejectedWith(Error)
-      } finally {
-        if (existsSync(path)) unlinkSync(path)
-      }
+      // file1/3 should have cached contents, file2 should fail
+      expect(await file1.contents()).to.equal('contents...')
+      expect(await file2.contents()).to.equal('contents...')
+      await expect(file3.contents()).to.be.rejectedWith(Error)
     } finally {
-      if (existsSync(dir)) rmdirSync(dir)
+      await rmdirs(dir)
     }
   })
 
   it('should cache or fail when a file disappears (sync)', async () => {
-    const dir = mkdtempSync(tmpdir()) as DirectoryPath
+    const dir = await mktempdir({ directory } as any)
     try {
       const path = createFilePath(dir, 'test.txt')
-      try {
-        writeFileSync(path, 'contents...')
+      writeFileSync(path, 'contents...')
 
-        const files = makeFiles(dir)
-        const file1 = new SimpleFile(files, path, false)
-        const file2 = new SimpleFile(files, path, false)
-        const file3 = new SimpleFile(files, path, false)
+      const files = makeFiles(dir)
+      const file1 = new SimpleFile(files, path, false)
+      const file2 = new SimpleFile(files, path, false)
+      const file3 = new SimpleFile(files, path, false)
 
-        // read file1, file2 asynchronously but _not_ file3
-        expect(file1.contentsSync()).to.equal('contents...')
-        expect(await file2.contentsSync()).to.equal('contents...')
+      // read file1, file2 asynchronously but _not_ file3
+      expect(file1.contentsSync()).to.equal('contents...')
+      expect(await file2.contentsSync()).to.equal('contents...')
 
-        // unkink
-        unlinkSync(path)
+      // unkink
+      unlinkSync(path)
 
-        // file1 should have cached contents, file2 should fail
-        expect(file1.contentsSync()).to.equal('contents...')
-        expect(file2.contentsSync()).to.equal('contents...')
-        expect(() => file3.contentsSync()).to.throw(Error)
-      } finally {
-        if (existsSync(path)) unlinkSync(path)
-      }
+      // file1 should have cached contents, file2 should fail
+      expect(file1.contentsSync()).to.equal('contents...')
+      expect(file2.contentsSync()).to.equal('contents...')
+      expect(() => file3.contentsSync()).to.throw(Error)
     } finally {
-      if (existsSync(dir)) rmdirSync(dir)
+      await rmdirs(dir)
     }
   })
 })

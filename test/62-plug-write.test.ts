@@ -1,12 +1,13 @@
 import { expect } from 'chai'
-import { existsSync, mkdtempSync, readFileSync, rmdirSync, rmSync } from 'fs'
-import { tmpdir } from 'os'
+import { readFileSync } from 'fs'
 import { RawSourceMap } from 'source-map'
 import { PlugPipe } from '../src/pipe'
 import { WritePlug } from '../src/plugs/write'
 import { SOURCE_MAPPING_URL } from '../src/sourcemaps'
-import { getParent, DirectoryPath, FilePath } from '../src/utils/paths'
-import { mock } from './support'
+import { mktempdir } from '../src/utils/mktempdir'
+import { FilePath } from '../src/utils/paths'
+import { rmdirs } from '../src/utils/rmdirs'
+import { mock, directory } from './support'
 
 describe('Plug Write Processor', () => {
   const sourceMap = { version: 3, mappings: 'mappings' } as RawSourceMap
@@ -136,7 +137,7 @@ describe('Plug Write Processor', () => {
   })
 
   it('should write come content to the filesystem', async () => {
-    const dir = mkdtempSync(tmpdir()) as DirectoryPath
+    const dir = await mktempdir({ directory } as any)
     const { files, run, log } = mock(dir)
     const file = files.add('foo/bar/baz.txt', { contents: 'contents...' })
     try {
@@ -146,11 +147,7 @@ describe('Plug Write Processor', () => {
       const contents = readFileSync(file.absolutePath, 'utf8')
       expect(contents).to.equal('contents...')
     } finally {
-      if (existsSync(file.absolutePath)) rmSync(file.absolutePath)
-      for (let parent = getParent(file.absolutePath); parent != dir; parent = getParent(parent)) {
-        if (existsSync(parent)) rmdirSync(parent)
-      }
-      if (existsSync(dir)) rmdirSync(dir)
+      await rmdirs(dir)
     }
   })
 })
