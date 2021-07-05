@@ -82,7 +82,7 @@ export class MochaPlug implements Plug {
     })
 
     // Let's prep our mocha run
-    const failures = await this.runMocha({ files: files, tests, options: this.#options })
+    const { failures } = await this.runMocha({ files: files, tests, options: this.#options })
 
     // Check for failures
     if (failures) run.fail(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)
